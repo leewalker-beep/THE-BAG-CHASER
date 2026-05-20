@@ -25,9 +25,12 @@ export const GameProvider = ({ children }) => {
   const [gBusy, setGBusy] = useState(false);
   const [rain, setRain] = useState(false);
   const [swFatigue, setSwFatigue] = useState(0);
+  const [smmClients, setSmmClients] = useState(0);
+  const [clientCrisis, setClientCrisis] = useState(false);
+  const [vinCh, setVinCh] = useState(null);
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0 });
+  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, stm: 100 });
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
   const cap = 500;
@@ -103,6 +106,12 @@ export const GameProvider = ({ children }) => {
   // Global Pulse Advance Logic
   const adv = (months = 1) => {
     setSwFatigue(prev => Math.max(0, prev - (0.25 * months)));
+
+    if (clientCrisis) {
+      setSmmClients(c => Math.max(0, c - 1));
+      setNews(prev => ["📉 SMM: Client churned due to unresolved crisis.", ...prev.slice(0, 15)]);
+    }
+
     setPl(prev => {
       let expenseBurn = 500;
       if (mkt === 2) expenseBurn *= 2;
@@ -130,10 +139,15 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
+      const smmRev = smmClients * 300;
+      const smmAura = smmClients * 2;
+
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome
+        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev,
+        aura: Math.min(cap, prev.aura + smmAura),
+        stm: Math.min(100, prev.stm + 25)
       };
     });
 
@@ -143,6 +157,12 @@ export const GameProvider = ({ children }) => {
       setMkt(nextMarket);
       const mktNames = ["NORMAL", "BULL MARKET", "RECESSION", "CRACKDOWN"];
       setNews(prev => [`🚨 MARKET WATCH: Shift detected. Economy is now in ${mktNames[nextMarket]} mode.`, ...prev.slice(0, 15)]);
+    }
+
+    // SMM Crisis Trigger
+    if (smmClients > 0 && Math.random() < 0.20) {
+      setClientCrisis(true);
+      setNews(prev => ["🚨 SMM ALERT: Client Crisis! Algorithm Shift detected.", ...prev.slice(0, 15)]);
     }
 
     // AI Engine Race Simulation
@@ -207,6 +227,82 @@ export const GameProvider = ({ children }) => {
     const id = Math.random();
     setImp(prev => [...prev, { id, kind, a: amount, w: amount >= 0 }]);
     setTimeout(() => setImp(curr => curr.filter(i => i.id !== id)), 1900);
+  };
+
+  const rVintage = async () => {
+    if (pl.bag < 50 || pl.stm < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - 50, stm: p.stm - 10 }));
+    await new Promise(r => setTimeout(r, 800));
+
+    const roll = Math.random();
+    let profit = -50;
+    if (roll < 0.01) { // GRAIL!
+      setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(cap, p.clout + 15), aura: Math.min(cap, p.aura + 5) }));
+      setNews(n => ["👕 GRAIL FOUND! A rare archive piece secured for the vault.", ...n.slice(0, 15)]);
+      setMod({
+        s: true,
+        t: "GRAIL SECURED! 🏆",
+        m: "You hit the bins and found an authentic 1990s Grail. The street authenticity and clout boost is massive.",
+        o: [{ label: "CELEBRATE", action: () => setMod({ s: false }) }],
+        ui: "ui-modal"
+      });
+      triggerImpact('bag', 600);
+      profit = 600;
+    } else if (roll < 0.61) { // Mid-Tier
+      setPl(p => ({ ...p, bag: p.bag + 120, clout: Math.min(cap, p.clout + 3) }));
+      triggerImpact('bag', 120);
+      profit = 120;
+    } else if (roll < 0.90) { // Common Thrift
+      setPl(p => ({ ...p, bag: p.bag + 35 }));
+      triggerImpact('bag', 35);
+      profit = 35;
+    } else { // Bootleg
+      setVinCh('bootleg');
+      return undefined;
+    }
+    adv();
+    return profit;
+  };
+
+  const rSmmPitch = async () => {
+    if (pl.clout < 15 || pl.stm < 20) return;
+    setPl(p => ({ ...p, stm: p.stm - 20 }));
+    await new Promise(r => setTimeout(r, 800));
+
+    if (Math.random() < 0.5) {
+      setSmmClients(c => c + 1);
+      setNews(prev => ["🤝 SMM: Pitch successful! New client onboarded.", ...prev.slice(0, 15)]);
+    } else {
+      setNews(prev => ["❌ SMM: Pitch Rejected: Need more street leverage.", ...prev.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rSmmFix = async () => {
+    if (pl.stm < 15) return;
+    setPl(p => ({ ...p, stm: p.stm - 15 }));
+    await new Promise(r => setTimeout(r, 800));
+    setClientCrisis(false);
+    setNews(prev => ["✅ SMM: Content strategy fixed. Crisis averted.", ...prev.slice(0, 15)]);
+  };
+
+  const rRest = async () => {
+    setPl(p => ({ ...p, stm: Math.min(100, p.stm + 50) }));
+    adv();
+    setNews(prev => ["😴 Resting... Stamina recovered.", ...prev.slice(0, 15)]);
+  };
+
+  const rVinCh = async (choice) => {
+    if (choice === 'burn') {
+      setPl(p => ({ ...p, aura: Math.min(cap, p.aura + 2) }));
+      setNews(n => ["🔥 VINTAGE: Burned the bootleg. Street authenticity +2.", ...n.slice(0, 15)]);
+    } else if (choice === 'pass') {
+      setPl(p => ({ ...p, bag: p.bag + 150, aura: Math.max(0, p.aura - 10) }));
+      setNews(n => ["💀 VINTAGE: Passed off a rep. Reputation damaged, but bags secured.", ...n.slice(0, 15)]);
+      triggerImpact('bag', 150);
+    }
+    setVinCh(null);
+    adv();
   };
 
   const rSw = async () => {
@@ -471,7 +567,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rSw, rDrp, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
     }}>
       {children}
     </GameContext.Provider>

@@ -403,8 +403,8 @@ const TierHub = () => {
     'SW': { label: 'Streetwear', icon: '👕' },
     'DROP': { label: 'Dropship', icon: '📦' },
     'TECH_FLIP': { label: 'Tech Flipping', icon: '💻', stub: true },
-    'VINTAGE': { label: 'Vintage Reselling', icon: '👕', stub: true },
-    'SMM': { label: 'SMM Micro-Agency', icon: '📱', stub: true },
+    'VINTAGE': { label: 'Vintage Reselling', icon: '👕' },
+    'SMM': { label: 'SMM Micro-Agency', icon: '📱' },
     'GIG': { label: 'Gig Runner Network', icon: '🏃', stub: true },
     'CC': { label: 'Creator Lab', icon: '📱' },
     'POD': { label: 'Podcast Net', icon: '🎙️' },
@@ -428,8 +428,21 @@ const TierHub = () => {
     'ELECTION': { label: 'ELECTION DAY', icon: '🗳️' }
   };
 
+  const { rRest } = useGame();
+
   return (
-    <div className="grid grid-cols-2 gap-5 mb-8">
+    <div className="flex flex-col gap-5 mb-8">
+      <div className="grid grid-cols-1">
+        <button
+          onClick={rRest}
+          className="w-full py-4 bg-blue-900/40 border-2 border-blue-500 rounded-xl font-black text-blue-400 tracking-widest hover:bg-blue-800/40 transition-all flex items-center justify-center gap-3"
+        >
+          <span className="text-2xl">😴</span>
+          TAKE A BREAK (+50 STM, ADVANCE 1 MO)
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5">
 
       {tier?.hustles?.map(hKey => {
         const h = hustleMap[hKey];
@@ -466,6 +479,7 @@ const TierHub = () => {
         );
       })}
 
+      </div>
     </div>
   );
 };
@@ -534,6 +548,78 @@ const SwTab = () => {
         {!up.swFlg && <Stepper val={sw.a} setVal={v => setSw(s => ({ ...s, a: v }))} min={0} max={250000} step={5000} label="Ad Spend" />}
         <FlashBtn onClick={rSw} dis={pl.bag < (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a)} label={`DROP - $${fMny((sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a))}`} />
       </>}
+    </LabShell>
+  );
+};
+
+const VintageTab = () => {
+  const { pl, rVintage, rVinCh, vinCh, setTab } = useGame();
+  return (
+    <LabShell t="VINTAGE RESELLING" c="amber" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="flex flex-col gap-4">
+        {vinCh === 'bootleg' ? (
+          <div className="bg-red-900/40 border-2 border-red-500 p-4 rounded-xl flex flex-col gap-3 animate-pulse">
+            <h4 className="text-red-400 font-black text-center uppercase">⚠️ BOOTLEG SPOTTED!</h4>
+            <p className="text-[10px] text-slate-300 text-center italic">The "Grail" you found is a high-quality replica. How do you handle it?</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => rVinCh('burn')} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-[10px] font-bold uppercase">Burn It Legally (+$0, +2 Aura)</button>
+              <button onClick={() => rVinCh('pass')} className="bg-red-600 hover:bg-red-500 text-white p-2 rounded-lg text-[10px] font-bold uppercase">Pass It Off (+$150, -10 Aura)</button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center">
+              <div className="text-[10px] text-slate-500 font-bold uppercase">Inventory Status</div>
+              <div className="text-xl font-black text-amber-400">SOURCING PHASE</div>
+            </div>
+            <FlashBtn
+              onClick={rVintage}
+              dis={pl.bag < 50 || pl.stm < 10}
+              label="HIT THE CLOTHING BINS ($50, -10 STM)"
+              color="amber"
+              txt="black"
+            />
+          </>
+        )}
+      </div>
+    </LabShell>
+  );
+};
+
+const SmmTab = () => {
+  const { pl, smmClients, clientCrisis, rSmmPitch, rSmmFix, setTab } = useGame();
+  return (
+    <LabShell t="SMM MICRO-AGENCY" c="sky" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="flex flex-col gap-4">
+        <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center ${clientCrisis ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Active Portfolio</div>
+          <div className={`text-2xl font-black ${clientCrisis ? 'text-red-500' : 'text-sky-400'}`}>{smmClients} CLIENTS</div>
+          <div className="text-[9px] text-slate-500 mt-1">Yield: +${fMny(smmClients * 300)}/mo | +{smmClients * 2} Aura/mo</div>
+        </div>
+
+        {clientCrisis && (
+          <div className="ui-crisis p-4 flex flex-col gap-2">
+            <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 CLIENT CRISIS: ALGORITHM SHIFT!</h4>
+            <p className="text-[9px] text-slate-300 text-center italic">Clients are panicking. Fix it now or lose 1 retainer next month.</p>
+            <FlashBtn
+              onClick={rSmmFix}
+              dis={pl.stm < 15}
+              label="FIX CONTENT STRATEGY (-15 STM)"
+              color="red"
+              txt="white"
+            />
+          </div>
+        )}
+
+        <FlashBtn
+          onClick={rSmmPitch}
+          dis={pl.clout < 15 || pl.stm < 20 || clientCrisis}
+          label={clientCrisis ? "🔒 CRISIS: SOLVE TO PITCH" : pl.clout >= 15 ? "PITCH LOCAL BUSINESS (-20 STM)" : "🔒 NEED 15 CLOUT TO PITCH"}
+          color="sky"
+          txt="black"
+        />
+        <p className="text-[9px] text-slate-500 text-center italic">"Flat 50% success rate. Street leverage is everything."</p>
+      </div>
     </LabShell>
   );
 };
@@ -1024,6 +1110,10 @@ const GameInterface = () => {
               <div className="flex justify-between text-[9px] font-bold text-red-400 tracking-widest leading-none"><span>CLOUT</span><span>{pl?.clout || 0}/{cap || 500}</span></div>
               <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-red-500 h-full rounded-full clout-glow transition-all" style={{ width: `${Math.min(100, ((pl?.clout || 0) / (cap || 500)) * 100)}%` }}></div></div>
             </div>
+            <div>
+              <div className="flex justify-between text-[9px] font-bold text-blue-400 tracking-widest leading-none"><span>STAMINA</span><span>{pl?.stm || 0}/100</span></div>
+              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${Math.min(100, (pl?.stm || 0))}%` }}></div></div>
+            </div>
           </div>
           <div className="text-[9px] font-hack text-slate-400 text-right leading-relaxed flex-shrink-0">
             <div>AGE <span className="text-white font-bold">{age}</span></div>
@@ -1060,6 +1150,8 @@ const GameInterface = () => {
           {tab === 'HUB'  && <TierHub />}
           {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
           {tab === 'DROP' && (isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'VINTAGE' && (isTierUnlocked?.(0) ? <VintageTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'SMM' && (isTierUnlocked?.(0) ? <SmmTab /> : <LockedTierScreen section={0} />)}
           {tab === 'CC'   && (isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />)}
           {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
           {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
