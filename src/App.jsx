@@ -430,28 +430,6 @@ const TierHub = () => {
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      {tierIdx === 0 && (
-        <>
-          <div className="col-span-2 bg-slate-900/80 rounded-xl p-4 border border-slate-700 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">CASH FLOW</div>
-                <div className="text-2xl font-black text-green-400 font-hack">${fMny(displayBag || 0)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">AURA / CLOUT</div>
-                <div className="text-lg font-black text-white">{pl?.aura || 0} <span className="text-yellow-500">A</span> / {pl?.clout || 0} <span className="text-red-500">C</span></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-span-2 bg-slate-900/80 rounded-xl p-3 border border-slate-700">
-            <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 MARKET INTEL</div>
-            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
-            <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
-          </div>
-        </>
-      )}
 
       {tier?.hustles?.map(hKey => {
         const h = hustleMap[hKey];
@@ -1073,7 +1051,7 @@ const GameInterface = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-3 pb-16">
+      <div className="flex-1 overflow-y-auto px-3 pb-16">
         <div className="max-w-xl mx-auto">
           {tab === 'HUB'  && <TierHub />}
           {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
@@ -1092,6 +1070,12 @@ const GameInterface = () => {
           {tab === 'BLITZ'    && (isTierUnlocked?.(5) ? <BlitzTab />    : <LockedTierScreen section={5} />)}
           {tab === 'SMEAR'    && (isTierUnlocked?.(5) ? <SmearTab />    : <LockedTierScreen section={5} />)}
           {tab === 'ELECTION' && (isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />)}
+
+          <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 mt-4">
+            <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 REAL WORLD MONITOR</div>
+            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
+            <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
+          </div>
         </div>
       </div>
 
