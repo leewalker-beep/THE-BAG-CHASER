@@ -16,6 +16,7 @@ const styles = `
   @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-10px) rotate(-3deg); } 50% { transform: translateX(10px) rotate(3deg); } }
   .animate-shake-hard { animation: shake 0.2s ease-in-out infinite; box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.5); }
   .aura-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.8); } .clout-glow { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+  .mh-glow { box-shadow: 0 0 15px rgba(168, 85, 247, 0.8); }
   @keyframes rain { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
   .money-rain { position: fixed; color: #22c55e; font-weight: bold; font-size: 2.5rem; z-index: 100; animation: rain 1.5s linear forwards; pointer-events: none; text-shadow: 0 0 10px #22c55e; }
   @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); } 20% { transform: translate(-50%, -20px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -100px) scale(1); } }
@@ -65,7 +66,7 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
   const [st, setSt] = useState('idle');
   const [amt, setAmt] = useState(0);
 
-  const exhausted = pl.stamina < costStm;
+  const exhausted = pl.mentalHealth < costStm;
 
   const hit = async () => {
     if (dis || exhausted || st !== 'idle' || (busy && st === 'idle')) return;
@@ -90,7 +91,7 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
   let bg = (dis || exhausted || (busy && st === 'idle'))
     ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed border-slate-700'
     : `bg-${color} text-${txt} hover:bg-gray-200`;
-  let l = exhausted ? 'EXHAUSTED' : label;
+  let l = exhausted ? 'BURNED OUT' : label;
   if (st === 'calc')  { bg = 'bg-slate-600 text-white animate-pulse'; l = 'CALCULATING...'; }
   else if (st === 'drain') { bg = 'bg-orange-900 text-orange-400 animate-pulse'; l = '💸 DRAINING...'; }
   else if (st === 'sweat') { bg = 'bg-yellow-900/80 text-yellow-300 animate-pulse'; l = '😰 THE SWEAT...'; }
@@ -380,14 +381,14 @@ const Prologue = () => {
           <input type="text" value={alias} onChange={e => setAlias(e.target.value.substring(0, 5).toUpperCase())} placeholder="ALIAS (3-5 CHARS)" className="w-full p-4 mb-4 bg-slate-900 border border-slate-600 rounded-lg text-center font-black tracking-widest text-xl text-white outline-none focus:border-green-400 transition-colors" />
           <div className="w-full mb-2">
             <div className="text-xs text-slate-500 font-bold tracking-widest mb-2">DIFFICULTY</div>
-            <Toggles opts={['TRUST FUND', 'SIDE HUSTLE', 'OUT THE MUD']} active={diff} setVal={setDiff} color="green" />
+            <Toggles opts={['TRUST FUND', 'HUSTLER', 'GRINDER']} active={diff} setVal={setDiff} color="green" />
           </div>
           <div className="w-full mb-4 px-1">
             {diff === 3 && <p className="text-[10px] text-red-400 font-bold text-center leading-relaxed">⚠ Protect Your Aura (0 = Cancellation) | Cash Flow is King | Read the Fine Print</p>}
             {diff === 2 && <p className="text-[10px] text-yellow-400 font-bold text-center leading-relaxed">⚠ Respect the Market Cycle | Beware Lifestyle Creep (Mortgages kill) | Rotate Your Roster</p>}
             {diff === 1 && <p className="text-[10px] text-slate-400 font-bold text-center leading-relaxed">⚠ Fame is a Target | The Feds are Watching (Whale Tax) | Leverage is a Double-Edged Sword</p>}
           </div>
-          <button onClick={() => { exStart(); setPh('PLAYING'); }} disabled={alias.length < 3} className={`w-full p-6 font-black tracking-widest text-xl rounded-xl transition-all ${alias.length >= 3 ? 'bg-green-500 text-black shadow-[0_0_20px_#22c55e] hover:bg-green-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>ENTER THE MATRIX</button>
+          <button onClick={() => { exStart(); }} disabled={alias.length < 3} className={`w-full p-6 font-black tracking-widest text-xl rounded-xl transition-all ${alias.length >= 3 ? 'bg-green-500 text-black shadow-[0_0_20px_#22c55e] hover:bg-green-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>ENTER THE MATRIX</button>
         </>}
       </div>
     </div>
@@ -442,10 +443,10 @@ const TierHub = () => {
       <div className="grid grid-cols-1">
         <button
           onClick={rRest}
-          className="w-full py-4 bg-blue-900/40 border-2 border-blue-500 rounded-xl font-black text-blue-400 tracking-widest hover:bg-blue-800/40 transition-all flex items-center justify-center gap-3"
+          className="w-full py-4 bg-purple-900/40 border-2 border-purple-500 rounded-xl font-black text-purple-400 tracking-widest hover:bg-purple-800/40 transition-all flex items-center justify-center gap-3"
         >
           <span className="text-2xl">😴</span>
-          TAKE A BREAK (+50 STM, ADVANCE 1 MO)
+          TAKE A BREAK (+50 MH, ADVANCE 1 MO)
         </button>
       </div>
 
@@ -530,7 +531,7 @@ const SwTab = () => {
     <LabShell t="STREETWEAR LAB" c="purple" fontCls="font-hype" onHub={() => useGame().setTab('HUB')}>
       <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
         <div className="text-[10px] text-slate-500 font-bold uppercase">Hustle Cost</div>
-        <div className="text-xs font-black text-blue-400">15 STAMINA</div>
+        <div className="text-xs font-black text-purple-400">15 MENTAL HEALTH</div>
       </div>
       {!up.swIp
         ? <UpgBtn onClk={() => dUp('swIp', 250000, 'IP Secured. 📜')} cost={250000} title="BUY IP" pB={pl.bag} />
@@ -569,7 +570,7 @@ const VintageTab = () => {
     <LabShell t="VINTAGE RESELLING" c="amber" fontCls="font-hype" onHub={() => setTab('HUB')}>
       <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
         <div className="text-[10px] text-slate-500 font-bold uppercase">Hustle Cost</div>
-        <div className="text-xs font-black text-blue-400">10 STAMINA</div>
+        <div className="text-xs font-black text-purple-400">10 MENTAL HEALTH</div>
       </div>
       <div className="flex flex-col gap-4">
         {vinCh === 'bootleg' ? (
@@ -608,7 +609,7 @@ const SmmTab = () => {
     <LabShell t="SMM MICRO-AGENCY" c="sky" fontCls="font-tech" onHub={() => setTab('HUB')}>
       <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
         <div className="text-[10px] text-slate-500 font-bold uppercase">Pitch Cost</div>
-        <div className="text-xs font-black text-blue-400">20 STAMINA</div>
+        <div className="text-xs font-black text-purple-400">20 MENTAL HEALTH</div>
       </div>
       <div className="flex flex-col gap-4">
         <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center ${clientCrisis ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
@@ -651,7 +652,7 @@ const DropTab = () => {
     <LabShell t="DROPSHIPPING" c="blue" fontCls="font-hype" onHub={() => setTab('HUB')}>
       <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
         <div className="text-[10px] text-slate-500 font-bold uppercase">Setup Cost</div>
-        <div className="text-xs font-black text-blue-400">10 STAMINA</div>
+        <div className="text-xs font-black text-purple-400">10 MENTAL HEALTH</div>
       </div>
       <UpgBtn onClk={() => dUp('drpFac', 250000, 'Factory Secured. 🏭')} cost={250000} title="PRIVATE LABEL FACTORY" unl={up.drpFac} pB={pl.bag} />
       <Toggles opts={['LEDs', 'Fake Pods', 'Supps']} active={drp.i} setVal={v => setDrp(s => ({ ...s, i: v }))} color="blue" />
@@ -667,6 +668,10 @@ const TechFlipTab = () => {
   const { pl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab } = useGame();
   return (
     <LabShell t="TECH FLIPPING" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Repair Cost</div>
+        <div className="text-xs font-black text-purple-400">10-15 MENTAL HEALTH</div>
+      </div>
       <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
         <div className="text-[10px] text-slate-500 font-bold uppercase">Hardware Mastery</div>
         <div className="text-2xl font-black text-cyan-400">{techFlipsComplete} FLIPS</div>
@@ -714,6 +719,10 @@ const GigTab = () => {
   const { pl, runnerCount, runnerBurnout, rRunnerRecruit, rRunnerFix, setTab } = useGame();
   return (
     <LabShell t="GIG RUNNER NETWORK" c="orange" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Recruit Cost</div>
+        <div className="text-xs font-black text-purple-400">25 MENTAL HEALTH</div>
+      </div>
       <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center mb-4 ${runnerBurnout ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
         <div className="text-[10px] text-slate-500 font-bold uppercase">Active Fleet</div>
         <div className={`text-2xl font-black ${runnerBurnout ? 'text-red-500' : 'text-orange-400'}`}>{runnerCount} COURIERS</div>
@@ -742,7 +751,7 @@ const GigTab = () => {
         color="orange"
         txt="black"
       />
-      <p className="text-[9px] text-slate-500 text-center italic mt-2">"High stamina cost to vet and onboard new runners."</p>
+      <p className="text-[9px] text-slate-500 text-center italic mt-2">"High mentalHealth cost to vet and onboard new runners."</p>
     </LabShell>
   );
 };
@@ -1154,7 +1163,7 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, breakdown, rDischarge } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
@@ -1174,6 +1183,29 @@ const GameInterface = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${busy ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+
+      {breakdown && (
+        <div className="fixed inset-0 bg-purple-900/90 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-black border-4 border-purple-500 p-8 rounded-3xl max-w-sm w-full text-center shadow-[0_0_100px_rgba(168,85,247,0.5)] animate-pulse">
+            <div className="text-6xl mb-4">🧠💥</div>
+            <h2 className="text-3xl font-black text-purple-400 mb-4 tracking-tighter">TOTAL NERVOUS BREAKDOWN</h2>
+            <p className="text-slate-300 mb-8 text-sm leading-relaxed">
+              Your mind has buckled under the pressure of the hustle. You've been admitted to a luxury wellness retreat for mandatory recovery.
+            </p>
+            <div className="bg-purple-900/30 border border-purple-700 p-4 rounded-xl mb-8 text-left text-xs space-y-2">
+              <div className="flex justify-between"><span>Time Lost:</span><span className="text-purple-300">1 Month</span></div>
+              <div className="flex justify-between"><span>Retreat Fee:</span><span className="text-red-400">-$300</span></div>
+              <div className="flex justify-between"><span>Mental Recovery:</span><span className="text-green-400">50%</span></div>
+            </div>
+            <button
+              onClick={rDischarge}
+              className="w-full py-4 bg-purple-600 text-white font-black tracking-widest rounded-xl hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all"
+            >
+              DISCHARGE FROM WELLNESS CARE
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating impacts */}
       {imp?.map(i => i.kind === 'bag'
@@ -1220,8 +1252,8 @@ const GameInterface = () => {
               <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-red-500 h-full rounded-full clout-glow transition-all" style={{ width: `${Math.min(100, ((pl?.clout || 0) / (cap || 500)) * 100)}%` }}></div></div>
             </div>
             <div>
-              <div className="flex justify-between text-[9px] font-bold text-blue-400 tracking-widest leading-none"><span>STAMINA</span><span>{pl?.stamina || 0}/{pl?.maxStamina || 100}</span></div>
-              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${Math.min(100, ((pl?.stamina || 0) / (pl?.maxStamina || 100)) * 100)}%` }}></div></div>
+              <div className="flex justify-between text-[9px] font-bold text-purple-400 tracking-widest leading-none"><span>MENTAL HEALTH</span><span>{pl?.mentalHealth || 0}/{pl?.maxMentalHealth || 100}</span></div>
+              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-purple-500 h-full rounded-full mh-glow transition-all" style={{ width: `${Math.min(100, ((pl?.mentalHealth || 0) / (pl?.maxMentalHealth || 100)) * 100)}%` }}></div></div>
             </div>
           </div>
           <div className="text-[9px] font-hack text-slate-400 text-right leading-relaxed flex-shrink-0">
@@ -1299,6 +1331,57 @@ const GameInterface = () => {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
+const GameIntro = () => {
+  const { setPh } = useGame();
+  const [page, setPage] = useState(1);
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center font-hack">
+      <div className="max-w-md w-full bg-slate-900 border-2 border-blue-500 rounded-3xl p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)]">
+        {page === 1 ? (
+          <>
+            <h2 className="text-3xl font-black text-blue-400 mb-8 uppercase tracking-widest font-hype">THE BRIEFING: PAGE 1</h2>
+            <div className="space-y-8 text-left">
+              <div>
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">1. THE STREET TRINITY</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  <span className="text-green-400 font-bold">CASH</span> buys assets, <span className="text-red-400 font-bold">CLOUT</span> unlocks tiers, <span className="text-yellow-400 font-bold">AURA</span> scales passive multipliers. Balance all three to escape the Mud.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">2. THE TICKING CLOCK</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  You start at Age 18. Every cycle advances months. You are racing against time to build an empire before you age out.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setPage(2)} className="w-full mt-12 py-4 bg-blue-600 text-white font-black tracking-widest rounded-xl hover:bg-blue-500 transition-all">NEXT PAGE →</button>
+          </>
+        ) : (
+          <>
+            <h2 className="text-3xl font-black text-blue-400 mb-8 uppercase tracking-widest font-hype">THE BRIEFING: PAGE 2</h2>
+            <div className="space-y-8 text-left">
+              <div>
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">3. MENTAL CAPITAL & REHAB</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Active hustle clicks drain your neon-violet <span className="text-purple-400 font-bold">Mental Health</span> bar. Passive months restore +15. Hitting 0 triggers a complete Nervous Breakdown, forcing a 1-month rehab stay and a $300 fee.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">4. THE MACRO SHADOW</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Watch the Real World Monitor. States like Normal, Boom, or Crackdown shift your risks. Advanced tiers introduce 'Heat' where reckless operations invite regulatory raids.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setPh('PLAYING')} className="w-full mt-12 py-4 bg-green-600 text-black font-black tracking-widest rounded-xl hover:bg-green-500 transition-all shadow-[0_0_20px_rgba(34,197,94,0.4)]">BEGIN HUSTLE</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const BagChaserInner = () => {
   const { ph, death, cancelIntro } = useGame();
 
@@ -1307,6 +1390,7 @@ const BagChaserInner = () => {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       {death       && !cancelIntro ? <AutopsyReport /> : null}
       {!death      && ph === 'PROLOGUE' ? <Prologue /> : null}
+      {!death      && ph === 'PROLOGUE_INTRO' ? <GameIntro /> : null}
       {!death      && ph === 'PLAYING'  ? <GameInterface /> : null}
     </>
   );
