@@ -99,7 +99,7 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost })
 };
 
 const LabShell = ({ t, c, f, onHub, children, fontCls = '' }) => (
-  <div className="bg-slate-900/95 border border-slate-700 p-3 rounded-2xl shadow-2xl flex flex-col gap-2">
+  <div className="bg-slate-900/95 border border-slate-700 p-6 rounded-2xl shadow-2xl flex flex-col gap-2">
     <div className="text-center">
       <h3 className={`text-lg font-black text-${c}-400 uppercase tracking-widest ${fontCls}`}>{t}</h3>
       {f && <p className="text-[10px] text-slate-500 italic">"{f}"</p>}
@@ -196,7 +196,7 @@ const ExpView = () => {
 
       <div className="grid grid-cols-1 gap-2">
         {stats.map((s, i) => (
-          <div key={i} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+          <div key={i} className="p-6 bg-slate-900/60 border border-slate-800 rounded-xl">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{s.label}</span>
               <span className={`font-black tracking-widest ${s.color}`}>{s.val}</span>
@@ -236,7 +236,7 @@ const FlexesView = () => {
           const owned = ass?.[item.key];
           const canAfford = (pl?.bag || 0) >= item.cost;
           return (
-            <div key={item.key} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${owned ? 'bg-green-900/20 border-green-700' : 'bg-slate-900/60 border-slate-800'}`}>
+            <div key={item.key} className={`p-6 rounded-xl border flex items-center justify-between transition-all ${owned ? 'bg-green-900/20 border-green-700' : 'bg-slate-900/60 border-slate-800'}`}>
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{item.icon}</span>
                 <div className="flex flex-col">
@@ -429,7 +429,7 @@ const TierHub = () => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-5 mb-8">
 
       {tier?.hustles?.map(hKey => {
         const h = hustleMap[hKey];
@@ -440,7 +440,7 @@ const TierHub = () => {
           <div key={hKey} className="relative">
             <button
               onClick={() => !isLocked && !isStub && setTab?.(hKey)}
-              className={`w-full py-6 px-2 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
+              className={`w-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
                 ${isLocked || isStub
                   ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
                   : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
@@ -450,7 +450,7 @@ const TierHub = () => {
               {isStub && <span className="text-[8px] text-yellow-600">UNDER CONSTRUCTION</span>}
             </button>
             {isLocked && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-2 text-center border border-slate-800 pointer-events-none">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-4 text-center border border-slate-800 pointer-events-none">
                 <span className="text-xl mb-1">🔒</span>
                 <div className="text-[8px] font-black text-red-500 uppercase tracking-tighter">Locked Sector</div>
                 <div className="text-[7px] text-slate-400 mt-1">
@@ -1071,7 +1071,7 @@ const GameInterface = () => {
           {tab === 'SMEAR'    && (isTierUnlocked?.(5) ? <SmearTab />    : <LockedTierScreen section={5} />)}
           {tab === 'ELECTION' && (isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />)}
 
-          <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 mt-4">
+          <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 my-6">
             <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 REAL WORLD MONITOR</div>
             <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
             <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
