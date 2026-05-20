@@ -132,7 +132,7 @@ const UpgBtn = ({ onClk, cost, title, unl, reqA = 0, reqC = 0, pB, pA = 0, pC = 
   if (unl) return <div className="w-full py-1.5 px-2 bg-green-900/30 border border-green-700 text-green-500 text-center font-bold text-[10px] tracking-widest rounded-xl">✓ {title}</div>;
   const meets = pB >= cost && pA >= reqA && pC >= reqC;
   let rT = ''; if (reqA > 0) rT += `${reqA} AURA `; if (reqC > 0) rT += `${reqC} CLOUT`;
-  return <button onClick={onClk} disabled={!meets} className={`w-full py-2 px-2 font-black text-[10px] tracking-widest rounded-xl flex justify-center gap-2 ${meets ? 'bg-yellow-900/20 border border-yellow-600 text-yellow-500 hover:bg-yellow-900/40' : 'bg-slate-900 border border-slate-800 text-slate-300 drop-shadow-sm'}`}>🔒 {title} (${fMny(cost)}) {rT}</button>;
+  return <button onClick={onClk} disabled={!meets} className={`w-full py-2 px-2 font-black text-[10px] tracking-widest rounded-xl flex justify-center gap-2 ${meets ? 'bg-yellow-900/20 border border-yellow-600 text-yellow-500 hover:bg-yellow-900/40' : 'bg-slate-900 border border-slate-800 text-slate-300 drop-shadow-sm opacity-40'}`}>🔒 {title} (${fMny(cost)}) {rT}</button>;
 };
 
 const LockedTierScreen = ({ section }) => {
@@ -903,41 +903,206 @@ const TourTab = () => {
 };
 
 const TechTab = () => {
-  const { pl, up, tch, setTch, dUp, rTch, setTab } = useGame();
+  const { pl, saasProgress, saasLaunches, techFlipsComplete, rSaasClick, setTab } = useGame();
+  const speedBoost = techFlipsComplete >= 10;
+
   return (
     <LabShell t="SAAS STARTUP" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
-      {!tch.l ? (
-        <FlashBtn onClick={() => rTch('seed')} dis={pl.bag < 250000 || pl.clout < 75} label={pl.bag >= 250000 && pl.clout >= 75 ? '🚀 TAKE VC SEED (+$5M, 30% OUT)' : '🔒 REQUIRES $250K & 75 CLOUT'} cost={0} />
-      ) : <>
-        <UpgBtn onClk={() => dUp('tchGov', 10000000, 'Defense Contract Secured! 🛡️')} cost={10000000} title="GOV CONTRACTS" unl={up.tchGov} reqA={100} reqC={100} pB={pl.bag} pA={pl.aura} pC={pl.clout} />
-        <div className="p-3 bg-black/50 border border-slate-700 rounded-lg text-center">
-          <div className="font-hack text-cyan-400 text-xl font-black">{tch.u >= 1000000 ? `${(tch.u / 1000000).toFixed(1)}M` : tch.u >= 1000 ? `${(tch.u / 1000).toFixed(0)}K` : tch.u} Users</div>
-          <div className="text-[10px] text-slate-300 drop-shadow-sm mt-0.5">Tier {tch.u >= 1000000 ? '3' : tch.u >= 100000 ? '2' : '1'} · Srv ${fMny(500 + Math.floor(tch.u * tch.srv))}/mo{tch.pw ? ' · 💰 PAYWALL' : ''}{tch.vc ? ' · VC −30% IPO' : ''}</div>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Active Versions</div>
+        <div className="text-2xl font-black text-cyan-400">{saasLaunches} LAUNCHES</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(saasLaunches * 15000)}/mo</div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase px-1">
+          <span>Sprint Progress</span>
+          <span className={speedBoost ? 'text-green-400' : ''}>{saasProgress}% {speedBoost && '(BOOSTED)'}</span>
         </div>
-        {up.tchGov ? <FlashBtn onClick={() => rTch('dod')} label="SERVE PENTAGON" color="cyan-600" txt="white" /> : <div className="flex flex-col gap-2">
-          {tch.u < 100000 && <>
-            <div className="text-[9px] text-slate-300 drop-shadow-sm font-black text-center tracking-widest uppercase">TIER 1 — FIND PRODUCT-MARKET FIT</div>
-            <Stepper val={tch.m} setVal={v => setTch(t => ({ ...t, m: v }))} min={2000} max={250000} step={2000} label="B2B Budget" />
-            <div className="grid grid-cols-2 gap-2">
-              <FlashBtn onClick={() => rTch('b2b')} dis={pl.bag < tch.m} label={`B2B SPAM ($${(tch.m / 1000).toFixed(0)}K)`} color="cyan-600" txt="white" cost={tch.m} />
-              <FlashBtn onClick={() => rTch('freemium')} label="FREEMIUM BAIT (FREE)" color="slate" txt="white" cost={0} />
-            </div>
-          </>}
-          {tch.u >= 100000 && tch.u < 1000000 && <>
-            <div className="text-[9px] text-cyan-600 font-black text-center tracking-widest uppercase">🚀 TIER 2 — SCALE OR DIE</div>
-            <Stepper val={tch.m} setVal={v => setTch(t => ({ ...t, m: v }))} min={2000} max={250000} step={2000} label="B2B Budget" />
-            <FlashBtn onClick={() => rTch('b2b')} dis={pl.bag < tch.m} label={`B2B SPAM ($${(tch.m / 1000).toFixed(0)}K)`} color="cyan-600" txt="white" cost={tch.m} />
-            <FlashBtn onClick={() => rTch('pivot')} dis={pl.bag < 10000000} label="PIVOT TO AI ($10M)" cost={10000000} />
-            <button onClick={() => { setTch(t => ({ ...t, pw: !t.pw })); }} className={`w-full py-2 font-black text-xs rounded-xl ${tch.pw ? 'bg-green-700 text-white' : 'bg-slate-700 text-slate-300 drop-shadow-sm hover:bg-slate-600'}`}>{tch.pw ? '✓ PAYWALL ACTIVE — PASSIVE ON' : 'ACTIVATE PAYWALL'}</button>
-          </>}
-          {tch.u >= 1000000 && <>
-            <div className="text-[9px] text-yellow-500 font-black text-center tracking-widest uppercase">👑 TIER 3 — GOD MODE</div>
-            <FlashBtn onClick={() => rTch('data')} label="SELL USER DATA (10% → CASH, 30% DOJ RISK)" color="orange-600" txt="white" />
-            <button onClick={() => { setTch(t => ({ ...t, pw: !t.pw })); }} className={`w-full py-2 font-black text-xs rounded-xl ${tch.pw ? 'bg-green-700 text-white' : 'bg-slate-700 text-slate-300 drop-shadow-sm hover:bg-slate-600'}`}>{tch.pw ? '✓ PAYWALL ACTIVE' : 'TOGGLE PAYWALL'}</button>
-          </>}
-          <FlashBtn onClick={() => rTch('ipo')} label={`IPO EXIT — ${tch.u >= 1000000 ? `${(tch.u / 1000000).toFixed(1)}M` : tch.u >= 1000 ? `${(tch.u / 1000).toFixed(0)}K` : tch.u} users × ${pl.aura} Aura${tch.vc ? ' (−30% VC)' : ''}`} cost={0} />
-        </div>}
-      </>}
+        <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
+          <div className="bg-cyan-500 h-full transition-all duration-300" style={{ width: `${saasProgress}%` }}></div>
+        </div>
+
+        <FlashBtn
+          onClick={rSaasClick}
+          costStm={20}
+          dis={pl.bag < 5000}
+          label="RUN A CODE SPRINT ($5,000)"
+          color="cyan-600"
+          txt="white"
+        />
+        <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">
+          {speedBoost ? "Hardware Mastery accelerating code sprints by 20%." : "Master 10 Tech Flips to accelerate SaaS development."}
+        </p>
+      </div>
+    </LabShell>
+  );
+};
+
+const AiAgencyTab = () => {
+  const { pl, corpClients, apiLockoutMonths, rAiAgencyClick, setTab } = useGame();
+  const locked = pl.bag < 1000000 || pl.clout < 150 || pl.aura < 100;
+
+  if (locked) return <LockedTierScreen section={2} />;
+
+  return (
+    <LabShell t="AI MARKETING AGENCY" c="indigo" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${apiLockoutMonths > 0 ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Corporate Clients</div>
+        <div className={`text-2xl font-black ${apiLockoutMonths > 0 ? 'text-red-500' : 'text-indigo-400'}`}>{corpClients} RETAINERS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          {apiLockoutMonths > 0 ? `API LOCKOUT: ${apiLockoutMonths} MO REMAINING` : `Passive: +$${fMny(corpClients * 8000)}/mo`}
+        </div>
+      </div>
+
+      <FlashBtn
+        onClick={rAiAgencyClick}
+        costStm={15}
+        dis={pl.bag < 2500 || apiLockoutMonths > 0}
+        label={apiLockoutMonths > 0 ? "LOCKOUT ACTIVE" : "DEPLOY AI SCRAPING LEAD BOTS ($2,500)"}
+        color="indigo-600"
+        txt="white"
+      />
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"40% success rate per deployment. Watch for API Poisoning."</p>
+    </LabShell>
+  );
+};
+
+const CreTab = () => {
+  const { pl, towerCount, mkt, rCreClick, setTab } = useGame();
+  const locked = pl.bag < 15000000 || pl.clout < 200 || pl.aura < 250;
+  const isVulnerable = mkt === 2 || mkt === 3;
+
+  if (locked) return <LockedTierScreen section={2} />;
+
+  return (
+    <LabShell t="COMMERCIAL REAL ESTATE" c="slate" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${isVulnerable ? 'border-red-500' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Portfolio</div>
+        <div className={`text-2xl font-black ${isVulnerable ? 'text-red-500' : 'text-white'}`}>{towerCount} TOWERS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          {isVulnerable ? "MASS VACANCY: GROSS PAYOUT $0" : `Gross: +$${fMny(towerCount * 45000)}/mo`}
+          <br />Mortgage: -${fMny(towerCount * 20000)}/mo
+        </div>
+      </div>
+
+      <FlashBtn
+        onClick={rCreClick}
+        costStm={30}
+        dis={pl.bag < 1000000}
+        label="LEVERAGE DEBT FOR TOWER ($1,000,000)"
+        color="slate-100"
+        txt="black"
+      />
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Towers bleed capital during Bear Markets or Crackdowns."</p>
+    </LabShell>
+  );
+};
+
+const FranchiseTab = () => {
+  const { pl, franchiseCount, unionStrikeActive, rFranchiseClick, rResolveUnionStrike, setTab } = useGame();
+  const locked = pl.bag < 5000000 || pl.clout < 300 || pl.aura < 200;
+
+  if (locked) return <LockedTierScreen section={2} />;
+
+  return (
+    <LabShell t="NATIONAL FRANCHISE" c="yellow" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${unionStrikeActive ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Territories</div>
+        <div className={`text-2xl font-black ${unionStrikeActive ? 'text-red-500' : 'text-yellow-400'}`}>{franchiseCount} UNITS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          {unionStrikeActive ? "UNION STRIKE: INCOME HALTED" : `Passive: +$${fMny(franchiseCount * 25000)}/mo`}
+        </div>
+      </div>
+
+      {unionStrikeActive ? (
+        <div className="flex flex-col gap-2">
+          <button onClick={() => rResolveUnionStrike('settle')} className="w-full py-3 bg-green-600 text-white font-black text-xs rounded-xl hover:bg-green-500">PAY $100,000 WAGE SETTLEMENT</button>
+          <button onClick={() => rResolveUnionStrike('ignore')} className="w-full py-3 bg-red-600 text-white font-black text-xs rounded-xl hover:bg-red-500">IGNORE (AURA PENALTY)</button>
+        </div>
+      ) : (
+        <FlashBtn
+          onClick={rFranchiseClick}
+          costStm={25}
+          dis={pl.bag < 500000}
+          label="ACQUIRE FAST FOOD TERRITORY ($500,000)"
+          color="yellow-500"
+          txt="black"
+        />
+      )}
+    </LabShell>
+  );
+};
+
+const PeTab = () => {
+  const { pl, peProgress, guttedFirms, rPeClick, setTab } = useGame();
+  const locked = pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400;
+
+  if (locked) return <LockedTierScreen section={3} />;
+
+  return (
+    <LabShell t="PRIVATE EQUITY" c="slate" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Portfolio</div>
+        <div className="text-2xl font-black text-slate-100">{guttedFirms} FIRMS GUTTED</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(guttedFirms * 100000)}/mo</div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase px-1">
+          <span>Buyout Progress</span>
+          <span>{peProgress}%</span>
+        </div>
+        <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
+          <div className="bg-slate-100 h-full transition-all duration-300" style={{ width: `${peProgress}%` }}></div>
+        </div>
+
+        <FlashBtn
+          onClick={rPeClick}
+          costStm={40}
+          dis={pl.bag < 5000000}
+          label="EXECUTE LEVERAGED BUYOUT ($5,000,000)"
+          color="slate-100"
+          txt="black"
+        />
+        <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"High risk of SEC Pension Subpoenas."</p>
+      </div>
+    </LabShell>
+  );
+};
+
+const ArtTab = () => {
+  const { pl, artHoldings, rArtBuy, rArtAuction, setTab } = useGame();
+  const locked = pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450;
+
+  if (locked) return <LockedTierScreen section={3} />;
+
+  return (
+    <LabShell t="ART SPECULATION" c="pink" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Private Collection</div>
+        <div className="text-2xl font-black text-pink-400">{artHoldings} MASTERPIECES</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Yield: +{artHoldings * 20} Clout/mo</div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <FlashBtn
+          onClick={rArtBuy}
+          costStm={35}
+          dis={pl.bag < 10000000}
+          label="PURCHASE FINE ART ($10,000,000)"
+          color="pink-600"
+          txt="white"
+        />
+        <button
+          onClick={rArtAuction}
+          disabled={artHoldings <= 0}
+          className={`w-full py-3 rounded-xl font-black text-xs tracking-widest transition-all ${artHoldings > 0 ? 'bg-white text-black hover:bg-gray-200' : 'bg-slate-800 text-slate-300 drop-shadow-sm opacity-40 cursor-not-allowed'}`}
+        >
+          AUCTION AT SOTHEBY'S
+        </button>
+      </div>
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Bull markets yield massive flips. Bear markets result in capital loss."</p>
     </LabShell>
   );
 };
@@ -1233,7 +1398,7 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, breakdown, rDischarge } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
@@ -1252,9 +1417,9 @@ const GameInterface = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${busy ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
 
-      {breakdown && (
+      {isBreakdownActive && (
         <div className="fixed inset-0 bg-purple-900/90 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
           <div className="bg-black border-4 border-purple-500 p-8 rounded-3xl max-w-sm w-full text-center shadow-[0_0_100px_rgba(168,85,247,0.5)] animate-pulse">
             <div className="text-6xl mb-4">🧠💥</div>
@@ -1369,8 +1534,13 @@ const GameInterface = () => {
           {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
           {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
           {tab === 'TECH' && (isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />)}
+          {tab === 'AI_AGENCY' && (isTierUnlocked?.(2) ? <AiAgencyTab /> : <LockedTierScreen section={2} />)}
+          {tab === 'CRE_FLIP' && (isTierUnlocked?.(2) ? <CreTab /> : <LockedTierScreen section={2} />)}
+          {tab === 'FRANCHISE' && (isTierUnlocked?.(2) ? <FranchiseTab /> : <LockedTierScreen section={2} />)}
           {tab === 'CRYP' && (isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />)}
           {tab === 'TOUR' && (isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />)}
+          {tab === 'PE_ROLLUP' && (isTierUnlocked?.(3) ? <PeTab /> : <LockedTierScreen section={3} />)}
+          {tab === 'ART_SPEC' && (isTierUnlocked?.(3) ? <ArtTab /> : <LockedTierScreen section={3} />)}
           {tab === 'MOV'  && (isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />)}
           {tab === 'HF'   && (isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />)}
           {tab === 'AI'   && (isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />)}
