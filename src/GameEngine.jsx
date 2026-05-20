@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { TIER_UNLOCKS } from './config.js';
+
+export const TIERS = [
+  { id: 0, label: 'Mud',       req: { bag: 0,         clout: 0,   aura: 0  }, hustles: ['SW', 'DROP'] },
+  { id: 1, label: 'Street',    req: { bag: 500000,    clout: 0,   aura: 0  }, hustles: ['CC', 'POD']  },
+  { id: 2, label: 'Corporate', req: { bag: 0,         clout: 200, aura: 50 }, hustles: ['BOX', 'TECH'] },
+  { id: 3, label: 'Elite',     req: { bag: 100000000, clout: 0,   aura: 0  }, hustles: ['CRYP', 'TOUR'] },
+  { id: 4, label: 'President', req: { bag: 500000000, clout: 0,   aura: 0  }, hustles: ['HF', 'AI']   },
+];
 
 const GameContext = createContext();
 export const useGame = () => useContext(GameContext);
@@ -11,6 +18,7 @@ export const GameProvider = ({ children }) => {
   const [alias, setAlias] = useState('');
   const [diff, setDiff] = useState(2);
   const [tab, setTab] = useState('HUB');
+  const [selTier, setSelTier] = useState('0');
   const [death, setDeath] = useState(null);
   const [cancelIntro, setCancelIntro] = useState(null);
   const [gBusy, setGBusy] = useState(false);
@@ -18,7 +26,7 @@ export const GameProvider = ({ children }) => {
   const [swFatigue, setSwFatigue] = useState(0);
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0 });
+  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0 });
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
   const cap = 500;
@@ -32,7 +40,7 @@ export const GameProvider = ({ children }) => {
   // Tech Tree Infrastructure
   const [up, setUp] = useState({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
   const [skl, setSkl] = useState({ neg: 0, tax: 0, inf: 0 });
-  const [ass, setAss] = useState({ pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false });
+  const [ass, setAss] = useState({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false });
 
   // Active Venture Vectors
   const [sw, setSw] = useState({ i: 1, u: 250, p: 45, a: 5000 });
@@ -69,7 +77,25 @@ export const GameProvider = ({ children }) => {
     if (pl.aura <= 0) {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
     }
-  }, [pl, ph]);
+  }, [pl, ph, peaks]);
+
+  // Tier Progression System
+  useEffect(() => {
+    if (ph !== 'PLAYING') return;
+    let nextTier = pl.tier;
+    for (let i = pl.tier + 1; i < TIERS.length; i++) {
+      const { req } = TIERS[i];
+      if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura) {
+        nextTier = i;
+      } else {
+        break;
+      }
+    }
+    if (nextTier !== pl.tier) {
+      setPl(prev => ({ ...prev, tier: nextTier }));
+      setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier].label} Tier.`, ...prev.slice(0, 15)]);
+    }
+  }, [peaks, ph, pl.tier]);
 
   // Global Pulse Advance Logic
   const adv = (months = 1) => {
@@ -416,16 +442,14 @@ export const GameProvider = ({ children }) => {
   const dDef = () => { setPl(p => ({ ...p, bag: p.bag - 75000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, du: true, sub: p.sub + 5 })); };
 
   const isTierUnlocked = useMemo(() => {
-    return (section) => {
-      const req = TIER_UNLOCKS[section];
-      if (!req) return true;
-      return peaks.peakB >= req.peakBag && peaks.peakC >= req.peakClout;
+    return (tierIdx) => {
+      return pl.tier >= tierIdx;
     };
-  }, [peaks]);
+  }, [pl.tier]);
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, tab, setTab, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rSw, rDrp, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rSw, rDrp, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
     }}>
       {children}
     </GameContext.Provider>
