@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { GameProvider, useGame } from './GameEngine.jsx';
-import { fMny, MARKETS, HF_RUMORS, TABS, TIER_UNLOCKS } from './config.js';
+import { GameProvider, useGame, TIERS } from './GameEngine.jsx';
+import { fMny, MARKETS, HF_RUMORS } from './config.js';
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -116,27 +116,90 @@ const UpgBtn = ({ onClk, cost, title, unl, reqA = 0, reqC = 0, pB, pA = 0, pC = 
   return <button onClick={onClk} disabled={!meets} className={`w-full py-2 px-2 font-black text-[10px] tracking-widest rounded-xl flex justify-center gap-2 ${meets ? 'bg-yellow-900/20 border border-yellow-600 text-yellow-500 hover:bg-yellow-900/40' : 'bg-slate-900 border border-slate-800 text-slate-600'}`}>🔒 {title} (${fMny(cost)}) {rT}</button>;
 };
 
-const LockedTierScreen = ({ section }) => {
-  const { peaks, setTab } = useGame();
-  const req = TIER_UNLOCKS[section];
-  const hasBag = peaks.peakB >= req.peakBag;
-  const hasClout = peaks.peakC >= req.peakClout;
+const ExpView = () => {
+  const { pl, peaks, cap } = useGame();
+
+  const stats = [
+    { label: 'Current Aura', val: pl.aura, max: cap, color: 'text-yellow-400', bar: 'bg-yellow-400' },
+    { label: 'Current Clout', val: pl.clout, max: cap, color: 'text-red-400', bar: 'bg-red-400' },
+    { label: 'Peak Wealth', val: `$${fMny(peaks.peakB)}`, color: 'text-green-400' },
+    { label: 'Peak Aura', val: peaks.peakA, color: 'text-yellow-500' },
+    { label: 'Peak Clout', val: peaks.peakC, color: 'text-red-500' },
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="text-6xl mb-4">🔒</div>
-      <h2 className="text-2xl font-black text-slate-400 tracking-widest mb-2 font-hype">{req.label}</h2>
-      <p className="text-slate-500 text-sm mb-6">This tier is locked. Prove yourself to unlock it.</p>
-      <div className="bg-black/60 border border-slate-800 rounded-xl p-4 w-full max-w-xs space-y-3">
-        <div className={`flex justify-between items-center text-sm font-bold ${hasBag ? 'text-green-400' : 'text-red-400'}`}>
-          <span>Peak Bag</span>
-          <span>${fMny(req.peakBag)} {hasBag ? '✓' : `(${fMny(peaks.peakB)})`}</span>
-        </div>
-        <div className={`flex justify-between items-center text-sm font-bold ${hasClout ? 'text-green-400' : 'text-red-400'}`}>
-          <span>Peak Clout</span>
-          <span>{req.peakClout} {hasClout ? '✓' : `(${peaks.peakC})`}</span>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="bg-slate-900/80 border border-blue-600/50 p-4 rounded-2xl shadow-2xl text-center">
+        <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest font-tech">EXP & METRICS</h3>
+        <p className="text-[10px] text-slate-500 italic mt-1">"Tracking your ascent to godhood."</p>
       </div>
-      <button onClick={() => setTab('HUB')} className="mt-6 py-2 px-6 bg-slate-800 text-white text-sm font-bold tracking-widest rounded-xl hover:bg-slate-700">BACK TO HUB</button>
+
+      <div className="grid grid-cols-1 gap-2">
+        {stats.map((s, i) => (
+          <div key={i} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{s.label}</span>
+              <span className={`font-black tracking-widest ${s.color}`}>{s.val}</span>
+            </div>
+            {s.max && (
+              <div className="bg-black/50 h-2 rounded-full border border-slate-800">
+                <div className={`h-full rounded-full transition-all ${s.bar}`} style={{ width: `${Math.min(100, (s.val / s.max) * 100)}%` }}></div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const FlexesView = () => {
+  const { ass, setAss, pl, setPl, bAss } = useGame();
+
+  const flexItems = [
+    { key: 'watch', label: 'Luxury Watch', cost: 50000, icon: '⌚' },
+    { key: 'pent',  label: 'Penthouse',     cost: 1000000, icon: '🏢' },
+    { key: 'mans',  label: 'Mansion',      cost: 5000000, icon: '🏡' },
+    { key: 'jet',   label: 'Private Jet',  cost: 20000000, icon: '🛩️' },
+    { key: 'spt',   label: 'Sports Team',  cost: 2000000000, icon: '🏟️' },
+    { key: 'spc',   label: 'Space Corp',   cost: 10000000000, icon: '🚀' },
+  ];
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="bg-slate-900/80 border border-yellow-600/50 p-4 rounded-2xl shadow-2xl text-center">
+        <h3 className="text-xl font-black text-yellow-400 uppercase tracking-widest font-hype">LIFESTYLE FLEXES</h3>
+        <p className="text-[10px] text-slate-500 italic mt-1">"Burn cash to buy the world."</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        {flexItems.map(item => {
+          const owned = ass[item.key];
+          const canAfford = pl.bag >= item.cost;
+          return (
+            <div key={item.key} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${owned ? 'bg-green-900/20 border-green-700' : 'bg-slate-900/60 border-slate-800'}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{item.icon}</span>
+                <div>
+                  <div className={`font-black tracking-widest ${owned ? 'text-green-400' : 'text-white'}`}>{item.label.toUpperCase()}</div>
+                  <div className="text-xs text-slate-500 font-bold">${fMny(item.cost)}</div>
+                </div>
+              </div>
+              {owned ? (
+                <div className="text-green-500 font-black text-xs tracking-widest">OWNED ✓</div>
+              ) : (
+                <button
+                  onClick={() => bAss(item.key, item.cost, item.label)}
+                  disabled={!canAfford}
+                  className={`px-4 py-2 rounded-lg font-black text-xs tracking-widest transition-all ${canAfford ? 'bg-yellow-500 text-black hover:bg-yellow-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                >
+                  BUY
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -257,91 +320,74 @@ const Prologue = () => {
 
 // ─── HUB tab ──────────────────────────────────────────────────────────────────
 
-const HubTab = () => {
-  const { pl, mkt, news, skl, diff, cap, adv, setTab, isTierUnlocked, peaks } = useGame();
+const TierHub = () => {
+  const { pl, mkt, news, skl, diff, cap, adv, setTab, selTier, displayBag } = useGame();
 
-  const LockedHustle = ({ label, section }) => {
-    const req = TIER_UNLOCKS[section];
-    const hasBag = peaks.peakB >= req.peakBag;
-    const hasClout = peaks.peakC >= req.peakClout;
-    return (
-      <div className="py-3 px-2 bg-slate-900/60 rounded-xl border border-slate-800 text-center cursor-not-allowed">
-        <div className="font-bold text-slate-500 text-sm tracking-wide">🔒 {label}</div>
-        <div className="text-[9px] mt-1 space-y-0.5">
-          <div className={hasBag ? 'text-green-500' : 'text-red-400'}>Peak Bag: ${fMny(req.peakBag)} {hasBag ? '✓' : `(${fMny(peaks.peakB)})`}</div>
-          <div className={hasClout ? 'text-green-500' : 'text-red-400'}>Peak Clout: {req.peakClout} {hasClout ? '✓' : `(${peaks.peakC})`}</div>
-        </div>
-      </div>
-    );
+  if (selTier === 'flexes') return <FlexesView />;
+  if (selTier === 'exp') return <ExpView />;
+
+  const tierIdx = parseInt(selTier);
+  const tier = TIERS[tierIdx];
+  const isLocked = pl.tier < tierIdx;
+
+  const hustleMap = {
+    'SW': { label: 'Streetwear', icon: '👕' },
+    'DROP': { label: 'Dropship', icon: '📦' },
+    'CC': { label: 'Creator Lab', icon: '📱' },
+    'POD': { label: 'Podcast Net', icon: '🎙️' },
+    'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
+    'TECH': { label: 'SaaS Startup', icon: '💻' },
+    'CRYP': { label: 'Web3 Hedge', icon: '🪙' },
+    'TOUR': { label: 'Events', icon: '🎪' },
+    'HF': { label: 'Hedge Fund', icon: '📈' },
+    'AI': { label: 'AGI Super-Lab', icon: '🧠' },
+    'MOV': { label: 'Movie Studio', icon: '🎬' },
+    'BILL': { label: 'Flex & Legacy', icon: '💎' },
+    'PRES': { label: 'POTUS', icon: '🇺🇸' }
   };
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      <div className="col-span-2 border border-blue-700 bg-blue-900/20 rounded-xl p-3 text-center"><span className="text-base font-black text-blue-300 tracking-wide">CHOOSE A HUSTLE TO START</span></div>
-      <div className="col-span-2 bg-slate-900/80 rounded-xl p-3 border border-slate-700">
-        <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 MARKET INTEL</div>
-        <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt].n}</div>
-        <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt].desc}</p>
-      </div>
-      {['SW', 'DROP', 'CC', 'POD'].map(t => (
-        <button key={t} onClick={() => setTab(t)} className="py-3 px-2 bg-slate-900/90 rounded-xl border border-slate-700 font-bold text-white text-sm tracking-wide hover:bg-slate-800 shadow-lg">
-          {t === 'SW' ? '👕 Streetwear' : t === 'DROP' ? '📦 Dropship' : t === 'CC' ? '📱 Creator Lab' : '🎙️ Podcast Net'}
-        </button>
-      ))}
-      <div className="col-span-2 text-center border-b border-slate-800 pb-1 mt-1"><span className="text-[10px] font-black text-slate-500 tracking-widest">--- THE EMPIRE ---</span></div>
-      {['BOX', 'TECH', 'CRYP', 'TOUR'].map(t => {
-        const label = t === 'BOX' ? 'Fight Promoter' : t === 'TECH' ? 'SaaS Startup' : t === 'CRYP' ? 'Web3 Lab' : 'Live Events';
-        const icon = t === 'BOX' ? '🥊' : t === 'TECH' ? '💻' : t === 'CRYP' ? '🪙' : '🎪';
-        return isTierUnlocked('empire')
-          ? <button key={t} onClick={() => setTab(t)} className="py-3 px-2 bg-slate-900/90 rounded-xl border border-slate-700 font-bold text-white text-sm tracking-wide hover:bg-slate-800 shadow-lg">{icon} {label}</button>
-          : <LockedHustle key={t} label={label} section="empire" />;
-      })}
-      <div className="col-span-2 text-center border-b border-slate-800 pb-1 mt-1"><span className="text-[10px] font-black text-slate-500 tracking-widest">--- GOD TIER ---</span></div>
-      {['MOV', 'HF', 'AI', 'BILL'].map(t => {
-        const label = t === 'MOV' ? 'Movie Studio' : t === 'HF' ? 'Hedge Fund' : t === 'AI' ? 'AI Super-Lab' : 'Flex & Legacy';
-        const icon = t === 'MOV' ? '🎬' : t === 'HF' ? '📈' : t === 'AI' ? '🧠' : '💎';
-        return isTierUnlocked('god')
-          ? <button key={t} onClick={() => setTab(t)} className="py-3 px-2 bg-slate-900/90 rounded-xl border border-slate-700 font-bold text-white text-sm tracking-wide hover:bg-slate-800 shadow-lg">{icon} {label}</button>
-          : <LockedHustle key={t} label={label} section="god" />;
-      })}
-      {isTierUnlocked('pres')
-        ? <button onClick={() => setTab('PRES')} className="col-span-2 py-2 px-3 bg-red-900/30 rounded-xl border border-red-800 font-black text-red-400 text-sm tracking-widest text-center hover:bg-red-900/50 shadow-lg font-gov">🇺🇸 POTUS WAR ROOM</button>
-        : <div className="col-span-2"><LockedHustle label="POTUS WAR ROOM" section="pres" /></div>
-      }
-      <button onClick={() => adv(1)} className="col-span-2 py-3 bg-blue-900/40 rounded-xl border border-blue-700 text-blue-300 font-black tracking-widest text-center shadow-[0_0_20px_rgba(59,130,246,0.2)] hover:bg-blue-800/60">🧘‍♂️ GRIND 1 MONTH</button>
-      <div className="col-span-2 bg-black/60 p-3 rounded-xl border border-slate-800">
-        <div className="text-[9px] text-slate-500 font-bold mb-2 uppercase tracking-widest font-hack">FEED</div>
-        <div className="space-y-1 max-h-32 overflow-y-auto scrollbar-hide">
-          {news.map((n, i) => <div key={i} className="text-[10px] text-slate-400 font-hack leading-tight" dangerouslySetInnerHTML={{ __html: n }} />)}
-        </div>
-      </div>
-      {/* Skills */}
-      <div className="col-span-2 bg-black/40 p-2 rounded-xl border border-slate-800">
-        <div className="text-[9px] text-slate-500 font-bold mb-2 uppercase tracking-widest text-center">SKILLS / PERKS</div>
-        <div className="flex flex-col gap-1.5">
-          {[
-            { key: 'neg', label: 'NEGOTIATOR', color: 'text-blue-400',   btnCls: 'bg-blue-600 text-white',   costs: [500000, 3000000, 15000000, 75000000, 300000000],  statLabel: '-15 CLOUT', buff: (l) => `-${l * 2}% global costs`, canStat: () => pl.clout >= 15 },
-            { key: 'tax', label: 'TAX HAVEN',   color: 'text-yellow-400', btnCls: 'bg-yellow-500 text-black', costs: [2000000, 10000000, 50000000, 250000000, 1000000000], statLabel: '-20 AURA',  buff: (l) => `-${l * 4}% burn rate`,   canStat: () => pl.aura >= 20 },
-            { key: 'inf', label: 'INFLUENCER',  color: 'text-pink-400',   btnCls: 'bg-pink-600 text-white',   costs: [1000000, 5000000, 25000000, 125000000, 500000000],  statLabel: '-15 CLOUT', buff: (l) => `-${l * 3}% scandal dmg`, canStat: () => pl.clout >= 15 },
-          ].map(({ key, label, color, btnCls, costs, statLabel, buff, canStat }) => {
-            const lvl = skl[key]; const maxed = lvl >= 5; const nextCost = maxed ? 0 : costs[lvl]; const ok = !maxed && pl.bag >= nextCost && canStat();
-            const skillCosts = { neg: [500000, 3000000, 15000000, 75000000, 300000000], tax: [2000000, 10000000, 50000000, 250000000, 1000000000], inf: [1000000, 5000000, 25000000, 125000000, 500000000] };
-            const statPenalty = { neg: { field: 'clout', amt: 15 }, tax: { field: 'aura', amt: 20 }, inf: { field: 'clout', amt: 15 } };
-            return (
-              <div key={key} className="bg-slate-900/60 rounded-lg px-2 py-1.5 flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className={`text-[9px] font-black ${color}`}>{label}{lvl > 0 ? ` [Lvl ${lvl}/5]` : ''}</div>
-                  <div className="text-[8px] text-slate-500 truncate">{lvl > 0 ? buff(lvl) : 'Locked — spend cash + stat to unlock'}</div>
-                </div>
-                {maxed
-                  ? <div className="text-[8px] font-black text-green-400 shrink-0">MAX ✓</div>
-                  : <SkillBuyBtn skill={key} lvl={lvl} cost={skillCosts[key][lvl]} penalty={statPenalty[key]} ok={ok} btnCls={btnCls} statLabel={statLabel} diff={diff} cap={cap} />
-                }
+      {tierIdx === 0 && (
+        <>
+          <div className="col-span-2 bg-slate-900/80 rounded-xl p-4 border border-slate-700 flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">CASH FLOW</div>
+                <div className="text-2xl font-black text-green-400 font-hack">${fMny(displayBag)}</div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <div className="text-right">
+                <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">AURA / CLOUT</div>
+                <div className="text-lg font-black text-white">{pl.aura} <span className="text-yellow-500">A</span> / {pl.clout} <span className="text-red-500">C</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-2 bg-slate-900/80 rounded-xl p-3 border border-slate-700">
+            <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 MARKET INTEL</div>
+            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt].n}</div>
+            <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt].desc}</p>
+          </div>
+        </>
+      )}
+
+      {tier.hustles.map(hKey => {
+        const h = hustleMap[hKey];
+        return (
+          <button
+            key={hKey}
+            onClick={() => !isLocked && setTab(hKey)}
+            className={`py-6 px-2 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
+              ${isLocked
+                ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
+          >
+            <span className="text-2xl">{h.icon}</span>
+            <span>{isLocked ? '🔒 ' : ''}{h.label.toUpperCase()}</span>
+          </button>
+        );
+      })}
+
     </div>
   );
 };
