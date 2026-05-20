@@ -437,17 +437,21 @@ const TierHub = () => {
         const isStub = h.stub;
 
         return (
-          <div key={hKey} className="relative">
+          <div key={hKey} className="relative aspect-[4/3]">
             <button
               onClick={() => !isLocked && !isStub && setTab?.(hKey)}
-              className={`w-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
+              className={`w-full h-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-between
                 ${isLocked || isStub
                   ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
                   : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
             >
-              <span className="text-2xl">{h.icon}</span>
-              <span>{h.label.toUpperCase()}</span>
-              {isStub && <span className="text-[8px] text-yellow-600">UNDER CONSTRUCTION</span>}
+              <div className="flex-1 flex items-center justify-center">
+                <span className="text-3xl">{h.icon}</span>
+              </div>
+              <span className="text-center">{h.label.toUpperCase()}</span>
+              <div className="h-4 flex items-center justify-center">
+                {isStub && <span className="text-[8px] text-yellow-600 uppercase">UNDER CONSTRUCTION</span>}
+              </div>
             </button>
             {isLocked && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-4 text-center border border-slate-800 pointer-events-none">
@@ -1051,7 +1055,7 @@ const GameInterface = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 pb-16">
+      <div className="flex-1 overflow-y-auto px-3 pt-6 pb-16">
         <div className="max-w-xl mx-auto">
           {tab === 'HUB'  && <TierHub />}
           {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
