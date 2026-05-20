@@ -4,10 +4,20 @@ import { fMny, MARKETS, HF_RUMORS } from './config.js';
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
+const HUSTLE_REQS = {
+  AI_AGENCY: { bag: 1000000, clout: 150, aura: 100 },
+  CRE_FLIP:  { bag: 15000000, clout: 200, aura: 250 },
+  FRANCHISE: { bag: 5000000, clout: 300, aura: 200 },
+  PE_ROLLUP: { bag: 50000000, clout: 450, aura: 400 },
+  ART_SPEC:  { bag: 30000000, clout: 500, aura: 450 },
+};
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=Bebas+Neue&family=Rajdhani:wght@400;700&family=Share+Tech+Mono&family=Playfair+Display:wght@700;900&display=swap');
 
   body, button, input, textarea, select { font-family: 'Space Grotesk', sans-serif; }
+  .text-slate-100 { color: #f1f5f9; }
+  .text-slate-300 { color: #cbd5e1; }
   .font-hype { font-family: 'Bebas Neue', cursive !important; letter-spacing: 0.08em; }
   .font-tech { font-family: 'Rajdhani', sans-serif !important; font-weight: 700; }
   .font-hack { font-family: 'Share Tech Mono', monospace !important; }
@@ -15,6 +25,7 @@ const styles = `
 
   @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-10px) rotate(-3deg); } 50% { transform: translateX(10px) rotate(3deg); } }
   .animate-shake-hard { animation: shake 0.2s ease-in-out infinite; box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.5); }
+  .animate-shake-once { animation: shake 0.5s ease-in-out; }
   .aura-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.8); } .clout-glow { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
   .mh-glow { box-shadow: 0 0 15px rgba(168, 85, 247, 0.8); }
   @keyframes rain { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
@@ -46,10 +57,10 @@ const styles = `
 
 const Stepper = ({ val, setVal, min, max, step, label, isCurr = true }) => (
   <div className="bg-black/40 px-2 py-2 rounded-lg flex items-center w-full border border-slate-800 gap-2">
-    <div className="text-xs font-bold text-white uppercase tracking-widest flex-1">{label}: <span className="text-green-400">{isCurr ? '$' : ''}{fMny(val)}</span></div>
+    <div className="text-xs font-bold text-slate-100 uppercase tracking-widest flex-1">{label}: <span className="text-green-400">{isCurr ? '$' : ''}{fMny(val)}</span></div>
     <div className="flex gap-1">
-      <button onClick={() => setVal(Math.max(min, val - step))} className="bg-slate-700 rounded px-4 py-2.5 text-xl font-black text-white hover:bg-slate-600 min-w-[44px]">-</button>
-      <button onClick={() => setVal(Math.min(max, val + step))} className="bg-slate-700 rounded px-4 py-2.5 text-xl font-black text-white hover:bg-slate-600 min-w-[44px]">+</button>
+      <button onClick={() => setVal(Math.max(min, val - step))} className="bg-slate-700 rounded px-4 py-2.5 text-xl font-black text-slate-100 hover:bg-slate-600 min-w-[44px]">-</button>
+      <button onClick={() => setVal(Math.min(max, val + step))} className="bg-slate-700 rounded px-4 py-2.5 text-xl font-black text-slate-100 hover:bg-slate-600 min-w-[44px]">+</button>
     </div>
   </div>
 );
@@ -59,7 +70,7 @@ const Toggles = ({ opts, active, setVal, color }) => {
   return (
     <div className="flex gap-1 w-full">
       {opts.map((o, i) => (
-        <button key={i} onClick={() => setVal(i + 1)} className={`flex-1 py-1.5 px-1 text-[10px] font-bold rounded-lg transition-colors ${active === i + 1 ? `${activeClass} text-white shadow-lg` : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{o}</button>
+        <button key={i} onClick={() => setVal(i + 1)} className={`flex-1 py-1.5 px-1 text-[10px] font-bold rounded-lg transition-colors ${active === i + 1 ? `${activeClass} text-slate-100 shadow-lg` : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{o}</button>
       ))}
     </div>
   );
@@ -95,13 +106,13 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
 
   let bg = (dis || exhausted || (busy && st === 'idle'))
     ? 'bg-slate-800/50 text-slate-300 drop-shadow-sm opacity-40 cursor-not-allowed border-slate-700'
-    : `bg-${color} text-${txt} hover:bg-gray-200`;
+    : `bg-${color} text-${txt === 'white' || color !== 'white' ? 'slate-100' : 'black'} hover:bg-gray-200`;
   let l = exhausted ? 'BURNED OUT' : label;
-  if (st === 'calc')  { bg = 'bg-slate-600 text-white animate-pulse'; l = 'CALCULATING...'; }
+  if (st === 'calc')  { bg = 'bg-slate-600 text-slate-100 animate-pulse'; l = 'CALCULATING...'; }
   else if (st === 'drain') { bg = 'bg-orange-900 text-orange-400 animate-pulse'; l = '💸 DRAINING...'; }
   else if (st === 'sweat') { bg = 'bg-yellow-900/80 text-yellow-300 animate-pulse'; l = '😰 THE SWEAT...'; }
-  else if (st === 'win')   { bg = 'bg-green-500 text-white shadow-[0_0_20px_#22c55e]'; l = `+$${fMny(amt)}`; }
-  else if (st === 'lose')  { bg = 'bg-red-600 text-white shadow-[0_0_20px_#dc2626]'; l = `-$${fMny(Math.abs(amt))}`; }
+  else if (st === 'win')   { bg = 'bg-green-500 text-slate-100 shadow-[0_0_20px_#22c55e]'; l = `+$${fMny(amt)}`; }
+  else if (st === 'lose')  { bg = 'bg-red-600 text-slate-100 shadow-[0_0_20px_#dc2626]'; l = `-$${fMny(Math.abs(amt))}`; }
 
   return <button onClick={hit} className={`w-full py-3 px-2 font-black text-sm tracking-widest rounded-xl transition-all ${bg}`}>{l.toUpperCase()}</button>;
 };
@@ -114,16 +125,16 @@ const LabShell = ({ t, c, f, onHub, children, fontCls = '', hustleKey }) => {
   return (
     <div className={`bg-slate-900/95 border border-slate-700 p-6 rounded-2xl shadow-2xl flex flex-col gap-2 relative ${isFatigued ? 'fatigue-warning' : ''}`}>
       {isFatigued && (
-        <div className="absolute -top-3 -right-3 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-black animate-bounce shadow-lg z-10 border-2 border-white">
+        <div className="absolute -top-3 -right-3 bg-red-600 text-slate-100 w-8 h-8 rounded-full flex items-center justify-center font-black animate-bounce shadow-lg z-10 border-2 border-white">
           !
         </div>
       )}
       <div className="text-center">
-        <h3 className={`text-lg font-black text-white uppercase tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] ${fontCls}`}>{t}</h3>
+        <h3 className={`text-lg font-black text-slate-100 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] ${fontCls}`}>{t}</h3>
         {f && <p className="text-[10px] text-slate-300 drop-shadow-sm italic">"{f}"</p>}
       </div>
       {children}
-      <button onClick={onHub} className="w-full py-2 px-3 mt-1 bg-slate-800 text-white text-xs font-bold tracking-widest rounded-xl hover:bg-slate-700">🏠 EMPIRE HUB</button>
+      <button onClick={onHub} className="w-full py-2 px-3 mt-1 bg-slate-800 text-slate-100 text-xs font-bold tracking-widest rounded-xl hover:bg-slate-700">🏠 EMPIRE HUB</button>
     </div>
   );
 };
@@ -135,34 +146,35 @@ const UpgBtn = ({ onClk, cost, title, unl, reqA = 0, reqC = 0, pB, pA = 0, pC = 
   return <button onClick={onClk} disabled={!meets} className={`w-full py-2 px-2 font-black text-[10px] tracking-widest rounded-xl flex justify-center gap-2 ${meets ? 'bg-yellow-900/20 border border-yellow-600 text-yellow-500 hover:bg-yellow-900/40' : 'bg-slate-900 border border-slate-800 text-slate-300 drop-shadow-sm'}`}>🔒 {title} (${fMny(cost)}) {rT}</button>;
 };
 
-const LockedTierScreen = ({ section }) => {
-  const { setTab } = useGame();
+const LockedTierScreen = ({ section, hustleKey }) => {
+  const { setTab, pl } = useGame();
   const tier = TIERS?.[section];
-  if (!tier) return null;
+  const req = hustleKey ? HUSTLE_REQS[hustleKey] : tier?.req;
+  if (!req) return null;
 
   return (
     <div className="flex flex-col items-center justify-center p-8 bg-slate-900/80 border border-slate-700 rounded-2xl text-center gap-4">
       <div className="text-6xl">🔒</div>
-      <h2 className="text-2xl font-black text-white uppercase tracking-widest">{tier.label} LOCKED</h2>
-      <p className="text-slate-300 drop-shadow-sm text-sm">Reach the required milestones to unlock this sector.</p>
+      <h2 className="text-2xl font-black text-slate-100 uppercase tracking-widest">{hustleKey ? hustleKey.replace('_', ' ') : tier.label} LOCKED</h2>
+      <p className="text-slate-300 drop-shadow-sm text-sm">Reach the required milestones to unlock this node.</p>
       <div className="bg-black/50 p-4 rounded-xl border border-slate-800 w-full max-w-xs">
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold mb-2 uppercase">Requirements</div>
         <div className="flex flex-col gap-1 text-xs font-bold">
           <div className="flex justify-between">
             <span className="text-slate-300 drop-shadow-sm">Wealth:</span>
-            <span className="text-green-400">${fMny(tier.req.bag)}</span>
+            <span className={pl.bag >= req.bag ? 'text-green-400' : 'text-red-500'}>${fMny(req.bag)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-300 drop-shadow-sm">Clout:</span>
-            <span className="text-red-400">{tier.req.clout}</span>
+            <span className={pl.clout >= req.clout ? 'text-green-400' : 'text-red-500'}>{req.clout}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-300 drop-shadow-sm">Aura:</span>
-            <span className="text-yellow-400">{tier.req.aura}</span>
+            <span className={pl.aura >= req.aura ? 'text-green-400' : 'text-red-500'}>{req.aura}</span>
           </div>
         </div>
       </div>
-      <button onClick={() => setTab('HUB')} className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors">RETURN TO HUB</button>
+      <button onClick={() => setTab('HUB')} className="w-full py-3 bg-slate-800 text-slate-100 font-bold rounded-xl hover:bg-slate-700 transition-colors">RETURN TO HUB</button>
     </div>
   );
 };
@@ -259,7 +271,7 @@ const FlexesView = () => {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{item.icon}</span>
                 <div className="flex flex-col">
-                  <div className={`font-black tracking-widest text-xs ${owned ? 'text-green-400' : 'text-white'}`}>{item.label.toUpperCase()}</div>
+                  <div className={`font-black tracking-widest text-xs ${owned ? 'text-green-400' : 'text-slate-100'}`}>{item.label.toUpperCase()}</div>
                   <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold">Cost: ${fMny(item.cost)}</div>
                   <div className="text-[9px] text-slate-300 drop-shadow-sm">
                     {item.clout && <span className="text-red-400">+{item.clout} Clout </span>}
@@ -304,7 +316,7 @@ const AutopsyReport = () => {
   const hustleIcons = { streetwear: '👕', dropship: '📦', vintage: '👕', tech: '💻', smm: '📱', runners: '🏃' };
 
   return (
-    <div className="min-h-screen bg-black text-white font-hack flex flex-col items-center justify-center p-4 text-center">
+    <div className="min-h-screen bg-black text-slate-100 font-hack flex flex-col items-center justify-center p-4 text-center">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="max-w-xl w-full bg-slate-900 border-2 border-red-600 rounded-2xl p-8 shadow-[0_0_80px_rgba(220,38,38,0.3)]">
         <div className="text-6xl mb-4">{hustleIcons[death.hustle] || '🪦'}</div>
@@ -334,7 +346,7 @@ const AutopsyReport = () => {
             {Object.entries(hustleClicks).map(([h, count]) => (
               <div key={h} className="flex justify-between text-sm items-center">
                 <span className="text-slate-300 drop-shadow-sm capitalize">{h}:</span>
-                <span className="font-black text-white">{count} ACTIONS</span>
+                <span className="font-black text-slate-100">{count} ACTIONS</span>
               </div>
             ))}
           </div>
@@ -345,7 +357,7 @@ const AutopsyReport = () => {
           <div className="text-2xl font-black text-slate-300 drop-shadow-sm tracking-tighter">{alias || 'ANON'} — {death.rank}</div>
         </div>
 
-        <button onClick={() => window.location.reload()} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
+        <button onClick={() => window.location.reload()} className="w-full p-6 bg-red-600 text-slate-100 font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
       </div>
     </div>
   );
@@ -357,7 +369,7 @@ const Prologue = () => {
   const { proSt, setProSt, alias, setAlias, diff, setDiff, setPh, exStart } = useGame();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <h1 className="text-5xl font-black mb-2 text-green-400 tracking-tighter drop-shadow-[0_0_15px_#22c55e] font-hype">THE BAG CHASER</h1>
       <p className="text-slate-300 drop-shadow-sm mb-8 text-sm font-tech">Build your empire from nothing. Or die broke.</p>
@@ -366,24 +378,24 @@ const Prologue = () => {
           <h3 className="font-black text-2xl text-green-400 mb-3 tracking-widest font-hype">THE BAG</h3>
           <p className="text-slate-300 drop-shadow-sm mb-2 leading-relaxed">Your cash. Every hustle costs money upfront.</p>
           <p className="text-slate-300 drop-shadow-sm mb-6 text-sm leading-relaxed">Hit $0 → BANKRUPT. Game over. Survive Market Shifts, Mortgages, and Fines. Never go dry.</p>
-          <button onClick={() => setProSt(1)} className="w-full p-4 bg-slate-800 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
+          <button onClick={() => setProSt(1)} className="w-full p-4 bg-slate-800 text-slate-100 font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
         </>}
         {proSt === 1 && <>
           <h3 className="font-black text-2xl text-yellow-400 mb-3 tracking-widest font-hype">AURA = REPUTATION</h3>
           <p className="text-slate-300 drop-shadow-sm mb-2 leading-relaxed">Street cred that unlocks bigger moves and boosts your revenue.</p>
           <p className="text-red-400 mb-6 text-sm font-bold leading-relaxed">⚠ Hit 0 Aura = CANCELLED. Permanent game over. Scandals and bad decisions drain it fast.</p>
-          <button onClick={() => setProSt(2)} className="w-full p-4 bg-slate-800 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
+          <button onClick={() => setProSt(2)} className="w-full p-4 bg-slate-800 text-slate-100 font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
         </>}
         {proSt === 2 && <>
           <h3 className="font-black text-2xl text-red-400 mb-3 tracking-widest font-hype">CLOUT = FAME</h3>
           <p className="text-slate-300 drop-shadow-sm mb-2 leading-relaxed">Unlocks arenas, political power, and God Tier moves.</p>
           <p className="text-slate-300 drop-shadow-sm mb-6 text-sm leading-relaxed">Low Clout = no one shows up. High Clout = world stage. Grind content, podcasts, and drops to build it.</p>
-          <button onClick={() => setProSt(3)} className="w-full p-4 bg-slate-800 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
+          <button onClick={() => setProSt(3)} className="w-full p-4 bg-slate-800 text-slate-100 font-black tracking-widest rounded-xl hover:bg-slate-700">GOT IT →</button>
         </>}
         {proSt === 3 && <>
           <h3 className="font-black text-xl text-blue-400 mb-3 tracking-widest font-tech">HOW TO PLAY</h3>
           <ul className="text-slate-300 drop-shadow-sm text-xs text-left mb-5 space-y-1.5 leading-relaxed">
-            <li>→ Pick any hustle from the <span className="text-white font-bold">HUB</span> and start grinding</li>
+            <li>→ Pick any hustle from the <span className="text-slate-100 font-bold">HUB</span> and start grinding</li>
             <li>→ <span className="text-yellow-400 font-bold">Market Cycles</span> shift every 12 months — costs and risks change</li>
             <li>→ <span className="text-orange-400 font-bold">Fatigue</span>: flood the same event tier and fans check out</li>
             <li>→ <span className="text-pink-400 font-bold">Lifestyle Creep</span>: assets auto-offer at bag milestones — mortgages burn monthly</li>
@@ -394,7 +406,7 @@ const Prologue = () => {
           <button onClick={() => setProSt(4)} className="w-full p-4 bg-green-600 text-black font-black tracking-widest rounded-xl hover:bg-green-500 shadow-[0_0_15px_#22c55e]">LET'S RUN IT →</button>
         </>}
         {proSt === 4 && <>
-          <input type="text" value={alias} onChange={e => setAlias(e.target.value.substring(0, 5).toUpperCase())} placeholder="ALIAS (3-5 CHARS)" className="w-full p-4 mb-4 bg-slate-900 border border-slate-600 rounded-lg text-center font-black tracking-widest text-xl text-white outline-none focus:border-green-400 transition-colors" />
+          <input type="text" value={alias} onChange={e => setAlias(e.target.value.substring(0, 5).toUpperCase())} placeholder="ALIAS (3-5 CHARS)" className="w-full p-4 mb-4 bg-slate-900 border border-slate-600 rounded-lg text-center font-black tracking-widest text-xl text-slate-100 outline-none focus:border-green-400 transition-colors" />
           <div className="w-full mb-2">
             <div className="text-xs text-slate-300 font-bold tracking-widest mb-2">DIFFICULTY</div>
             <Toggles opts={['TRUST FUND', 'HUSTLER', 'GRINDER']} active={diff} setVal={setDiff} color="green-600" />
@@ -435,13 +447,13 @@ const TierHub = () => {
     'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
     'AUDIO': { label: 'Indie Audio Syndicate', icon: '🎵', stub: true },
     'TECH': { label: 'SaaS Startup', icon: '💻' },
-    'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖', stub: true },
-    'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢', stub: true },
-    'FRANCHISE': { label: 'National Franchise', icon: '🍟', stub: true },
+    'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖' },
+    'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢' },
+    'FRANCHISE': { label: 'National Franchise', icon: '🍟' },
     'CRYP': { label: 'Web3 Hedge', icon: '🪙' },
     'TOUR': { label: 'Events', icon: '🎪' },
-    'PE_ROLLUP': { label: 'Private Equity', icon: '📊', stub: true },
-    'ART_SPEC': { label: 'Art Speculation', icon: '🎨', stub: true },
+    'PE_ROLLUP': { label: 'Private Equity', icon: '📊' },
+    'ART_SPEC': { label: 'Art Speculation', icon: '🎨' },
     'HF': { label: 'Hedge Fund', icon: '📈' },
     'COMMODITIES': { label: 'Lithium Supply Chain', icon: '🔋', stub: true },
     'PMC': { label: 'Private Military', icon: '🎖️', stub: true },
@@ -472,15 +484,17 @@ const TierHub = () => {
         const h = hustleMap[hKey];
         if (!h) return null;
         const isStub = h.stub;
+        const req = HUSTLE_REQS[hKey] || tier.req;
+        const nodeLocked = isLocked || (req && (pl.bag < req.bag || pl.clout < req.clout || pl.aura < req.aura));
 
         return (
           <div key={hKey} className="relative aspect-[4/3]">
             <button
-              onClick={() => !isLocked && !isStub && setTab?.(hKey)}
+              onClick={() => !isStub && setTab?.(hKey)}
               className={`w-full h-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-between
-                ${isLocked || isStub
+                ${nodeLocked || isStub
                   ? 'bg-slate-900/40 border-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'
-                  : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
+                  : 'bg-slate-900/90 border-slate-700 text-slate-100 hover:bg-slate-800'}`}
             >
               <div className="flex-1 flex items-center justify-center">
                 <span className="text-3xl">{h.icon}</span>
@@ -490,12 +504,12 @@ const TierHub = () => {
                 {isStub && <span className="text-[8px] text-yellow-600 uppercase">UNDER CONSTRUCTION</span>}
               </div>
             </button>
-            {isLocked && (
+            {nodeLocked && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-4 text-center border border-slate-800 pointer-events-none">
                 <span className="text-xl mb-1">🔒</span>
                 <div className="text-[8px] font-black text-red-500 uppercase tracking-tighter">Locked Sector</div>
                 <div className="text-[7px] text-slate-300 drop-shadow-sm mt-1">
-                  Req: ${fMny(tier.req.bag)} | {tier.req.clout} C | {tier.req.aura} A
+                  Req: ${fMny(req.bag)} | {req.clout} C | {req.aura} A
                 </div>
               </div>
             )}
@@ -612,8 +626,8 @@ const VintageTab = () => {
             <h4 className="text-red-400 font-black text-center uppercase">⚠️ BOOTLEG SPOTTED!</h4>
             <p className="text-[10px] text-slate-300 drop-shadow-sm text-center italic">The "Grail" you found is a high-quality replica. How do you handle it?</p>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => rVinCh('burn')} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-[10px] font-bold uppercase">Burn It Legally (+$0, +2 Aura)</button>
-              <button onClick={() => rVinCh('pass')} className="bg-red-600 hover:bg-red-500 text-white p-2 rounded-lg text-[10px] font-bold uppercase">Pass It Off (+$150, -10 Aura)</button>
+              <button onClick={() => rVinCh('burn')} className="bg-slate-800 hover:bg-slate-700 text-slate-100 p-2 rounded-lg text-[10px] font-bold uppercase">Burn It Legally (+$0, +2 Aura)</button>
+              <button onClick={() => rVinCh('pass')} className="bg-red-600 hover:bg-red-500 text-slate-100 p-2 rounded-lg text-[10px] font-bold uppercase">Pass It Off (+$150, -10 Aura)</button>
             </div>
           </div>
         ) : (
@@ -835,20 +849,20 @@ const CcTab = () => {
         : <UpgBtn onClk={() => dUp('ccNet', 20000000, 'Network Launched! 📺')} cost={20000000} title="STREAMING NETWORK" unl={up.ccNet} reqC={150} pB={pl.bag} pC={pl.clout} />
       }
       <div className="flex bg-slate-800 p-1 rounded-xl mb-2">
-        <button onClick={() => setCc(c => ({ ...c, m: 'solo' }))} className={`flex-1 p-3 rounded font-bold text-sm ${cc.m === 'solo' ? 'bg-emerald-600 text-white' : 'text-slate-300 drop-shadow-sm'}`}>SOLO</button>
-        <button onClick={() => { if (pl.bag >= 100000 && pl.clout >= 50) setCc(c => ({ ...c, m: 'house' })); }} className={`flex-1 p-3 rounded font-bold text-sm ${cc.m === 'house' ? 'bg-emerald-600 text-white' : pl.bag >= 100000 && pl.clout >= 50 ? 'text-slate-300 drop-shadow-sm' : 'text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.bag >= 100000 && pl.clout >= 50 ? 'HOUSE' : '🔒 ($100K/50C)'}</button>
+        <button onClick={() => setCc(c => ({ ...c, m: 'solo' }))} className={`flex-1 p-3 rounded font-bold text-sm ${cc.m === 'solo' ? 'bg-emerald-600 text-slate-100' : 'text-slate-300 drop-shadow-sm'}`}>SOLO</button>
+        <button onClick={() => { if (pl.bag >= 100000 && pl.clout >= 50) setCc(c => ({ ...c, m: 'house' })); }} className={`flex-1 p-3 rounded font-bold text-sm ${cc.m === 'house' ? 'bg-emerald-600 text-slate-100' : pl.bag >= 100000 && pl.clout >= 50 ? 'text-slate-300 drop-shadow-sm' : 'text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.bag >= 100000 && pl.clout >= 50 ? 'HOUSE' : '🔒 ($100K/50C)'}</button>
       </div>
       {cc.m === 'house' ? <>
         <Toggles opts={['Drama', 'Gaming', 'Lifestyle']} active={cc.v} setVal={v => setCc(s => ({ ...s, v }))} color="emerald-600" />
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <FlashBtn onClick={() => rCc('feu')} dis={pl.bag < 25000} label="FEUD ($25K)" color="emerald-600" txt="white" />
-          <FlashBtn onClick={() => rCc('mch')} dis={pl.bag < 25000} label="COLLAB ($25K)" />
+          <FlashBtn onClick={() => rCc('feu')} dis={pl.bag < 25000} label="FEUD ($25K)" color="emerald-600" />
+          <FlashBtn onClick={() => rCc('mch')} dis={pl.bag < 25000} label="COLLAB ($25K)" color="emerald-600" />
         </div>
-        {up.ccAge && !up.ccNet && <FlashBtn onClick={() => rCc('meg')} label="MEGA-DEAL ($0)" color="purple" txt="white" />}
-        {up.ccNet && <FlashBtn onClick={() => rCc('net')} label="COLLECT SUBS ($0)" color="yellow-600" txt="white" />}
+        {up.ccAge && !up.ccNet && <FlashBtn onClick={() => rCc('meg')} label="MEGA-DEAL ($0)" color="purple" />}
+        {up.ccNet && <FlashBtn onClick={() => rCc('net')} label="COLLECT SUBS ($0)" color="yellow-600" />}
       </> : <>
         <Toggles opts={['Brainrot', 'Finance', 'IRL']} active={cc.n} setVal={v => setCc(s => ({ ...s, n: v }))} color="emerald-600" />
-        <FlashBtn onClick={() => rCc('sol')} dis={pl.bag < 500} label="STREAM - $500" />
+        <FlashBtn onClick={() => rCc('sol')} dis={pl.bag < 500} label="STREAM - $500" color="emerald-600" />
       </>}
     </LabShell>
   );
@@ -860,13 +874,13 @@ const PodTab = () => {
     <LabShell t="PODCAST NET" c="pink" onHub={() => setTab('HUB')}>
       <UpgBtn onClk={() => dUp('podCmp', 500000, 'Compound Built. 🎙️')} cost={500000} title="BUILD COMPOUND" unl={up.podCmp} pB={pl.bag} />
       <div className="flex gap-1 w-full">
-        <button onClick={() => setPod(s => ({ ...s, g: 1 }))} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 1 ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Z-List</button>
-        <button onClick={() => { if (pl.clout >= 50) setPod(s => ({ ...s, g: 2 })); }} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 2 ? 'bg-pink-600 text-white' : pl.clout >= 50 ? 'bg-slate-800 text-slate-300 drop-shadow-sm' : 'bg-slate-900 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.clout >= 50 ? 'Drama' : '🔒(50C)'}</button>
-        <button onClick={() => { if (pl.clout >= 100) setPod(s => ({ ...s, g: 3 })); }} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 3 ? 'bg-pink-600 text-white' : pl.clout >= 100 ? 'bg-slate-800 text-slate-300 drop-shadow-sm' : 'bg-slate-900 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.clout >= 100 ? 'A-List' : '🔒(100C)'}</button>
-        {up.podCmp && <button onClick={() => setPod(s => ({ ...s, g: 4 }))} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 4 ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Billionaire</button>}
+        <button onClick={() => setPod(s => ({ ...s, g: 1 }))} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 1 ? 'bg-pink-600 text-slate-100' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Z-List</button>
+        <button onClick={() => { if (pl.clout >= 50) setPod(s => ({ ...s, g: 2 })); }} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 2 ? 'bg-pink-600 text-slate-100' : pl.clout >= 50 ? 'bg-slate-800 text-slate-300 drop-shadow-sm' : 'bg-slate-900 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.clout >= 50 ? 'Drama' : '🔒(50C)'}</button>
+        <button onClick={() => { if (pl.clout >= 100) setPod(s => ({ ...s, g: 3 })); }} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 3 ? 'bg-pink-600 text-slate-100' : pl.clout >= 100 ? 'bg-slate-800 text-slate-300 drop-shadow-sm' : 'bg-slate-900 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}>{pl.clout >= 100 ? 'A-List' : '🔒(100C)'}</button>
+        {up.podCmp && <button onClick={() => setPod(s => ({ ...s, g: 4 }))} className={`flex-1 p-3 text-[10px] font-bold rounded ${pod.g === 4 ? 'bg-pink-600 text-slate-100' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Billionaire</button>}
       </div>
       {!up.podCmp && <Stepper val={pod.q} setVal={v => setPod(s => ({ ...s, q: v }))} min={10000} max={100000} step={10000} label="Studio Rental" />}
-      <FlashBtn onClick={rPod} dis={pl.bag < (up.podCmp ? 0 : pod.q) + (pod.g === 1 ? 10000 : pod.g === 2 ? 50000 : pod.g === 3 ? 100000 : 250000)} label={`RECORD - $${fMny((up.podCmp ? 0 : pod.q) + (pod.g === 1 ? 10000 : pod.g === 2 ? 50000 : pod.g === 3 ? 100000 : 250000))}`} />
+      <FlashBtn onClick={rPod} color="pink-600" dis={pl.bag < (up.podCmp ? 0 : pod.q) + (pod.g === 1 ? 10000 : pod.g === 2 ? 50000 : pod.g === 3 ? 100000 : 250000)} label={`RECORD - $${fMny((up.podCmp ? 0 : pod.q) + (pod.g === 1 ? 10000 : pod.g === 2 ? 50000 : pod.g === 3 ? 100000 : 250000))}`} />
     </LabShell>
   );
 };
@@ -883,7 +897,7 @@ const BoxTab = () => {
       <Toggles opts={up.boxLg ? ['Scrap', 'MMAvYT', 'Pro', 'Super'] : ['Scrap', 'MMAvYT', 'Pro']} active={box.t} setVal={v => setBox(s => ({ ...s, t: v }))} color="orange-600" />
       {!up.boxBrd && <Stepper val={box.b} setVal={v => setBox(s => ({ ...s, b: v }))} min={box.t === 4 ? 10000000 : 50004} max={box.t === 4 ? 50000000 : 5000000} step={50000} label="Promo Budget" />}
       <Toggles opts={['Respectful', 'Script Brawl']} active={box.p} setVal={v => setBox(s => ({ ...s, p: v }))} color="orange-600" />
-      <FlashBtn onClick={rBox} dis={pl.bag < (up.boxBrd ? 0 : box.b) + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000))} label={up.boxBrd ? 'HOST NETWORK FIGHT ($0)' : `HOST - $${fMny(box.b + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000)))}`} />
+      <FlashBtn onClick={rBox} color="orange-600" dis={pl.bag < (up.boxBrd ? 0 : box.b) + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000))} label={up.boxBrd ? 'HOST NETWORK FIGHT ($0)' : `HOST - $${fMny(box.b + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000)))}`} />
     </LabShell>
   );
 };
@@ -897,70 +911,205 @@ const TourTab = () => {
       <Stepper val={tur.m} setVal={v => setTur(t => ({ ...t, m: v }))} min={50000} max={10000000} step={50000} label="Marketing" />
       <Stepper val={tur.a} setVal={v => setTur(t => ({ ...t, a: v }))} min={10000} max={5000000} step={10000} label="Artist Fees" />
       <Stepper val={tur.l} setVal={v => setTur(t => ({ ...t, l: v }))} min={50000} max={5000000} step={50000} label="Logistics" />
-      <FlashBtn onClick={rTur} dis={pl.bag < tur.m + tur.a + tur.l} label={`LAUNCH ${up.trFst ? 'FESTIVAL' : 'TOUR'} - $${fMny(tur.m + tur.a + tur.l)}`} />
+      <FlashBtn onClick={rTur} color="teal-600" dis={pl.bag < tur.m + tur.a + tur.l} label={`LAUNCH ${up.trFst ? 'FESTIVAL' : 'TOUR'} - $${fMny(tur.m + tur.a + tur.l)}`} />
     </LabShell>
   );
 };
 
-const TechTab = () => {
-  const { pl, up, tch, setTch, dUp, rTch, setTab } = useGame();
+const SaasTab = () => {
+  const { pl, saasProgress, saasLaunches, saasBreach, rSaasSprint, setTab, isTierUnlocked } = useGame();
+  if (!isTierUnlocked(2)) return <LockedTierScreen section={2} />;
+
   return (
     <LabShell t="SAAS STARTUP" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
-      {!tch.l ? (
-        <FlashBtn onClick={() => rTch('seed')} dis={pl.bag < 250000 || pl.clout < 75} label={pl.bag >= 250000 && pl.clout >= 75 ? '🚀 TAKE VC SEED (+$5M, 30% OUT)' : '🔒 REQUIRES $250K & 75 CLOUT'} cost={0} />
-      ) : <>
-        <UpgBtn onClk={() => dUp('tchGov', 10000000, 'Defense Contract Secured! 🛡️')} cost={10000000} title="GOV CONTRACTS" unl={up.tchGov} reqA={100} reqC={100} pB={pl.bag} pA={pl.aura} pC={pl.clout} />
-        <div className="p-3 bg-black/50 border border-slate-700 rounded-lg text-center">
-          <div className="font-hack text-cyan-400 text-xl font-black">{tch.u >= 1000000 ? `${(tch.u / 1000000).toFixed(1)}M` : tch.u >= 1000 ? `${(tch.u / 1000).toFixed(0)}K` : tch.u} Users</div>
-          <div className="text-[10px] text-slate-300 drop-shadow-sm mt-0.5">Tier {tch.u >= 1000000 ? '3' : tch.u >= 100000 ? '2' : '1'} · Srv ${fMny(500 + Math.floor(tch.u * tch.srv))}/mo{tch.pw ? ' · 💰 PAYWALL' : ''}{tch.vc ? ' · VC −30% IPO' : ''}</div>
-        </div>
-        {up.tchGov ? <FlashBtn onClick={() => rTch('dod')} label="SERVE PENTAGON" color="cyan-600" txt="white" /> : <div className="flex flex-col gap-2">
-          {tch.u < 100000 && <>
-            <div className="text-[9px] text-slate-300 drop-shadow-sm font-black text-center tracking-widest uppercase">TIER 1 — FIND PRODUCT-MARKET FIT</div>
-            <Stepper val={tch.m} setVal={v => setTch(t => ({ ...t, m: v }))} min={2000} max={250000} step={2000} label="B2B Budget" />
-            <div className="grid grid-cols-2 gap-2">
-              <FlashBtn onClick={() => rTch('b2b')} dis={pl.bag < tch.m} label={`B2B SPAM ($${(tch.m / 1000).toFixed(0)}K)`} color="cyan-600" txt="white" cost={tch.m} />
-              <FlashBtn onClick={() => rTch('freemium')} label="FREEMIUM BAIT (FREE)" color="slate" txt="white" cost={0} />
-            </div>
-          </>}
-          {tch.u >= 100000 && tch.u < 1000000 && <>
-            <div className="text-[9px] text-cyan-600 font-black text-center tracking-widest uppercase">🚀 TIER 2 — SCALE OR DIE</div>
-            <Stepper val={tch.m} setVal={v => setTch(t => ({ ...t, m: v }))} min={2000} max={250000} step={2000} label="B2B Budget" />
-            <FlashBtn onClick={() => rTch('b2b')} dis={pl.bag < tch.m} label={`B2B SPAM ($${(tch.m / 1000).toFixed(0)}K)`} color="cyan-600" txt="white" cost={tch.m} />
-            <FlashBtn onClick={() => rTch('pivot')} dis={pl.bag < 10000000} label="PIVOT TO AI ($10M)" cost={10000000} />
-            <button onClick={() => { setTch(t => ({ ...t, pw: !t.pw })); }} className={`w-full py-2 font-black text-xs rounded-xl ${tch.pw ? 'bg-green-700 text-white' : 'bg-slate-700 text-slate-300 drop-shadow-sm hover:bg-slate-600'}`}>{tch.pw ? '✓ PAYWALL ACTIVE — PASSIVE ON' : 'ACTIVATE PAYWALL'}</button>
-          </>}
-          {tch.u >= 1000000 && <>
-            <div className="text-[9px] text-yellow-500 font-black text-center tracking-widest uppercase">👑 TIER 3 — GOD MODE</div>
-            <FlashBtn onClick={() => rTch('data')} label="SELL USER DATA (10% → CASH, 30% DOJ RISK)" color="orange-600" txt="white" />
-            <button onClick={() => { setTch(t => ({ ...t, pw: !t.pw })); }} className={`w-full py-2 font-black text-xs rounded-xl ${tch.pw ? 'bg-green-700 text-white' : 'bg-slate-700 text-slate-300 drop-shadow-sm hover:bg-slate-600'}`}>{tch.pw ? '✓ PAYWALL ACTIVE' : 'TOGGLE PAYWALL'}</button>
-          </>}
-          <FlashBtn onClick={() => rTch('ipo')} label={`IPO EXIT — ${tch.u >= 1000000 ? `${(tch.u / 1000000).toFixed(1)}M` : tch.u >= 1000 ? `${(tch.u / 1000).toFixed(0)}K` : tch.u} users × ${pl.aura} Aura${tch.vc ? ' (−30% VC)' : ''}`} cost={0} />
-        </div>}
-      </>}
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Launch Portfolio</div>
+        <div className={`text-2xl font-black ${saasBreach ? 'text-red-500' : 'text-cyan-400'}`}>{saasLaunches} LIVE APPS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(saasLaunches * 15000 * (saasBreach ? 0.5 : 1))}/mo</div>
+      </div>
+
+      <div className="bg-black/50 h-4 rounded-full border border-slate-800 overflow-hidden mb-4">
+        <div className="bg-cyan-500 h-full transition-all duration-500 shadow-[0_0_15px_#22d3ee]" style={{ width: `${saasProgress}%` }}></div>
+      </div>
+
+      <FlashBtn
+        onClick={rSaasSprint}
+        costStm={20}
+        dis={pl.bag < 5000}
+        label={`RUN CODE SPRINT ($5,000)`}
+        color="cyan-600"
+        txt="white"
+      />
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"High-velocity development scales passive yields."</p>
     </LabShell>
   );
 };
 
-const CrpTab = () => {
-  const { pl, crp, setCrp, rCrp, setTab } = useGame();
+const AiAgencyTab = () => {
+  const { pl, corpClients, corpApiLockout, rAiDeploy, setTab } = useGame();
+  const meets = pl.bag >= 1000000 && pl.clout >= 150 && pl.aura >= 100;
+
+  if (!meets) return <LockedTierScreen section={2} hustleKey="AI_AGENCY" />;
+
   return (
-    <LabShell t="WEB3 LAB" c="green" fontCls="font-hack" onHub={() => setTab('HUB')}>
-      {!crp.l ? <>
-        <input type="text" value={crp.t} placeholder="$TICKER" onChange={e => setCrp(c => ({ ...c, t: e.target.value }))} className="w-full p-4 bg-black border border-slate-700 rounded font-hack text-green-400 font-bold uppercase text-center" />
-        <Stepper val={crp.i} setVal={v => setCrp(c => ({ ...c, i: v }))} min={5000} max={1000000} step={25000} label="Liquidity" />
-        <FlashBtn onClick={() => rCrp('dep')} dis={pl.bag < crp.i || !crp.t} label={`DEPLOY - $${fMny(crp.i)}`} />
-      </> : <>
-        <div className="p-6 bg-green-900/20 border border-green-500 rounded text-center">
-          <h4 className="text-3xl font-black text-green-400 mb-2 font-hack">{crp.t}</h4>
-          <p className="font-hack text-slate-300 drop-shadow-sm">LP Pool: ${fMny(crp.l)}</p>
+    <LabShell t="AI MARKETING AGENCY" c="indigo" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center mb-4 ${corpApiLockout > 0 ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Client Roster</div>
+        <div className={`text-2xl font-black ${corpApiLockout > 0 ? 'text-red-500' : 'text-indigo-400'}`}>{corpClients} CORPORATE ACCOUNTS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(corpApiLockout > 0 ? 0 : corpClients * 8000)}/mo</div>
+      </div>
+
+      {corpApiLockout > 0 && (
+        <div className="ui-crisis p-4 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 API LOCKOUT ACTIVE</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Key access suspended for {corpApiLockout} more months.</p>
         </div>
-        <Stepper val={crp.m} setVal={v => setCrp(c => ({ ...c, m: v }))} min={5000} max={250000} step={5000} label="Shill Budget" />
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <FlashBtn onClick={() => rCrp('shil')} dis={pl.bag < crp.m} label={`SHILL ($${(crp.m / 1000).toFixed(0)}K)`} color="green-600" txt="white" />
-          <FlashBtn onClick={() => rCrp('rug')} label="RUG PULL" />
+      )}
+
+      <FlashBtn
+        onClick={rAiDeploy}
+        costStm={15}
+        dis={pl.bag < 2500 || corpApiLockout > 0}
+        label={corpApiLockout > 0 ? "🔒 KEYS SUSPENDED" : "DEPLOY AI SCRAPING BOTS ($2,500)"}
+        color="indigo-600"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+const CreTab = () => {
+  const { pl, towerCount, mkt, rCreAcquire, setTab } = useGame();
+  const meets = pl.bag >= 15000000 && pl.clout >= 200 && pl.aura >= 250;
+  const isBadMkt = mkt === 2 || mkt === 3;
+
+  if (!meets) return <LockedTierScreen section={2} hustleKey="CRE_FLIP" />;
+
+  return (
+    <LabShell t="COMMERCIAL REAL ESTATE" c="slate" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center mb-4 ${isBadMkt ? 'border-red-500' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Tower Portfolio</div>
+        <div className={`text-2xl font-black ${isBadMkt ? 'text-red-500' : 'text-slate-100'}`}>{towerCount} SKYLINE TOWER{towerCount !== 1 ? 'S' : ''}</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Net Yield: +${fMny((isBadMkt ? 0 : towerCount * 45000) - (towerCount * 20000))}/mo</div>
+      </div>
+
+      {isBadMkt && (
+        <div className="ui-crisis p-4 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 MASS COMMERCIAL VACANCY</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Market downturn has zeroed gross yields. Mortgage liabilities remain active.</p>
         </div>
-      </>}
+      )}
+
+      <FlashBtn
+        onClick={rCreAcquire}
+        costStm={30}
+        dis={pl.bag < 1000000}
+        label="LEVERAGE DEBT FOR TOWER ($1M DOWN)"
+        color="slate"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+const FranchiseTab = () => {
+  const { pl, franchiseCount, unionStrikeActive, rFranchiseAcquire, rFranchiseUnionChoice, setTab } = useGame();
+  const meets = pl.bag >= 5000000 && pl.clout >= 300 && pl.aura >= 200;
+
+  if (!meets) return <LockedTierScreen section={2} hustleKey="FRANCHISE" />;
+
+  return (
+    <LabShell t="NATIONAL FRANCHISE" c="yellow" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center mb-4 ${unionStrikeActive ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Territory Units</div>
+        <div className={`text-2xl font-black ${unionStrikeActive ? 'text-red-500' : 'text-yellow-400'}`}>{franchiseCount} FAST FOOD OUTLETS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(unionStrikeActive ? 0 : franchiseCount * 25000)}/mo</div>
+      </div>
+
+      {unionStrikeActive ? (
+        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 SYSTEM-WIDE UNION STRIKE</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Income suspended. Pay settlement or suffer Aura rot.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => rFranchiseUnionChoice('pay')} className="bg-green-600 text-slate-100 p-2 rounded-lg text-[10px] font-bold uppercase">PAY $100K SETTLE</button>
+            <button onClick={() => rFranchiseUnionChoice('ignore')} className="bg-red-600 text-slate-100 p-2 rounded-lg text-[10px] font-bold uppercase">IGNORE STRIKE</button>
+          </div>
+        </div>
+      ) : (
+        <FlashBtn
+          onClick={rFranchiseAcquire}
+          costStm={25}
+          dis={pl.bag < 500000}
+          label="ACQUIRE FAST FOOD TERRITORY ($500,000)"
+          color="yellow-600"
+          txt="white"
+        />
+      )}
+    </LabShell>
+  );
+};
+
+const PeTab = () => {
+  const { pl, peProgress, guttedFirms, rPeBuyout, setTab } = useGame();
+  const meets = pl.bag >= 50000000 && pl.clout >= 450 && pl.aura >= 400;
+
+  if (!meets) return <LockedTierScreen section={3} hustleKey="PE_ROLLUP" />;
+
+  return (
+    <LabShell t="PRIVATE EQUITY" c="blue" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Asset Portfolio</div>
+        <div className="text-2xl font-black text-blue-400">{guttedFirms} FIRMS GUTTED</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(guttedFirms * 100000)}/mo</div>
+      </div>
+
+      <div className="bg-black/50 h-4 rounded-full border border-slate-800 overflow-hidden mb-4">
+        <div className="bg-blue-500 h-full transition-all duration-500 shadow-[0_0_15px_#3b82f6]" style={{ width: `${peProgress}%` }}></div>
+      </div>
+
+      <FlashBtn
+        onClick={rPeBuyout}
+        costStm={40}
+        dis={pl.bag < 5000000}
+        label="EXECUTE LEVERAGED BUYOUT ($5M)"
+        color="blue-600"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+const ArtTab = () => {
+  const { pl, artHoldings, rArtPurchase, rArtAuction, setTab } = useGame();
+  const meets = pl.bag >= 30000000 && pl.clout >= 500 && pl.aura >= 450;
+
+  if (!meets) return <LockedTierScreen section={3} hustleKey="ART_SPEC" />;
+
+  return (
+    <LabShell t="ART SPECULATION" c="pink" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Collection Status</div>
+        <div className="text-2xl font-black text-pink-400">{artHoldings} MASTERPIECES</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Yield: +{artHoldings * 20} Clout/mo</div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        <FlashBtn
+          onClick={rArtPurchase}
+          costStm={35}
+          dis={pl.bag < 10000000}
+          label="PURCHASE FINE ART COLLECTION ($10M)"
+          color="pink-600"
+          txt="white"
+        />
+        <FlashBtn
+          onClick={rArtAuction}
+          dis={artHoldings <= 0}
+          label="AUCTION AT SOTHEBY'S"
+          color="slate"
+          txt="white"
+        />
+      </div>
     </LabShell>
   );
 };
@@ -974,14 +1123,14 @@ const MovTab = () => {
       <UpgBtn onClk={() => dUp('movUni', 2000000000, 'Cinematic Universe Acquired. 🌌')} cost={2000000000} title="CINEMATIC UNIVERSE" unl={up.movUni} reqC={300} pB={pl.bag} pC={pl.clout} />
       <Toggles opts={['Horror ($2M)', 'Comedy ($15M)', 'Super ($100M)']} active={mov.g} setVal={v => setMov(m => ({ ...m, g: v }))} color="yellow-600" />
       <div className="flex gap-2">
-        <button onClick={() => setMov(m => ({ ...m, w: 1 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 1 ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>ChatGPT ($0)</button>
-        <button onClick={() => setMov(m => ({ ...m, w: 2 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 2 ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Nepo ($2M)</button>
-        <button onClick={() => setMov(m => ({ ...m, w: 3 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 3 ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Oscar ($10M)</button>
+        <button onClick={() => setMov(m => ({ ...m, w: 1 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 1 ? 'bg-yellow-600 text-slate-100' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>ChatGPT ($0)</button>
+        <button onClick={() => setMov(m => ({ ...m, w: 2 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 2 ? 'bg-yellow-600 text-slate-100' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Nepo ($2M)</button>
+        <button onClick={() => setMov(m => ({ ...m, w: 3 }))} className={`flex-1 p-3 text-[11px] font-bold rounded ${mov.w === 3 ? 'bg-yellow-600 text-slate-100' : 'bg-slate-800 text-slate-300 drop-shadow-sm'}`}>Oscar ($10M)</button>
       </div>
       <Toggles opts={['MusicVid ($1M)', 'Indie ($5M)', 'Vision ($20M)']} active={mov.d} setVal={v => setMov(m => ({ ...m, d: v }))} color="yellow-600" />
       <Toggles opts={['TikToker ($1M)', 'Cancel ($5M)', 'A-List ($10M)']} active={mov.s} setVal={v => setMov(m => ({ ...m, s: v }))} color="yellow-600" />
       <Stepper val={mov.m} setVal={v => setMov(m => ({ ...m, m: v }))} min={0} max={100000000} step={5000000} label="Marketing" />
-      <FlashBtn onClick={rMov} dis={pl.bag < cst} label={`SHOOT MOVIE - $${fMny(cst)}`} />
+      <FlashBtn onClick={rMov} color="yellow-600" dis={pl.bag < cst} label={`SHOOT MOVIE - $${fMny(cst)}`} />
     </LabShell>
   );
 };
@@ -993,13 +1142,13 @@ const HfTab = () => {
       <div className="bg-blue-900/20 border border-blue-500/50 p-4 rounded-xl font-hack text-sm text-blue-300 mb-2">TERMINAL: {HF_RUMORS[hf.r].tick} is volatile.</div>
       <div className="flex gap-2">
         <input type="text" value={hf.t} placeholder="TICKER" onChange={e => setHf(h => ({ ...h, t: e.target.value }))} className="p-4 w-2/3 bg-black border border-slate-700 rounded font-hack text-yellow-400 font-bold uppercase text-center" />
-        <button onClick={() => { if (pl.bag >= 5000000) { useGame().setPl(p => ({ ...p, bag: p.bag - 5000000 })); alert(`INTEL: ${HF_RUMORS[hf.r].tick} going ${HF_RUMORS[hf.r].dir === 1 ? 'UP' : 'DOWN'}`); } }} className="w-1/3 bg-slate-800 text-xs font-bold rounded hover:bg-slate-700 text-white">INTEL ($5M)</button>
+        <button onClick={() => { if (pl.bag >= 5000000) { useGame().setPl(p => ({ ...p, bag: p.bag - 5000000 })); alert(`INTEL: ${HF_RUMORS[hf.r].tick} going ${HF_RUMORS[hf.r].dir === 1 ? 'UP' : 'DOWN'}`); } }} className="w-1/3 bg-slate-800 text-xs font-bold rounded hover:bg-slate-700 text-slate-100">INTEL ($5M)</button>
       </div>
       <Stepper val={hf.c} setVal={v => setHf(h => ({ ...h, c: v }))} min={100000} max={100000000} step={5000000} label="Capital" />
       <Stepper val={hf.l} setVal={v => setHf(h => ({ ...h, l: v }))} min={1} max={50} step={1} label="Leverage" isCurr={false} />
       <div className="flex gap-2">
-        <div className="w-1/2"><FlashBtn onClick={() => rHf(true)} dis={pl.bag < hf.c || !hf.t} label={`LONG ($${fMny(hf.c)})`} /></div>
-        <div className="w-1/2"><FlashBtn onClick={() => rHf(false)} dis={pl.bag < hf.c || !hf.t} label={`SHORT ($${fMny(hf.c)})`} /></div>
+        <div className="w-1/2"><FlashBtn onClick={() => rHf(true)} color="yellow-600" dis={pl.bag < hf.c || !hf.t} label={`LONG ($${fMny(hf.c)})`} /></div>
+        <div className="w-1/2"><FlashBtn onClick={() => rHf(false)} color="yellow-600" dis={pl.bag < hf.c || !hf.t} label={`SHORT ($${fMny(hf.c)})`} /></div>
       </div>
     </LabShell>
   );
@@ -1018,8 +1167,8 @@ const AiTab = () => {
           <div className="bg-black/30 p-3 rounded-lg border border-slate-800"><div className="text-[10px] text-slate-300 drop-shadow-sm font-bold mb-2 text-center uppercase tracking-widest">Data</div><Toggles opts={['Clean ($50M)', 'Scrape']} active={ai.d} setVal={v => setAi(a => ({ ...a, d: v }))} color="indigo-600" /></div>
           <div className="bg-black/30 p-3 rounded-lg border border-slate-800">
             <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold mb-2 text-center uppercase tracking-widest">Espionage</div>
-            <button onClick={() => { if (pl.bag >= 10000000) { setPl(p => ({ ...p, bag: p.bag - 10000000 })); setAi(a => ({ ...a, r: Math.max(0, a.r - 5) })); } }} className="w-full text-[10px] font-bold p-2 bg-slate-800 text-white rounded mb-2 hover:bg-slate-700">POACH ($10M)</button>
-            <button onClick={() => { if (pl.bag >= 5000000) { setPl(p => ({ ...p, bag: p.bag - 5000000 })); setAi(a => ({ ...a, r: Math.max(0, a.r - 2) })); } }} className="w-full text-[10px] font-bold p-2 bg-slate-800 text-white rounded hover:bg-slate-700">SMEAR ($5M)</button>
+            <button onClick={() => { if (pl.bag >= 10000000) { setPl(p => ({ ...p, bag: p.bag - 10000000 })); setAi(a => ({ ...a, r: Math.max(0, a.r - 5) })); } }} className="w-full text-[10px] font-bold p-2 bg-slate-800 text-slate-100 rounded mb-2 hover:bg-slate-700">POACH ($10M)</button>
+            <button onClick={() => { if (pl.bag >= 5000000) { setPl(p => ({ ...p, bag: p.bag - 5000000 })); setAi(a => ({ ...a, r: Math.max(0, a.r - 2) })); } }} className="w-full text-[10px] font-bold p-2 bg-slate-800 text-slate-100 rounded hover:bg-slate-700">SMEAR ($5M)</button>
           </div>
         </div>
         <Stepper val={ai.c} setVal={v => setAi(a => ({ ...a, c: v }))} min={1} max={10} step={1} label="Compute" isCurr={false} />
@@ -1085,7 +1234,7 @@ const SuperPacTab = () => {
   return (
     <LabShell t="SUPER PAC FUNDRAISING" c="red" fontCls="font-gov" onHub={() => setTab('HUB')}>
       <div className="bg-slate-900/80 p-6 rounded-2xl border border-red-800 text-center flex flex-col gap-4">
-        <div className="text-4xl font-black text-white font-gov">${fMny(prs?.chest || 0)}</div>
+        <div className="text-4xl font-black text-slate-100 font-gov">${fMny(prs?.chest || 0)}</div>
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">Campaign War Chest</div>
 
         <Stepper val={deposit} setVal={setDeposit} min={1000000} max={pl?.bag || 0} step={1000000} label="Deposit Amt" />
@@ -1187,7 +1336,7 @@ const ElectionTab = () => {
     <LabShell t="ELECTION DAY" c="green" fontCls="font-gov" onHub={() => setTab('HUB')}>
       <div className="bg-slate-900/80 p-8 rounded-2xl border border-green-800 text-center flex flex-col gap-6">
         <div className="text-6xl mb-2">{ready ? '🗳️' : '🔒'}</div>
-        <h3 className="text-2xl font-black text-white uppercase tracking-widest">The Ballot</h3>
+        <h3 className="text-2xl font-black text-slate-100 uppercase tracking-widest">The Ballot</h3>
 
         <div className="bg-black/40 p-4 rounded-xl border border-slate-800">
           <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase mb-2">Threshold Required</div>
@@ -1207,7 +1356,7 @@ const ElectionTab = () => {
             });
           }}
           disabled={!ready}
-          className={`w-full py-6 rounded-2xl font-black text-xl tracking-widest transition-all ${ready ? 'bg-green-600 text-white shadow-[0_0_30px_#16a34a] hover:bg-green-500' : 'bg-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}
+          className={`w-full py-6 rounded-2xl font-black text-xl tracking-widest transition-all ${ready ? 'bg-green-600 text-slate-100 shadow-[0_0_30px_#16a34a] hover:bg-green-500' : 'bg-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}
         >
           {ready ? 'SUBMIT BALLOT' : 'BALLOT LOCKED'}
         </button>
@@ -1217,7 +1366,7 @@ const ElectionTab = () => {
           <div className={`p-4 rounded-xl border transition-all flex items-center gap-4 ${tier6Achieved ? 'bg-indigo-900/20 border-indigo-700' : 'bg-slate-800/40 border-slate-700 opacity-50 grayscale'}`}>
             <span className="text-3xl">🤖</span>
             <div>
-              <div className="font-black text-xs text-white uppercase tracking-wide">Mud Tier AI Overseer Bot</div>
+              <div className="font-black text-xs text-slate-100 uppercase tracking-wide">Mud Tier AI Overseer Bot</div>
               <div className="text-[9px] text-slate-300 drop-shadow-sm font-bold">
                 {tier6Achieved ? 'SYSTEM ONLINE - AUTOMATING LOW-TIER OPERATIONS' : 'LOCKED - REQUIRES TIER 6 ASCENSION'}
               </div>
@@ -1233,16 +1382,17 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, breakdown, rDischarge } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, breakdown, rDischarge, shake, isBreakdownActive } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
   const busy = gBusy || imp?.some(i => !i.w);
+  const isHardShaking = busy && !isBreakdownActive;
   const cancelIntroStyles = { userSelect: 'none', pointerEvents: 'none' };
 
   if (cancelIntro) {
     return (
-      <div className="min-h-screen bg-black text-white font-hack flex flex-col items-center justify-center p-4 text-center animate-shake-hard select-none" style={cancelIntroStyles}>
+      <div className="min-h-screen bg-black text-slate-100 font-hack flex flex-col items-center justify-center p-4 text-center animate-shake-hard select-none" style={cancelIntroStyles}>
         <div className="text-8xl mb-6 animate-pulse">🚫</div>
         <h1 className="text-6xl font-black text-red-500 mb-4 tracking-widest drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] font-hype">CANCELLED</h1>
         <p className="text-slate-300 drop-shadow-sm text-xl max-w-sm leading-relaxed mb-6">{cancelIntro?.r}</p>
@@ -1252,9 +1402,9 @@ const GameInterface = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${busy ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${isHardShaking ? 'animate-shake-hard' : shake ? 'animate-shake-once' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
 
-      {breakdown && (
+      {isBreakdownActive && (
         <div className="fixed inset-0 bg-purple-900/90 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
           <div className="bg-black border-4 border-purple-500 p-8 rounded-3xl max-w-sm w-full text-center shadow-[0_0_100px_rgba(168,85,247,0.5)] animate-pulse">
             <div className="text-6xl mb-4">🧠💥</div>
@@ -1269,7 +1419,7 @@ const GameInterface = () => {
             </div>
             <button
               onClick={rDischarge}
-              className="w-full py-4 bg-purple-600 text-white font-black tracking-widest rounded-xl hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all"
+              className="w-full py-4 bg-purple-600 text-slate-100 font-black tracking-widest rounded-xl hover:bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all"
             >
               DISCHARGE FROM WELLNESS CARE
             </button>
@@ -1292,9 +1442,9 @@ const GameInterface = () => {
       {mod?.s && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
           <div className={`p-8 w-full max-w-sm ${mod?.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)]`}>
-            <h2 className="text-3xl font-black mb-4 text-white tracking-widest">{mod?.t}</h2>
+            <h2 className="text-3xl font-black mb-4 text-slate-100 tracking-widest">{mod?.t}</h2>
             <p className="mb-8 text-slate-300 drop-shadow-sm text-lg">{mod?.m}</p>
-            <div className="flex flex-col gap-3">{mod?.o?.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">{o.label}</button>)}</div>
+            <div className="flex flex-col gap-3">{mod?.o?.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-slate-100 font-black tracking-widest rounded-xl hover:bg-slate-700">{o.label}</button>)}</div>
           </div>
         </div>
       )}
@@ -1327,9 +1477,9 @@ const GameInterface = () => {
             </div>
           </div>
           <div className="text-[9px] font-hack text-slate-300 drop-shadow-sm text-right leading-relaxed flex-shrink-0">
-            <div>AGE <span className="text-white font-bold">{age}</span></div>
-            <div>MO <span className="text-white font-bold">{(pl?.mo || 0) % 12 + 1}</span></div>
-            <div><span className={`font-bold ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</span></div>
+            <div>AGE <span className="text-slate-100 font-bold">{age}</span></div>
+            <div>MO <span className="text-slate-100 font-bold">{(pl?.mo || 0) % 12 + 1}</span></div>
+            <div><span className={`font-bold ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-slate-100'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</span></div>
           </div>
         </div>
         {/* Tab bar */}
@@ -1368,9 +1518,14 @@ const GameInterface = () => {
           {tab === 'CC'   && (isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />)}
           {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
           {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
-          {tab === 'TECH' && (isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />)}
+          {tab === 'TECH' && <SaasTab />}
+          {tab === 'AI_AGENCY' && <AiAgencyTab />}
+          {tab === 'CRE_FLIP' && <CreTab />}
+          {tab === 'FRANCHISE' && <FranchiseTab />}
           {tab === 'CRYP' && (isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />)}
           {tab === 'TOUR' && (isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />)}
+          {tab === 'PE_ROLLUP' && <PeTab />}
+          {tab === 'ART_SPEC' && <ArtTab />}
           {tab === 'MOV'  && (isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />)}
           {tab === 'HF'   && (isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />)}
           {tab === 'AI'   && (isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />)}
@@ -1382,7 +1537,7 @@ const GameInterface = () => {
 
           <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 my-6">
             <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold tracking-widest mb-2 text-center uppercase">📡 REAL WORLD MONITOR</div>
-            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
+            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-slate-100'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
             <p className="text-slate-300 drop-shadow-sm text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
           </div>
         </div>
@@ -1406,39 +1561,39 @@ const GameIntro = () => {
   const [page, setPage] = useState(1);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center font-hack">
+    <div className="min-h-screen bg-black text-slate-100 flex flex-col items-center justify-center p-6 text-center font-hack">
       <div className="max-w-md w-full bg-slate-900 border-2 border-blue-500 rounded-3xl p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)]">
         {page === 1 ? (
           <>
             <h2 className="text-3xl font-black text-blue-400 mb-8 uppercase tracking-widest font-hype">THE BRIEFING: PAGE 1</h2>
             <div className="space-y-8 text-left">
               <div>
-                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">1. THE STREET TRINITY</h3>
+                <h3 className="text-xl font-black text-slate-100 mb-2 uppercase tracking-tighter">1. THE STREET TRINITY</h3>
                 <p className="text-slate-300 drop-shadow-sm text-sm leading-relaxed">
                   <span className="text-green-400 font-bold">CASH</span> buys assets, <span className="text-red-400 font-bold">CLOUT</span> unlocks tiers, <span className="text-yellow-400 font-bold">AURA</span> scales passive multipliers. Balance all three to escape the Mud.
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">2. THE TICKING CLOCK</h3>
+                <h3 className="text-xl font-black text-slate-100 mb-2 uppercase tracking-tighter">2. THE TICKING CLOCK</h3>
                 <p className="text-slate-300 drop-shadow-sm text-sm leading-relaxed">
                   You start at Age 18. Every cycle advances months. You are racing against time to build an empire before you age out.
                 </p>
               </div>
             </div>
-            <button onClick={() => setPage(2)} className="w-full mt-12 py-4 bg-blue-600 text-white font-black tracking-widest rounded-xl hover:bg-blue-500 transition-all">NEXT PAGE →</button>
+            <button onClick={() => setPage(2)} className="w-full mt-12 py-4 bg-blue-600 text-slate-100 font-black tracking-widest rounded-xl hover:bg-blue-500 transition-all">NEXT PAGE →</button>
           </>
         ) : (
           <>
             <h2 className="text-3xl font-black text-blue-400 mb-8 uppercase tracking-widest font-hype">THE BRIEFING: PAGE 2</h2>
             <div className="space-y-8 text-left">
               <div>
-                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">3. MENTAL CAPITAL & REHAB</h3>
+                <h3 className="text-xl font-black text-slate-100 mb-2 uppercase tracking-tighter">3. MENTAL CAPITAL & REHAB</h3>
                 <p className="text-slate-300 drop-shadow-sm text-sm leading-relaxed">
                   Active hustle clicks drain your neon-violet <span className="text-purple-400 font-bold">Mental Health</span> bar. Passive months restore +15. Hitting 0 triggers a complete Nervous Breakdown, forcing a 1-month rehab stay and a $300 fee.
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">4. THE MACRO SHADOW</h3>
+                <h3 className="text-xl font-black text-slate-100 mb-2 uppercase tracking-tighter">4. THE MACRO SHADOW</h3>
                 <p className="text-slate-300 drop-shadow-sm text-sm leading-relaxed">
                   Watch the Real World Monitor. States like Normal, Boom, or Crackdown shift your risks. Advanced tiers introduce 'Heat' where reckless operations invite regulatory raids.
                 </p>
@@ -1464,14 +1619,14 @@ const BagChaserInner = () => {
             <div className="text-7xl mb-6">💥</div>
             <h2 className="text-4xl font-black text-red-500 mb-4 tracking-tighter font-hype">THE FATAL BLOW</h2>
             <div className="h-0.5 w-full bg-red-600/30 my-6"></div>
-            <p className="text-white text-xl font-bold leading-relaxed mb-8">
+            <p className="text-slate-100 text-xl font-bold leading-relaxed mb-8">
               {fatalTragedyMessage}
             </p>
             <button
               onClick={() => {
                 setFatalTragedyMessage(null);
               }}
-              className="w-full py-5 bg-red-600 text-white font-black tracking-widest text-xl rounded-2xl hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all"
+              className="w-full py-5 bg-red-600 text-slate-100 font-black tracking-widest text-xl rounded-2xl hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all"
             >
               REVIEW YOUR LEGACY
             </button>

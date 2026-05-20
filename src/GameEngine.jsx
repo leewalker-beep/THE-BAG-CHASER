@@ -25,7 +25,7 @@ export const GameProvider = ({ children }) => {
   const [gBusy, setGBusy] = useState(false);
   const [rain, setRain] = useState(false);
   const [swFatigue, setSwFatigue] = useState(0);
-  const [hustleFatigue, setHustleFatigue] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+  const [hustleFatigue, setHustleFatigue] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0, saas: 0, ai_agency: 0, tower: 0, franchise: 0, pe: 0, art: 0 });
   const [karmaFlags, setKarmaFlags] = useState({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
   const [fatalTragedyMessage, setFatalTragedyMessage] = useState(null);
   const [lastHustle, setLastHustle] = useState(null);
@@ -37,12 +37,28 @@ export const GameProvider = ({ children }) => {
   const [smmClients, setSmmClients] = useState(0);
   const [clientCrisis, setClientCrisis] = useState(false);
   const [vinCh, setVinCh] = useState(null);
-  const [hustleClicks, setHustleClicks] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+  const [hustleClicks, setHustleClicks] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0, saas: 0, ai_agency: 0, tower: 0, franchise: 0, pe: 0, art: 0 });
   const [techItem, setTechItem] = useState(null);
   const [techFlipsComplete, setTechFlipsComplete] = useState(0);
   const [runnerCount, setRunnerCount] = useState(0);
   const [runnerBurnout, setRunnerBurnout] = useState(false);
-  const [breakdown, setBreakdown] = useState(false);
+  const [isBreakdownActive, setIsBreakdownActive] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  // Corporate Tier (Tier 3) State
+  const [saasProgress, setSaasProgress] = useState(0);
+  const [saasLaunches, setSaasLaunches] = useState(0);
+  const [saasBreach, setSaasBreach] = useState(false);
+  const [corpClients, setCorpClients] = useState(0);
+  const [corpApiLockout, setCorpApiLockout] = useState(0);
+  const [towerCount, setTowerCount] = useState(0);
+  const [franchiseCount, setFranchiseCount] = useState(0);
+  const [unionStrikeActive, setUnionStrikeActive] = useState(false);
+
+  // Elite Tier (Tier 4) State
+  const [peProgress, setPeProgress] = useState(0);
+  const [guttedFirms, setGuttedFirms] = useState(0);
+  const [artHoldings, setArtHoldings] = useState(0);
 
   // Financial Systems & Vital Signs
   const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
@@ -153,11 +169,13 @@ export const GameProvider = ({ children }) => {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
     }
 
-    if (pl.mentalHealth <= 0 && !breakdown) {
-      setBreakdown(true);
+    if (pl.mentalHealth <= 0 && !isBreakdownActive) {
+      setIsBreakdownActive(true);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
       setGBusy(true);
     }
-  }, [pl, ph, peaks, breakdown]);
+  }, [pl, ph, peaks, isBreakdownActive]);
 
   const rDischarge = () => {
     setPl(prev => ({
@@ -166,8 +184,9 @@ export const GameProvider = ({ children }) => {
       mo: prev.mo + 1,
       mentalHealth: Math.floor(prev.maxMentalHealth * 0.5)
     }));
-    setBreakdown(false);
+    setIsBreakdownActive(false);
     setGBusy(false);
+    setShake(false);
     setNews(prev => ["🏥 DISCHARGED: You've completed mandatory wellness rehab. -$300 fee applied.", ...prev.slice(0, 15)]);
   };
 
@@ -224,6 +243,11 @@ export const GameProvider = ({ children }) => {
     });
     setDropshipLock(prev => Math.max(0, prev - months));
     setVintageLock(prev => Math.max(0, prev - months));
+    setCorpApiLockout(prev => Math.max(0, prev - months));
+
+    if (unionStrikeActive) {
+      setPl(prev => ({ ...prev, aura: Math.max(0, prev.aura - 50) }));
+    }
 
     if (clientCrisis) {
       if (karmaFlags.ignoredSmmCrisis) {
@@ -277,12 +301,27 @@ export const GameProvider = ({ children }) => {
       const smmRev = smmClients * 300;
       const runnerRev = runnerCount * 150;
 
+      // Tier 3 Passive
+      let saasRev = saasLaunches * 15000;
+      if (saasBreach) saasRev *= 0.5;
+
+      const aiRev = corpApiLockout > 0 ? 0 : corpClients * 8000;
+
+      const isBadCreMkt = mkt === 2 || mkt === 3;
+      const towerRev = isBadCreMkt ? 0 : towerCount * 45000;
+      const towerDebt = towerCount * 20000;
+
+      const franchiseRev = unionStrikeActive ? 0 : franchiseCount * 25000;
+
+      // Tier 4 Passive
+      const artClout = artHoldings * 20;
+
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev,
+        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev + saasRev + aiRev + towerRev - towerDebt + franchiseRev + (guttedFirms * 100000),
         aura: Math.min(prev.maxAura, prev.aura),
-        clout: Math.min(prev.maxClout, prev.clout),
+        clout: Math.min(prev.maxClout, prev.clout + artClout),
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + 15)
       };
     });
@@ -580,6 +619,171 @@ export const GameProvider = ({ children }) => {
     setNews(n => ["✅ GIG: Bonus paid. Fleet burnout resolved.", ...n.slice(0, 15)]);
   };
 
+  const rSaasSprint = async () => {
+    if (pl.bag < 5000 || pl.mentalHealth < 20) return;
+    updateFatigue('saas');
+    setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - 20 }));
+    setHustleClicks(prev => ({ ...prev, saas: prev.saas + 1 }));
+
+    if (triggerChaos('saas')) {
+      setSaasBreach(true);
+      setPl(p => ({ ...p, bag: p.bag - 50000 }));
+      setNews(n => ["🚨 THE CYBER BREACH: Hacker group drains 50% of monthly passive yield and steals -$50,000 cash.", ...n.slice(0, 15)]);
+      return undefined;
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+    const gain = techFlipsComplete >= 10 ? 12 : 10;
+    let finalProgress = 0;
+    setSaasProgress(prev => {
+      const next = prev + gain;
+      if (next >= 100) {
+        setSaasLaunches(l => l + 1);
+        setNews(n => ["🚀 SAAS: Code sprint complete. New software module launched!", ...n.slice(0, 15)]);
+        return 0;
+      }
+      finalProgress = next;
+      return next;
+    });
+    if (finalProgress > 0) {
+      setNews(n => [`💻 SAAS: Code sprint successful. Progress: ${finalProgress}%`, ...n.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rAiDeploy = async () => {
+    if (pl.bag < 2500 || pl.mentalHealth < 15 || pl.bag < 1000000 || pl.clout < 150 || pl.aura < 100) return;
+    updateFatigue('ai_agency');
+    setPl(p => ({ ...p, bag: p.bag - 2500, mentalHealth: p.mentalHealth - 15 }));
+    setHustleClicks(prev => ({ ...prev, ai_agency: prev.ai_agency + 1 }));
+
+    if (triggerChaos('ai_agency')) {
+      setCorpApiLockout(3);
+      setNews(n => ["🚨 THE API POISONING LOCKOUT: API keys revoked. All AI Agency payouts suspended for 3 months.", ...n.slice(0, 15)]);
+      return undefined;
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+    if (Math.random() < 0.40) {
+      setCorpClients(c => c + 1);
+      setNews(n => ["🤖 AI AGENCY: Lead bot successful. New corporate client onboarded.", ...n.slice(0, 15)]);
+    } else {
+      setNews(n => ["❌ AI AGENCY: Leads were low quality. No clients secured.", ...n.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rCreAcquire = async () => {
+    if (pl.bag < 1000000 || pl.mentalHealth < 30 || pl.bag < 15000000 || pl.clout < 200 || pl.aura < 250) return;
+    updateFatigue('tower');
+    setPl(p => ({ ...p, bag: p.bag - 1000000, mentalHealth: p.mentalHealth - 30 }));
+    setHustleClicks(prev => ({ ...prev, tower: prev.tower + 1 }));
+    setTowerCount(prev => prev + 1);
+    setNews(n => ["🏢 CRE: Tower acquisition finalized. Mortgage active.", ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rFranchiseAcquire = async () => {
+    if (pl.bag < 500000 || pl.mentalHealth < 25 || pl.bag < 5000000 || pl.clout < 300 || pl.aura < 200) return;
+    updateFatigue('franchise');
+    setPl(p => ({ ...p, bag: p.bag - 500000, mentalHealth: p.mentalHealth - 25 }));
+    setHustleClicks(prev => ({ ...prev, franchise: prev.franchise + 1 }));
+
+    if (triggerChaos('franchise')) {
+      setUnionStrikeActive(true);
+      setNews(n => ["🚨 SYSTEM-WIDE UNION STRIKE: Franchise operations halted. Settle the dispute or suffer Aura rot.", ...n.slice(0, 15)]);
+      return undefined;
+    }
+
+    setFranchiseCount(prev => prev + 1);
+    setNews(n => ["🍟 FRANCHISE: Fast food territory acquired.", ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rFranchiseUnionChoice = async (choice) => {
+    if (choice === 'pay') {
+      if (pl.bag < 100000) return;
+      setPl(p => ({ ...p, bag: p.bag - 100000 }));
+      setUnionStrikeActive(false);
+      setNews(n => ["✅ FRANCHISE: Wage settlement paid. Workers return to the line.", ...n.slice(0, 15)]);
+    } else {
+      setNews(n => ["💀 FRANCHISE: Strike continues. Reputation begins to rot.", ...n.slice(0, 15)]);
+    }
+  };
+
+  const rPeBuyout = async () => {
+    if (pl.bag < 5000000 || pl.mentalHealth < 40 || pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400) return;
+    updateFatigue('pe');
+    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 40 }));
+    setHustleClicks(prev => ({ ...prev, pe: prev.pe + 1 }));
+
+    if (triggerChaos('pe')) {
+      setPl(p => ({ ...p, bag: p.bag - 10000000, aura: Math.max(0, p.aura - 150) }));
+      setNews(n => ["🚨 SEC PENSION SUBPOENA: Federal penalties deducted -$10,000,000. Aura crashed by -150 points.", ...n.slice(0, 15)]);
+      return undefined;
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+    let finalPeProgress = 0;
+    setPeProgress(prev => {
+      const next = prev + 20;
+      if (next >= 100) {
+        setGuttedFirms(g => g + 1);
+        setPl(p => ({ ...p, bag: p.bag + 25000000 }));
+        setNews(n => ["💰 PE: Buyout complete. Firm gutted for +$25,000,000 liquid windfall and permanent cash flow.", ...n.slice(0, 15)]);
+        return 0;
+      }
+      finalPeProgress = next;
+      return next;
+    });
+    if (finalPeProgress > 0) {
+      setNews(n => [`📊 PE: Buyout progress: ${finalPeProgress}%`, ...n.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rArtPurchase = async () => {
+    if (pl.bag < 10000000 || pl.mentalHealth < 35 || pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450) return;
+    updateFatigue('art');
+    setPl(p => ({ ...p, bag: p.bag - 10000000, mentalHealth: p.mentalHealth - 35 }));
+    setHustleClicks(prev => ({ ...prev, art: prev.art + 1 }));
+
+    if (triggerChaos('art')) {
+      setPl(p => ({ ...p, clout: Math.max(0, p.clout - 200) }));
+      setNews(n => ["🚨 THE FORGERY SCANDAL: Masterpiece proven fake. Piece confiscated and -200 Clout reputation reduction.", ...n.slice(0, 15)]);
+      return undefined;
+    }
+
+    setArtHoldings(prev => prev + 1);
+    setNews(n => ["🎨 ART: New masterpiece added to collection. Passive Clout yield active.", ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rArtAuction = async () => {
+    if (artHoldings <= 0) return;
+    setArtHoldings(prev => prev - 1);
+    await new Promise(r => setTimeout(r, 1000));
+
+    const isBull = mkt === 1;
+    const roll = Math.random();
+    let payout = 0;
+
+    if (isBull) {
+      // If BULL: 70% success to flip for $40M, 30% to break even at $10M.
+      payout = roll < 0.70 ? 40000000 : 10000000;
+    } else if (mkt === 2 || mkt === 3) {
+      // If BEAR/CRACKDOWN: 80% failure rate yielding $2M, 20% success (break even)
+      payout = roll < 0.80 ? 2000000 : 10000000;
+    } else {
+      // Normal Market
+      payout = roll < 0.50 ? 15000000 : 8000000;
+    }
+
+    setPl(p => ({ ...p, bag: p.bag + payout }));
+    setNews(n => [`🎨 ART AUCTION: Sotheby's hammer falls. Piece liquidated for $${payout.toLocaleString()}.`, ...n.slice(0, 15)]);
+    return payout;
+  };
+
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
       setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
@@ -743,6 +947,7 @@ export const GameProvider = ({ children }) => {
     let heatGain = 0;
 
     if (up.boxBrd) {
+      // Broadcast Match: $12,000 + (Clout * $250)
       revenue = 12000 + (pl.clout * 250);
       cloutGain = 5;
       heatGain = 10;
@@ -903,7 +1108,10 @@ export const GameProvider = ({ children }) => {
     <GameContext.Provider value={{
       ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
-      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost
+      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
+      isBreakdownActive, shake, rDischarge, saasProgress, saasLaunches, corpClients, towerCount, franchiseCount, peProgress, guttedFirms, artHoldings,
+      rSaasSprint, rAiDeploy, rCreAcquire, rFranchiseAcquire, rFranchiseUnionChoice, rPeBuyout, rArtPurchase, rArtAuction,
+      unionStrikeActive, saasBreach, corpApiLockout
     }}>
       {children}
     </GameContext.Provider>
