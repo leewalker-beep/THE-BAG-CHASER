@@ -33,9 +33,10 @@ export const GameProvider = ({ children }) => {
   const [techFlipsComplete, setTechFlipsComplete] = useState(0);
   const [runnerCount, setRunnerCount] = useState(0);
   const [runnerBurnout, setRunnerBurnout] = useState(false);
+  const [breakdown, setBreakdown] = useState(false);
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, stamina: 100, maxStamina: 100 });
+  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0 });
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
   const cap = 500;
@@ -82,8 +83,9 @@ export const GameProvider = ({ children }) => {
     }
     const maxMudAge = 30;
     const isMud = pl.tier === 0;
+    const hasPassive = smmClients > 0 || runnerCount > 0 || ass?.watch || ass?.pent || (tch.l && tch.pw);
 
-    if ((pl.bag || 0) <= 0) {
+    if ((pl.bag || 0) <= 0 && !hasPassive) {
       const topHustle = Object.keys(hustleClicks).reduce((a, b) => hustleClicks[a] > hustleClicks[b] ? a : b);
       const roasts = {
         vintage: "You spent your best years bin dipping. You died smelling like vintage mothballs, holding a bootleg hoodie you swore was a Grail.",
@@ -121,7 +123,24 @@ export const GameProvider = ({ children }) => {
     if ((pl.aura || 0) <= 0) {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
     }
-  }, [pl, ph, peaks]);
+
+    if (pl.mentalHealth <= 0 && !breakdown) {
+      setBreakdown(true);
+      setGBusy(true);
+    }
+  }, [pl, ph, peaks, breakdown]);
+
+  const rDischarge = () => {
+    setPl(prev => ({
+      ...prev,
+      bag: prev.bag - 300,
+      mo: prev.mo + 1,
+      mentalHealth: Math.floor(prev.maxMentalHealth * 0.5)
+    }));
+    setBreakdown(false);
+    setGBusy(false);
+    setNews(prev => ["🏥 DISCHARGED: You've completed mandatory wellness rehab. -$300 fee applied.", ...prev.slice(0, 15)]);
+  };
 
   // Tier Progression System
   useEffect(() => {
@@ -187,17 +206,17 @@ export const GameProvider = ({ children }) => {
       }
 
       const smmRev = smmClients * 300;
-      const smmAura = smmClients * 2;
+    const smmAura = smmClients * 1;
 
       const runnerRev = runnerCount * 150;
-      const runnerAura = runnerCount * 3;
+    const runnerAura = runnerCount * 1;
 
       return {
         ...prev,
         mo: prev.mo + months,
         bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev,
         aura: Math.min(cap, prev.aura + smmAura + runnerAura),
-        stamina: Math.min(prev.maxStamina, prev.stamina + 15)
+        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + 15)
       };
     });
 
@@ -260,14 +279,14 @@ export const GameProvider = ({ children }) => {
     if (alias.length < 3) return;
 
     if (diff === 1) { // TRUST FUND (Easy)
-      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxStamina: 300, stamina: 300 }));
+      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 300, mentalHealth: 300, heat: 0 }));
     } else if (diff === 2) { // HUSTLER (Normal)
-      setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxStamina: 150, stamina: 150 }));
+      setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxMentalHealth: 150, mentalHealth: 150, heat: 0 }));
     } else { // GRINDER (Difficult)
-      setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxStamina: 100, stamina: 100 }));
+      setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxMentalHealth: 100, mentalHealth: 100, heat: 0 }));
     }
 
-    setPh('PLAYING');
+    setPh('PROLOGUE_INTRO');
   };
 
   const dUp = (key, cost, flashMsg) => {
@@ -298,15 +317,15 @@ export const GameProvider = ({ children }) => {
   };
 
   const rVintage = async () => {
-    if (pl.bag < 50 || pl.stamina < 10) return;
-    setPl(p => ({ ...p, bag: p.bag - 50, stamina: p.stamina - 10 }));
+    if (pl.bag < 50 || pl.mentalHealth < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - 50, mentalHealth: p.mentalHealth - 10 }));
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
     const roll = Math.random();
     let profit = -50;
     if (roll < 0.01) { // GRAIL!
-      setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(cap, p.clout + 15), aura: Math.min(cap, p.aura + 5) }));
+      setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(cap, p.clout + 15), aura: Math.min(cap, p.aura + 1) }));
       setNews(n => ["👕 GRAIL FOUND! A rare archive piece secured for the vault.", ...n.slice(0, 15)]);
       setMod({
         s: true,
@@ -334,8 +353,8 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSmmPitch = async () => {
-    if (pl.clout < 15 || pl.stamina < 20) return;
-    setPl(p => ({ ...p, stamina: p.stamina - 20 }));
+    if (pl.clout < 15 || pl.mentalHealth < 20) return;
+    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 20 }));
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
@@ -349,17 +368,18 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSmmFix = async () => {
-    if (pl.stamina < 15) return;
-    setPl(p => ({ ...p, stamina: p.stamina - 15 }));
+    if (pl.mentalHealth < 15) return;
+    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 15 }));
     await new Promise(r => setTimeout(r, 800));
     setClientCrisis(false);
     setNews(prev => ["✅ SMM: Content strategy fixed. Crisis averted.", ...prev.slice(0, 15)]);
+    return undefined;
   };
 
   const rRest = async () => {
-    setPl(p => ({ ...p, stamina: Math.min(p.maxStamina, p.stamina + 50) }));
+    setPl(p => ({ ...p, mentalHealth: Math.min(p.maxMentalHealth, p.mentalHealth + 50) }));
     adv();
-    setNews(prev => ["😴 Resting... Stamina recovered.", ...prev.slice(0, 15)]);
+    setNews(prev => ["😴 Resting... MentalHealth recovered.", ...prev.slice(0, 15)]);
   };
 
   const rTechSource = async () => {
@@ -371,8 +391,8 @@ export const GameProvider = ({ children }) => {
   };
 
   const rTechFixA = async () => {
-    if (pl.bag < 30 || pl.stamina < 10 || !techItem) return;
-    setPl(p => ({ ...p, bag: p.bag - 30, stamina: p.stamina - 10 }));
+    if (pl.bag < 30 || pl.mentalHealth < 10 || !techItem) return;
+    setPl(p => ({ ...p, bag: p.bag - 30, mentalHealth: p.mentalHealth - 10 }));
     await new Promise(r => setTimeout(r, 800));
 
     if (Math.random() < 0.5) {
@@ -389,8 +409,8 @@ export const GameProvider = ({ children }) => {
   };
 
   const rTechFixB = async () => {
-    if (pl.bag < 100 || pl.stamina < 15 || !techItem) return;
-    setPl(p => ({ ...p, bag: p.bag - 100, stamina: p.stamina - 15, clout: Math.min(cap, p.clout + 8), aura: Math.min(cap, p.aura + 8) }));
+    if (pl.bag < 100 || pl.mentalHealth < 15 || !techItem) return;
+    setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - 15, clout: Math.min(cap, p.clout + 2), aura: Math.min(cap, p.aura + 1) }));
     setTechFlipsComplete(prev => prev + 1);
     await new Promise(r => setTimeout(r, 1000));
     setPl(p => ({ ...p, bag: p.bag + 750 }));
@@ -398,11 +418,12 @@ export const GameProvider = ({ children }) => {
     triggerImpact('bag', 650);
     setNews(n => ["✅ TECH: Premium repair successful! Sold for $750. Hardware Mastery increased.", ...n.slice(0, 15)]);
     adv();
+    return 650;
   };
 
   const rRunnerRecruit = async () => {
-    if (pl.bag < 300 || pl.stamina < 25 || pl.clout < 20) return;
-    setPl(p => ({ ...p, bag: p.bag - 300, stamina: p.stamina - 25 }));
+    if (pl.bag < 300 || pl.mentalHealth < 25 || pl.clout < 20) return;
+    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 25 }));
     setRunnerCount(prev => prev + 1);
     setHustleClicks(prev => ({ ...prev, runners: prev.runners + 1 }));
     setNews(n => ["🏃 GIG: New fleet courier recruited.", ...n.slice(0, 15)]);
@@ -418,8 +439,8 @@ export const GameProvider = ({ children }) => {
 
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
-      setPl(p => ({ ...p, aura: Math.min(cap, p.aura + 2) }));
-      setNews(n => ["🔥 VINTAGE: Burned the bootleg. Street authenticity +2.", ...n.slice(0, 15)]);
+      setPl(p => ({ ...p, aura: Math.min(cap, p.aura + 1) }));
+      setNews(n => ["🔥 VINTAGE: Burned the bootleg. Street authenticity +1.", ...n.slice(0, 15)]);
     } else if (choice === 'pass') {
       setPl(p => ({ ...p, bag: p.bag + 150, aura: Math.max(0, p.aura - 10) }));
       setNews(n => ["💀 VINTAGE: Passed off a rep. Reputation damaged, but bags secured.", ...n.slice(0, 15)]);
@@ -431,9 +452,9 @@ export const GameProvider = ({ children }) => {
 
   const rSw = async () => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
-    if (pl.stamina < 15) return;
+    if (pl.mentalHealth < 15) return;
 
-    setPl(p => ({ ...p, bag: p.bag - totalOut, stamina: p.stamina - 15 }));
+    setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - 15 }));
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
     await new Promise(r => setTimeout(r, 1000));
 
@@ -486,8 +507,8 @@ export const GameProvider = ({ children }) => {
 
   const rDrp = async () => {
     const costBasis = drp.u * 10 + drp.a;
-    if (pl.stamina < 10) return;
-    setPl(p => ({ ...p, bag: p.bag - costBasis, stamina: p.stamina - 10 }));
+    if (pl.mentalHealth < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - costBasis, mentalHealth: p.mentalHealth - 10 }));
     setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
@@ -548,10 +569,26 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({ ...p, bag: p.bag - totalOut }));
     await new Promise(r => setTimeout(r, 1200));
 
-    let revenue = Math.floor(totalOut * (1.1 + Math.random() * 2.2));
+    let revenue = 0;
+    let cloutGain = 40;
+    let heatGain = 0;
+
+    if (up.boxBrd) {
+      revenue = 12000 + (pl.clout * 250);
+      cloutGain = 5;
+      heatGain = 10;
+    } else {
+      revenue = Math.floor(totalOut * (1.1 + Math.random() * 2.2));
+    }
+
     let profit = revenue - totalOut;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(cap, p.clout + 40) }));
+    setPl(p => ({
+      ...p,
+      bag: p.bag + revenue,
+      clout: Math.min(cap, p.clout + cloutGain),
+      heat: p.heat + heatGain
+    }));
     setTally(t => ({ ...t, box: t.box + 1 }));
     setHl(h => ({ ...h, box: h.box + Math.max(0, profit) }));
     triggerImpact('bag', profit);
