@@ -15,6 +15,7 @@ export const GameProvider = ({ children }) => {
   const [cancelIntro, setCancelIntro] = useState(null);
   const [gBusy, setGBusy] = useState(false);
   const [rain, setRain] = useState(false);
+  const [swFatigue, setSwFatigue] = useState(0);
 
   // Financial Systems & Vital Signs
   const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0 });
@@ -72,9 +73,10 @@ export const GameProvider = ({ children }) => {
 
   // Global Pulse Advance Logic
   const adv = (months = 1) => {
+    setSwFatigue(prev => Math.max(0, prev - (0.25 * months)));
     setPl(prev => {
-      let expenseBurn = 500; 
-      if (mkt === 2) expenseBurn *= 2; 
+      let expenseBurn = 500;
+      if (mkt === 2) expenseBurn *= 2;
       if (ass.mtgPent) expenseBurn += 60000;
       if (ass.mtgMans) expenseBurn += 250000;
       if (ass.mtgJet) expenseBurn += 1500000;
@@ -164,18 +166,52 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSw = async () => {
-    const unitCost = sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90;
-    const prodExpense = sw.u * unitCost;
-    const totalOut = prodExpense + (up.swFlg ? 0 : sw.a);
+    const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
 
     setPl(p => ({ ...p, bag: p.bag - totalOut }));
     await new Promise(r => setTimeout(r, 1000));
 
-    const roll = Math.random() * (mkt === 1 ? 2.2 : 1.4);
-    const revenue = Math.floor(sw.u * sw.p * roll);
+    const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
+    let hype = (pl.aura * 0.5) + (pl.clout * 0.3) + (sw.a / 2500);
+    if (mkt === 1) hype *= 1.6;
+
+    if (sw.p > baseValue) {
+      hype *= Math.max(0, 1 - ((sw.p - baseValue) * 0.04));
+    }
+
+    hype *= Math.max(0, 1 - (swFatigue * 0.15));
+
+    let unitsSold = Math.floor(Math.min(sw.u, Math.max(0, hype * (5 + Math.random() * 5))));
+    unitsSold = Math.max(0, unitsSold);
+
+    const revenue = unitsSold * sw.p;
     const profit = revenue - totalOut;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, aura: Math.min(cap, p.aura + 8), clout: Math.min(cap, p.clout + 4) }));
+    setSwFatigue(prev => prev + (sw.u / 1000));
+
+    let auraGain = 0;
+    let cloutGain = 0;
+    let newsMsg = "";
+
+    if (unitsSold >= sw.u * 0.8) {
+      auraGain = 10;
+      cloutGain = 5;
+      newsMsg = "👟 VIRAL SELLOUT! Cleared all inventory.";
+    } else if (unitsSold < sw.u * 0.2) {
+      auraGain = -15;
+      newsMsg = "👟 Bricked. Heavy boxes sitting in the warehouse.";
+    } else {
+      newsMsg = `👟 Drop concluded. Moved ${unitsSold.toLocaleString()} units.`;
+    }
+
+    setPl(p => ({
+      ...p,
+      bag: p.bag + revenue,
+      aura: Math.min(cap, Math.max(0, p.aura + auraGain)),
+      clout: Math.min(cap, p.clout + cloutGain)
+    }));
+
+    setNews(prev => [newsMsg, ...prev.slice(0, 15)]);
     setHl(h => ({ ...h, sw: h.sw + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
@@ -389,7 +425,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, tab, setTab, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rSw, rDrp, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, tab, setTab, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rSw, rDrp, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
     }}>
       {children}
     </GameContext.Provider>
