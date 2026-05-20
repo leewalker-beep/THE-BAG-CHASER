@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 
 export const TIERS = [
   { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG'] },
-  { id: 1, label: 'Street',    req: { bag: 100000,      clout: 50,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
+  { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
   { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
   { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'COMMODITIES', 'PMC', 'SOVEREIGN'] },
@@ -25,6 +25,15 @@ export const GameProvider = ({ children }) => {
   const [gBusy, setGBusy] = useState(false);
   const [rain, setRain] = useState(false);
   const [swFatigue, setSwFatigue] = useState(0);
+  const [hustleFatigue, setHustleFatigue] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+  const [karmaFlags, setKarmaFlags] = useState({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
+  const [fatalTragedyMessage, setFatalTragedyMessage] = useState(null);
+  const [lastHustle, setLastHustle] = useState(null);
+  const [dropshipLock, setDropshipLock] = useState(0);
+  const [vintageLock, setVintageLock] = useState(0);
+  const [smmPenalty, setSmmPenalty] = useState(false);
+  const [techSourceCost, setTechSourceCost] = useState(150);
+
   const [smmClients, setSmmClients] = useState(0);
   const [clientCrisis, setClientCrisis] = useState(false);
   const [vinCh, setVinCh] = useState(null);
@@ -36,10 +45,9 @@ export const GameProvider = ({ children }) => {
   const [breakdown, setBreakdown] = useState(false);
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0 });
+  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
-  const cap = 500;
 
   // Macro Environment
   const [mkt, setMkt] = useState(0);
@@ -71,6 +79,23 @@ export const GameProvider = ({ children }) => {
   const [hl, setHl] = useState({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
   const [tally, setTally] = useState({ cryp: 0, box: 0, hf: 0, pres: 0 });
 
+  // Dynamic Stat Caps
+  useEffect(() => {
+    if (ph !== 'PLAYING') return;
+    const caps = [100, 250, 500, 2000, 10000, 999999999];
+    const currentCap = caps[pl.tier] || caps[0];
+    setPl(prev => {
+      if (prev.maxClout === currentCap && prev.maxAura === currentCap) return prev;
+      return {
+        ...prev,
+        maxClout: currentCap,
+        maxAura: currentCap,
+        clout: Math.min(currentCap, prev.clout),
+        aura: Math.min(currentCap, prev.aura)
+      };
+    });
+  }, [pl.tier, ph]);
+
   // Keep Track of Records & Auto Failures
   useEffect(() => {
     if (ph !== 'PLAYING' || !pl) return;
@@ -85,7 +110,11 @@ export const GameProvider = ({ children }) => {
     const isMud = pl.tier === 0;
     const hasPassive = smmClients > 0 || runnerCount > 0 || ass?.watch || ass?.pent || (tch.l && tch.pw);
 
-    if ((pl.bag || 0) <= 0 && !hasPassive) {
+    if ((pl.bag || 0) <= 0 && !hasPassive && !fatalTragedyMessage) {
+      setFatalTragedyMessage("BANKRUPTCY: Your cash reserves have hit zero and you have no passive income to keep the lights on. The hustle is over.");
+    }
+
+    if (((pl.bag || 0) <= 0 && !hasPassive) || fatalTragedyMessage) {
       const topHustle = Object.keys(hustleClicks).reduce((a, b) => hustleClicks[a] > hustleClicks[b] ? a : b);
       const roasts = {
         vintage: "You spent your best years bin dipping. You died smelling like vintage mothballs, holding a bootleg hoodie you swore was a Grail.",
@@ -162,19 +191,59 @@ export const GameProvider = ({ children }) => {
     }
   }, [peaks, ph, pl.tier]);
 
+  // Click Chaos Helpers
+  const triggerChaos = (hustleKey) => {
+    const fatigue = hustleFatigue[hustleKey] || 0;
+    const risk = 0.02 + (fatigue / 100);
+    return Math.random() < risk;
+  };
+
+  const updateFatigue = (activeHustle) => {
+    setHustleFatigue(prev => {
+      const next = { ...prev };
+      const isDifferent = lastHustle !== activeHustle;
+      Object.keys(next).forEach(k => {
+        if (k === activeHustle) {
+          next[k] = Math.min(100, next[k] + 15);
+        } else if (isDifferent) {
+          next[k] = Math.max(0, next[k] - 10);
+        }
+      });
+      return next;
+    });
+    setLastHustle(activeHustle);
+  };
+
   // Global Pulse Advance Logic
   const adv = (months = 1) => {
     setSwFatigue(prev => Math.max(0, prev - (0.25 * months)));
+    setHustleFatigue(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => { next[k] = Math.max(0, next[k] - 20); });
+      return next;
+    });
+    setDropshipLock(prev => Math.max(0, prev - months));
+    setVintageLock(prev => Math.max(0, prev - months));
 
     if (clientCrisis) {
-      setSmmClients(c => Math.max(0, c - 1));
-      setNews(prev => ["📉 SMM: Client churned due to unresolved crisis.", ...prev.slice(0, 15)]);
+      if (karmaFlags.ignoredSmmCrisis) {
+        setSmmClients(c => Math.max(0, c - 2));
+        setNews(prev => ["📉 SMM: Disgruntled clients post terrible reviews. 2 clients churned.", ...prev.slice(0, 15)]);
+      } else {
+        setSmmClients(c => Math.max(0, c - 1));
+        setNews(prev => ["📉 SMM: Client churned due to unresolved crisis.", ...prev.slice(0, 15)]);
+      }
       setClientCrisis(false);
     }
 
     if (runnerBurnout) {
-      setRunnerCount(c => Math.max(0, c - 1));
-      setNews(prev => ["📉 GIG: Runner mutinied and stole inventory due to burnout.", ...prev.slice(0, 15)]);
+      if (karmaFlags.ignoredRunnerWelfare) {
+        setPl(prev => ({ ...prev, bag: prev.bag - 500, clout: Math.max(0, prev.clout - 10) }));
+        setNews(prev => ["📉 GIG: A disgruntled runner stole a premium package. -$500, -10 Clout.", ...prev.slice(0, 15)]);
+      } else {
+        setRunnerCount(c => Math.max(0, c - 1));
+        setNews(prev => ["📉 GIG: Runner mutinied and stole inventory due to burnout.", ...prev.slice(0, 15)]);
+      }
       setRunnerBurnout(false);
     }
 
@@ -206,16 +275,14 @@ export const GameProvider = ({ children }) => {
       }
 
       const smmRev = smmClients * 300;
-    const smmAura = smmClients * 1;
-
       const runnerRev = runnerCount * 150;
-    const runnerAura = runnerCount * 1;
 
       return {
         ...prev,
         mo: prev.mo + months,
         bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev,
-        aura: Math.min(cap, prev.aura + smmAura + runnerAura),
+        aura: Math.min(prev.maxAura, prev.aura),
+        clout: Math.min(prev.maxClout, prev.clout),
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + 15)
       };
     });
@@ -279,11 +346,11 @@ export const GameProvider = ({ children }) => {
     if (alias.length < 3) return;
 
     if (diff === 1) { // TRUST FUND (Easy)
-      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 300, mentalHealth: 300, heat: 0 }));
+      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 300, mentalHealth: 300, heat: 0, maxClout: 100, maxAura: 100 }));
     } else if (diff === 2) { // HUSTLER (Normal)
-      setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxMentalHealth: 150, mentalHealth: 150, heat: 0 }));
+      setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxMentalHealth: 150, mentalHealth: 150, heat: 0, maxClout: 100, maxAura: 100 }));
     } else { // GRINDER (Difficult)
-      setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxMentalHealth: 100, mentalHealth: 100, heat: 0 }));
+      setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxMentalHealth: 100, mentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 }));
     }
 
     setPh('PROLOGUE_INTRO');
@@ -302,8 +369,8 @@ export const GameProvider = ({ children }) => {
       setPl(p => ({
         ...p,
         bag: p.bag - cost,
-        clout: Math.min(cap, p.clout + cloutBump),
-        aura: Math.min(cap, p.aura + auraBump)
+        clout: Math.min(p.maxClout, p.clout + cloutBump),
+        aura: Math.min(p.maxAura, p.aura + auraBump)
       }));
       setAss(a => ({ ...a, [key]: true }));
       setNews(n => [`💎 FLEET UPGRADE: Acquired ownership rights to ${label}. Balance sheet updated.`, ...n.slice(0, 15)]);
@@ -318,14 +385,43 @@ export const GameProvider = ({ children }) => {
 
   const rVintage = async () => {
     if (pl.bag < 50 || pl.mentalHealth < 10) return;
+    if (vintageLock > 0) {
+      if (pl.bag >= 150) {
+        setMod({
+          s: true,
+          t: "WAREHOUSE BRIBE",
+          m: "The warehouse boss is still blocking your entry. Pay a $150 bribe to clear the blacklist?",
+          o: [
+            { label: "PAY BRIBE ($150)", action: () => { setPl(p => ({ ...p, bag: p.bag - 150 })); setVintageLock(0); setMod({ s: false }); } },
+            { label: "CANCEL", action: () => setMod({ s: false }) }
+          ],
+          ui: "ui-modal"
+        });
+      }
+      return;
+    }
+    updateFatigue('vintage');
     setPl(p => ({ ...p, bag: p.bag - 50, mentalHealth: p.mentalHealth - 10 }));
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
+
+    if (triggerChaos('vintage')) {
+      if (karmaFlags.soldBootleg) {
+        setPl(p => ({ ...p, aura: Math.max(0, p.aura - 20) }));
+        setSmmPenalty(true);
+        setNews(n => ["🚫 THE COMMUNITY EXPOSURE: Thrift community exposed your bootleg sales online. -20 Aura, SMM access locked.", ...n.slice(0, 15)]);
+      } else {
+        setVintageLock(3);
+        setNews(n => ["🚫 THE WAREHOUSE BLACKLIST: Boss blocks entry for 3 months unless you pay a $150 bribe.", ...n.slice(0, 15)]);
+      }
+      return undefined;
+    }
+
     await new Promise(r => setTimeout(r, 800));
 
     const roll = Math.random();
     let profit = -50;
     if (roll < 0.01) { // GRAIL!
-      setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(cap, p.clout + 15), aura: Math.min(cap, p.aura + 1) }));
+      setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(p.maxClout, p.clout + 15), aura: Math.min(p.maxAura, p.aura + 1) }));
       setNews(n => ["👕 GRAIL FOUND! A rare archive piece secured for the vault.", ...n.slice(0, 15)]);
       setMod({
         s: true,
@@ -337,7 +433,7 @@ export const GameProvider = ({ children }) => {
       triggerImpact('bag', 600);
       profit = 600;
     } else if (roll < 0.61) { // Mid-Tier
-      setPl(p => ({ ...p, bag: p.bag + 120, clout: Math.min(cap, p.clout + 3) }));
+      setPl(p => ({ ...p, bag: p.bag + 120, clout: Math.min(p.maxClout, p.clout + 3) }));
       triggerImpact('bag', 120);
       profit = 120;
     } else if (roll < 0.90) { // Common Thrift
@@ -353,12 +449,26 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSmmPitch = async () => {
-    if (pl.clout < 15 || pl.mentalHealth < 20) return;
+    if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty) return;
+    updateFatigue('smm');
     setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 20 }));
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
+
+    if (triggerChaos('smm')) {
+      if (karmaFlags.ignoredSmmCrisis) {
+        setSmmClients(c => Math.max(0, c - 2));
+        setNews(n => ["📉 KARMA DETONATION: Disgruntled clients post terrible reviews. 2 clients lost.", ...n.slice(0, 15)]);
+      } else {
+        setNews(n => ["🚫 THE GROUP-CHAT BLACKLIST: Chamber of Commerce tags you as spam. Pitch success drops to 10%.", ...n.slice(0, 15)]);
+        setSmmPenalty(true);
+      }
+      return undefined;
+    }
+
     await new Promise(r => setTimeout(r, 800));
 
-    if (Math.random() < 0.5) {
+    const successProb = smmPenalty ? 0.1 : 0.5;
+    if (Math.random() < successProb) {
       setSmmClients(c => c + 1);
       setNews(prev => ["🤝 SMM: Pitch successful! New client onboarded.", ...prev.slice(0, 15)]);
     } else {
@@ -383,11 +493,30 @@ export const GameProvider = ({ children }) => {
   };
 
   const rTechSource = async () => {
-    if (pl.bag < 150) return;
-    setPl(p => ({ ...p, bag: p.bag - 150 }));
+    if (pl.bag < techSourceCost) return;
+    updateFatigue('tech');
+    setPl(p => ({ ...p, bag: p.bag - techSourceCost }));
     setTechItem({ id: Math.random(), name: "Bricked Hardware" });
     setHustleClicks(prev => ({ ...prev, tech: prev.tech + 1 }));
-    setNews(n => ["💻 TECH: Sourced bricked hardware for $150. Ready for repair.", ...n.slice(0, 15)]);
+
+    if (triggerChaos('tech')) {
+      if (karmaFlags.usedCheapParts) {
+        const pay = 250;
+        if (pl.bag >= pay) {
+          setPl(p => ({ ...p, bag: p.bag - pay }));
+          setNews(n => ["💸 KARMA DETONATION: Swollen screen refund paid. -$250.", ...n.slice(0, 15)]);
+        } else {
+          setPl(p => ({ ...p, aura: Math.max(0, p.aura - 15) }));
+          setNews(n => ["💀 KARMA DETONATION: Refused refund. -15 Aura.", ...n.slice(0, 15)]);
+        }
+      } else {
+        setNews(n => ["🚫 THE LISTING TAKEDOWN: Marketplace flags down reach. Sourcing climbs to $250.", ...n.slice(0, 15)]);
+        setTechSourceCost(250);
+      }
+      return undefined;
+    }
+
+    setNews(n => ["💻 TECH: Sourced bricked hardware. Ready for repair.", ...n.slice(0, 15)]);
   };
 
   const rTechFixA = async () => {
@@ -410,7 +539,7 @@ export const GameProvider = ({ children }) => {
 
   const rTechFixB = async () => {
     if (pl.bag < 100 || pl.mentalHealth < 15 || !techItem) return;
-    setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - 15, clout: Math.min(cap, p.clout + 2), aura: Math.min(cap, p.aura + 1) }));
+    setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - 15, clout: Math.min(p.maxClout, p.clout + 2), aura: Math.min(p.maxAura, p.aura + 1) }));
     setTechFlipsComplete(prev => prev + 1);
     await new Promise(r => setTimeout(r, 1000));
     setPl(p => ({ ...p, bag: p.bag + 750 }));
@@ -423,9 +552,23 @@ export const GameProvider = ({ children }) => {
 
   const rRunnerRecruit = async () => {
     if (pl.bag < 300 || pl.mentalHealth < 25 || pl.clout < 20) return;
+    updateFatigue('runners');
     setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 25 }));
-    setRunnerCount(prev => prev + 1);
     setHustleClicks(prev => ({ ...prev, runners: prev.runners + 1 }));
+
+    if (triggerChaos('runners')) {
+      if (karmaFlags.ignoredRunnerWelfare) {
+        setPl(p => ({ ...p, bag: p.bag - 500, clout: Math.max(0, p.clout - 10) }));
+        setNews(n => ["📉 KARMA DETONATION: Disgruntled runner stole package. -$500, -10 Clout.", ...n.slice(0, 15)]);
+      } else {
+        setRunnerCount(c => Math.max(0, c - 3));
+        setPl(p => ({ ...p, bag: p.bag - 400 }));
+        setNews(n => ["🚫 THE SIDEWALK RAID: Bikes impounded. Lost 3 couriers, -$400 fine.", ...n.slice(0, 15)]);
+      }
+      return undefined;
+    }
+
+    setRunnerCount(prev => prev + 1);
     setNews(n => ["🏃 GIG: New fleet courier recruited.", ...n.slice(0, 15)]);
     adv();
   };
@@ -439,7 +582,7 @@ export const GameProvider = ({ children }) => {
 
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
-      setPl(p => ({ ...p, aura: Math.min(cap, p.aura + 1) }));
+      setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
       setNews(n => ["🔥 VINTAGE: Burned the bootleg. Street authenticity +1.", ...n.slice(0, 15)]);
     } else if (choice === 'pass') {
       setPl(p => ({ ...p, bag: p.bag + 150, aura: Math.max(0, p.aura - 10) }));
@@ -453,9 +596,21 @@ export const GameProvider = ({ children }) => {
   const rSw = async () => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
     if (pl.mentalHealth < 15) return;
-
+    updateFatigue('streetwear');
     setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - 15 }));
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
+
+    if (triggerChaos('streetwear')) {
+      if (karmaFlags.usedCheapBlanks) {
+        setPl(p => ({ ...p, clout: Math.max(0, p.clout - 15) }));
+        setNews(n => ["💀 KARMA DETONATION: Influencer rips your stitching apart. -15 Clout, $0 yield.", ...n.slice(0, 15)]);
+      } else {
+        setPl(p => ({ ...p, bag: p.bag - 400, clout: Math.max(0, p.clout - 15), mentalHealth: Math.max(0, p.mentalHealth - 25) }));
+        setNews(n => ["🚫 THE COPYRIGHT STRIKE: Lose -$400, -15 Clout, -25 Mental Health.", ...n.slice(0, 15)]);
+      }
+      return undefined;
+    }
+
     await new Promise(r => setTimeout(r, 1000));
 
     const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
@@ -494,8 +649,8 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({
       ...p,
       bag: p.bag + revenue,
-      aura: Math.min(cap, Math.max(0, p.aura + auraGain)),
-      clout: Math.min(cap, p.clout + cloutGain)
+      aura: Math.min(p.maxAura, Math.max(0, p.aura + auraGain)),
+      clout: Math.min(p.maxClout, p.clout + cloutGain)
     }));
 
     setNews(prev => [newsMsg, ...prev.slice(0, 15)]);
@@ -507,16 +662,30 @@ export const GameProvider = ({ children }) => {
 
   const rDrp = async () => {
     const costBasis = drp.u * 10 + drp.a;
-    if (pl.mentalHealth < 10) return;
+    if (pl.mentalHealth < 10 || dropshipLock > 0) return;
+    updateFatigue('dropship');
     setPl(p => ({ ...p, bag: p.bag - costBasis, mentalHealth: p.mentalHealth - 10 }));
     setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
+
+    if (triggerChaos('dropship')) {
+      if (karmaFlags.ignoredRefunds) {
+        setPl(p => ({ ...p, bag: p.bag - 600 }));
+        setNews(n => ["💸 KARMA DETONATION: Gateway freezes assets. -$600 deduction.", ...n.slice(0, 15)]);
+      } else {
+        setPl(p => ({ ...p, mentalHealth: Math.max(0, p.mentalHealth - 30) }));
+        setDropshipLock(2);
+        setNews(n => ["🚫 THE ALGORITHM LOCKDOWN: Income zeroed for 2 months, -30 MH.", ...n.slice(0, 15)]);
+      }
+      return undefined;
+    }
+
     await new Promise(r => setTimeout(r, 800));
 
     const modifier = up.drpFac ? 1.5 : 1.1;
     const revenue = Math.floor((drp.u * drp.p) * (Math.random() * modifier));
     const profit = revenue - costBasis;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(cap, p.clout + 3) }));
+    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 3) }));
     setHl(h => ({ ...h, drop: h.drop + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
@@ -530,13 +699,13 @@ export const GameProvider = ({ children }) => {
     if (type === 'sol') {
       profit = Math.floor(Math.random() * 2500);
       cloutGain = 5;
-      setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(cap, p.clout + cloutGain) }));
+      setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
     } else if (type === 'feu') {
       profit = -25000; cloutGain = 35; auraGain = -15;
-      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(cap, p.clout + cloutGain), aura: Math.max(0, p.aura + auraGain) }));
+      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain), aura: Math.max(0, p.aura + auraGain) }));
     } else {
       profit = Math.floor(Math.random() * 75000); cloutGain = 20;
-      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(cap, p.clout + cloutGain) }));
+      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
     }
     setHl(h => ({ ...h, cc: h.cc + Math.max(0, profit) }));
     triggerImpact('bag', profit);
@@ -555,7 +724,7 @@ export const GameProvider = ({ children }) => {
     let revenue = Math.floor(totalOut * (1.2 + Math.random() * 1.8));
     let profit = revenue - totalOut;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(cap, p.clout + 15) }));
+    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 15) }));
     setHl(h => ({ ...h, pod: h.pod + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
@@ -586,7 +755,7 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({
       ...p,
       bag: p.bag + revenue,
-      clout: Math.min(cap, p.clout + cloutGain),
+      clout: Math.min(p.maxClout, p.clout + cloutGain),
       heat: p.heat + heatGain
     }));
     setTally(t => ({ ...t, box: t.box + 1 }));
@@ -605,7 +774,7 @@ export const GameProvider = ({ children }) => {
     const revenue = Math.floor(totalOut * (Math.random() * revMult));
     const profit = revenue - totalOut;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(cap, p.clout + 55), aura: Math.min(cap, p.aura + 15) }));
+    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 55), aura: Math.min(p.maxAura, p.aura + 15) }));
     setHl(h => ({ ...h, tour: h.tour + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
@@ -676,7 +845,7 @@ export const GameProvider = ({ children }) => {
     const revenue = Math.floor(cst * success);
     const profit = revenue - cst;
 
-    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(cap, p.clout + 75) }));
+    setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 75) }));
     setHl(h => ({ ...h, mov: h.mov + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
@@ -732,9 +901,9 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
-      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix
+      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost
     }}>
       {children}
     </GameContext.Provider>
