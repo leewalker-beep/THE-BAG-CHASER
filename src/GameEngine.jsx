@@ -28,9 +28,14 @@ export const GameProvider = ({ children }) => {
   const [smmClients, setSmmClients] = useState(0);
   const [clientCrisis, setClientCrisis] = useState(false);
   const [vinCh, setVinCh] = useState(null);
+  const [hustleClicks, setHustleClicks] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+  const [techItem, setTechItem] = useState(null);
+  const [techFlipsComplete, setTechFlipsComplete] = useState(0);
+  const [runnerCount, setRunnerCount] = useState(0);
+  const [runnerBurnout, setRunnerBurnout] = useState(false);
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, stm: 100 });
+  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, stamina: 100, maxStamina: 100 });
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
   const cap = 500;
@@ -75,8 +80,43 @@ export const GameProvider = ({ children }) => {
         peakC: Math.max(prev?.peakC || 0, pl.clout || 0)
       }));
     }
+    const maxMudAge = 30;
+    const isMud = pl.tier === 0;
+
     if ((pl.bag || 0) <= 0) {
-      setDeath({ r: "BANKRUPTCY PROCEEDINGS INDICTED", i: "Your liquid assets reached absolute zero. The banks claimed your enterprise assets.", rank: "BROKE HUSTLER" });
+      const topHustle = Object.keys(hustleClicks).reduce((a, b) => hustleClicks[a] > hustleClicks[b] ? a : b);
+      const roasts = {
+        vintage: "You spent your best years bin dipping. You died smelling like vintage mothballs, holding a bootleg hoodie you swore was a Grail.",
+        streetwear: "Hyped yourself into poverty. You ended up an old man with 500 unsold, screen-printed graphic tees rotting in your parents' garage.",
+        dropship: "Automated your way to absolute zero. You spent your whole life staring at unoptimized Facebook ad pixels and arguing with foreign suppliers.",
+        tech: "Bricked your own future. You blew your life savings on cheap, third-party phone batteries that ended up melting your workbench.",
+        smm: "Killed by client feedback. You spent your youth getting yelled at by a local pizzeria owner over a low-performing Instagram Reel.",
+        runners: "Overthrown by local middle-schoolers. Your neighborhood bicycle delivery cartel mutinied and stole your inventory over a $200 bonus dispute."
+      };
+
+      setDeath({
+        r: "THE AUTOPSY REPORT",
+        i: roasts[topHustle] || "You failed to find a groove and the world moved on without you.",
+        rank: "BROKE HUSTLER",
+        hustle: topHustle
+      });
+    } else if (age >= maxMudAge && isMud) {
+      const topHustle = Object.keys(hustleClicks).reduce((a, b) => hustleClicks[a] > hustleClicks[b] ? a : b);
+      const roasts = {
+        vintage: "You spent your best years bin dipping. You died smelling like vintage mothballs, holding a bootleg hoodie you swore was a Grail.",
+        streetwear: "Hyped yourself into poverty. You ended up an old man with 500 unsold, screen-printed graphic tees rotting in your parents' garage.",
+        dropship: "Automated your way to absolute zero. You spent your whole life staring at unoptimized Facebook ad pixels and arguing with foreign suppliers.",
+        tech: "Bricked your own future. You blew your life savings on cheap, third-party phone batteries that ended up melting your workbench.",
+        smm: "Killed by client feedback. You spent your youth getting yelled at by a local pizzeria owner over a low-performing Instagram Reel.",
+        runners: "Overthrown by local middle-schoolers. Your neighborhood bicycle delivery cartel mutinied and stole your inventory over a $200 bonus dispute."
+      };
+
+      setDeath({
+        r: "THE AUTOPSY REPORT",
+        i: "MUD TIER EXCLUSION: " + (roasts[topHustle] || "Your youth expired before your empire began."),
+        rank: "MUD TIER CASUALTY",
+        hustle: topHustle
+      });
     }
     if ((pl.aura || 0) <= 0) {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
@@ -110,6 +150,13 @@ export const GameProvider = ({ children }) => {
     if (clientCrisis) {
       setSmmClients(c => Math.max(0, c - 1));
       setNews(prev => ["📉 SMM: Client churned due to unresolved crisis.", ...prev.slice(0, 15)]);
+      setClientCrisis(false);
+    }
+
+    if (runnerBurnout) {
+      setRunnerCount(c => Math.max(0, c - 1));
+      setNews(prev => ["📉 GIG: Runner mutinied and stole inventory due to burnout.", ...prev.slice(0, 15)]);
+      setRunnerBurnout(false);
     }
 
     setPl(prev => {
@@ -142,12 +189,15 @@ export const GameProvider = ({ children }) => {
       const smmRev = smmClients * 300;
       const smmAura = smmClients * 2;
 
+      const runnerRev = runnerCount * 150;
+      const runnerAura = runnerCount * 3;
+
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev,
-        aura: Math.min(cap, prev.aura + smmAura),
-        stm: Math.min(100, prev.stm + 25)
+        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev,
+        aura: Math.min(cap, prev.aura + smmAura + runnerAura),
+        stamina: Math.min(prev.maxStamina, prev.stamina + 15)
       };
     });
 
@@ -163,6 +213,12 @@ export const GameProvider = ({ children }) => {
     if (smmClients > 0 && Math.random() < 0.20) {
       setClientCrisis(true);
       setNews(prev => ["🚨 SMM ALERT: Client Crisis! Algorithm Shift detected.", ...prev.slice(0, 15)]);
+    }
+
+    // Runner Burnout Trigger
+    if (runnerCount > 0 && Math.random() < 0.15) {
+      setRunnerBurnout(true);
+      setNews(prev => ["🚨 RUNNER ALERT: Fleet Burnout! Bonus required to retain courier.", ...prev.slice(0, 15)]);
     }
 
     // AI Engine Race Simulation
@@ -200,7 +256,19 @@ export const GameProvider = ({ children }) => {
     }
   };
 
-  const exStart = () => { if (alias.length >= 3) setPh('PLAYING'); };
+  const exStart = () => {
+    if (alias.length < 3) return;
+
+    if (diff === 1) { // TRUST FUND (Easy)
+      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxStamina: 300, stamina: 300 }));
+    } else if (diff === 2) { // HUSTLER (Normal)
+      setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxStamina: 150, stamina: 150 }));
+    } else { // GRINDER (Difficult)
+      setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxStamina: 100, stamina: 100 }));
+    }
+
+    setPh('PLAYING');
+  };
 
   const dUp = (key, cost, flashMsg) => {
     if (pl.bag >= cost) {
@@ -230,8 +298,9 @@ export const GameProvider = ({ children }) => {
   };
 
   const rVintage = async () => {
-    if (pl.bag < 50 || pl.stm < 10) return;
-    setPl(p => ({ ...p, bag: p.bag - 50, stm: p.stm - 10 }));
+    if (pl.bag < 50 || pl.stamina < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - 50, stamina: p.stamina - 10 }));
+    setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
     const roll = Math.random();
@@ -265,8 +334,9 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSmmPitch = async () => {
-    if (pl.clout < 15 || pl.stm < 20) return;
-    setPl(p => ({ ...p, stm: p.stm - 20 }));
+    if (pl.clout < 15 || pl.stamina < 20) return;
+    setPl(p => ({ ...p, stamina: p.stamina - 20 }));
+    setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
     if (Math.random() < 0.5) {
@@ -279,17 +349,71 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSmmFix = async () => {
-    if (pl.stm < 15) return;
-    setPl(p => ({ ...p, stm: p.stm - 15 }));
+    if (pl.stamina < 15) return;
+    setPl(p => ({ ...p, stamina: p.stamina - 15 }));
     await new Promise(r => setTimeout(r, 800));
     setClientCrisis(false);
     setNews(prev => ["✅ SMM: Content strategy fixed. Crisis averted.", ...prev.slice(0, 15)]);
   };
 
   const rRest = async () => {
-    setPl(p => ({ ...p, stm: Math.min(100, p.stm + 50) }));
+    setPl(p => ({ ...p, stamina: Math.min(p.maxStamina, p.stamina + 50) }));
     adv();
     setNews(prev => ["😴 Resting... Stamina recovered.", ...prev.slice(0, 15)]);
+  };
+
+  const rTechSource = async () => {
+    if (pl.bag < 150) return;
+    setPl(p => ({ ...p, bag: p.bag - 150 }));
+    setTechItem({ id: Math.random(), name: "Bricked Hardware" });
+    setHustleClicks(prev => ({ ...prev, tech: prev.tech + 1 }));
+    setNews(n => ["💻 TECH: Sourced bricked hardware for $150. Ready for repair.", ...n.slice(0, 15)]);
+  };
+
+  const rTechFixA = async () => {
+    if (pl.bag < 30 || pl.stamina < 10 || !techItem) return;
+    setPl(p => ({ ...p, bag: p.bag - 30, stamina: p.stamina - 10 }));
+    await new Promise(r => setTimeout(r, 800));
+
+    if (Math.random() < 0.5) {
+      setPl(p => ({ ...p, bag: p.bag + 750 }));
+      setTechItem(null);
+      triggerImpact('bag', 720);
+      setNews(n => ["✅ TECH: Repair successful with cheap parts! Sold for $750.", ...n.slice(0, 15)]);
+    } else {
+      setPl(p => ({ ...p, aura: Math.max(0, p.aura - 5) }));
+      setTechItem(null);
+      setNews(n => ["💀 TECH: Hardware bricked during repair. Aura decreased.", ...n.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rTechFixB = async () => {
+    if (pl.bag < 100 || pl.stamina < 15 || !techItem) return;
+    setPl(p => ({ ...p, bag: p.bag - 100, stamina: p.stamina - 15, clout: Math.min(cap, p.clout + 8), aura: Math.min(cap, p.aura + 8) }));
+    setTechFlipsComplete(prev => prev + 1);
+    await new Promise(r => setTimeout(r, 1000));
+    setPl(p => ({ ...p, bag: p.bag + 750 }));
+    setTechItem(null);
+    triggerImpact('bag', 650);
+    setNews(n => ["✅ TECH: Premium repair successful! Sold for $750. Hardware Mastery increased.", ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rRunnerRecruit = async () => {
+    if (pl.bag < 300 || pl.stamina < 25 || pl.clout < 20) return;
+    setPl(p => ({ ...p, bag: p.bag - 300, stamina: p.stamina - 25 }));
+    setRunnerCount(prev => prev + 1);
+    setHustleClicks(prev => ({ ...prev, runners: prev.runners + 1 }));
+    setNews(n => ["🏃 GIG: New fleet courier recruited.", ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rRunnerFix = async () => {
+    if (pl.bag < 200) return;
+    setPl(p => ({ ...p, bag: p.bag - 200 }));
+    setRunnerBurnout(false);
+    setNews(n => ["✅ GIG: Bonus paid. Fleet burnout resolved.", ...n.slice(0, 15)]);
   };
 
   const rVinCh = async (choice) => {
@@ -307,8 +431,10 @@ export const GameProvider = ({ children }) => {
 
   const rSw = async () => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
+    if (pl.stamina < 15) return;
 
-    setPl(p => ({ ...p, bag: p.bag - totalOut }));
+    setPl(p => ({ ...p, bag: p.bag - totalOut, stamina: p.stamina - 15 }));
+    setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
     await new Promise(r => setTimeout(r, 1000));
 
     const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
@@ -360,7 +486,9 @@ export const GameProvider = ({ children }) => {
 
   const rDrp = async () => {
     const costBasis = drp.u * 10 + drp.a;
-    setPl(p => ({ ...p, bag: p.bag - costBasis }));
+    if (pl.stamina < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - costBasis, stamina: p.stamina - 10 }));
+    setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
     await new Promise(r => setTimeout(r, 800));
 
     const modifier = up.drpFac ? 1.5 : 1.1;
@@ -567,7 +695,9 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, cap, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked,
+      hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
+      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix
     }}>
       {children}
     </GameContext.Provider>

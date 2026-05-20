@@ -59,14 +59,16 @@ const Toggles = ({ opts, active, setVal, color }) => (
   </div>
 );
 
-const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost }) => {
+const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, costStm = 0 }) => {
   const { gBusy, imp, pl } = useGame();
   const busy = gBusy || imp.some(i => !i.w);
   const [st, setSt] = useState('idle');
   const [amt, setAmt] = useState(0);
 
+  const exhausted = pl.stamina < costStm;
+
   const hit = async () => {
-    if (dis || st !== 'idle' || (busy && st === 'idle')) return;
+    if (dis || exhausted || st !== 'idle' || (busy && st === 'idle')) return;
     const hr = cost !== undefined && pl.bag > 0 && cost >= pl.bag * 0.25;
     if (hr) {
       const actionPromise = onClick();
@@ -85,10 +87,10 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost })
     }
   };
 
-  let bg = (dis || (busy && st === 'idle'))
+  let bg = (dis || exhausted || (busy && st === 'idle'))
     ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed border-slate-700'
     : `bg-${color} text-${txt} hover:bg-gray-200`;
-  let l = label;
+  let l = exhausted ? 'EXHAUSTED' : label;
   if (st === 'calc')  { bg = 'bg-slate-600 text-white animate-pulse'; l = 'CALCULATING...'; }
   else if (st === 'drain') { bg = 'bg-orange-900 text-orange-400 animate-pulse'; l = '💸 DRAINING...'; }
   else if (st === 'sweat') { bg = 'bg-yellow-900/80 text-yellow-300 animate-pulse'; l = '😰 THE SWEAT...'; }
@@ -273,55 +275,60 @@ const FlexesView = () => {
   );
 };
 
-// ─── Legacy Autopsy screen ────────────────────────────────────────────────────
+// ─── Autopsy Report screen ────────────────────────────────────────────────────
 
-const LegacyAutopsy = () => {
-  const { death, alias, peaks, hl, tally } = useGame();
+const AutopsyReport = () => {
+  const { death, alias, peaks, hl, tally, hustleClicks } = useGame();
   if (!death) return null;
 
   const catNames = { sw: '👟 Streetwear Drop', drop: '📦 Dropship', cc: '📺 Creator Lab', pod: '🎙️ Podcast', box: '🥊 Fight Promo', tch: '💻 SaaS Exit', cryp: '🪙 Crypto Rug', tour: '🎪 Live Event', mov: '🎬 Hollywood', hf: '📈 Hedge Trade' };
   const top5  = Object.entries(hl).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const shame = [
-    ...(tally.cryp === 0 ? ['Terrified of the blockchain. NGMI. 💀'] : []),
-    ...(tally.box  === 0 ? ["Couldn't look at a fight card. Soft era. 🥊"] : []),
-    ...(tally.hf   === 0 ? ['Paper hands. Never even checked a chart. 📉'] : []),
-    ...(tally.pres === 0 ? ["Didn't attempt world domination. Ran it back. 🗳️"] : []),
-  ];
+
+  const hustleIcons = { streetwear: '👕', dropship: '📦', vintage: '👕', tech: '💻', smm: '📱', runners: '🏃' };
 
   return (
     <div className="min-h-screen bg-black text-white font-hack flex flex-col items-center justify-center p-4 text-center">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
-      <div className="max-w-xl w-full bg-slate-900 border border-slate-700 rounded-xl p-8 shadow-[0_0_50px_rgba(255,255,255,0.1)]">
-        <h1 className="text-4xl font-black mb-2 text-red-500 font-hype tracking-widest">LEGACY AUTOPSY</h1>
-        <p className="text-slate-400 mb-4 italic">{death.r}</p>
-        <p className="text-pink-400 mb-8 font-bold text-lg">"{death.i}"</p>
-        <div className="bg-black/50 p-6 rounded-lg mb-4">
-          <h2 className="text-sm text-slate-500 mb-4 tracking-widest uppercase">The Peak</h2>
-          <div className="grid grid-cols-3 gap-4 text-lg">
-            <div><span className="text-green-400 font-black">${fMny(peaks.peakB)}</span><div className="text-xs text-slate-500">BAG</div></div>
-            <div><span className="text-yellow-400 font-black">{peaks.peakA}</span><div className="text-xs text-slate-500">AURA</div></div>
-            <div><span className="text-red-400 font-black">{peaks.peakC}</span><div className="text-xs text-slate-500">CLOUT</div></div>
+      <div className="max-w-xl w-full bg-slate-900 border-2 border-red-600 rounded-2xl p-8 shadow-[0_0_80px_rgba(220,38,38,0.3)]">
+        <div className="text-6xl mb-4">{hustleIcons[death.hustle] || '🪦'}</div>
+        <h1 className="text-4xl font-black mb-2 text-red-500 font-hype tracking-widest">{death.r}</h1>
+        <div className="h-0.5 w-full bg-red-600/30 my-6"></div>
+
+        <p className="text-pink-400 mb-8 font-bold text-xl leading-relaxed italic">"{death.i}"</p>
+
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-black/50 p-4 rounded-xl border border-slate-800">
+            <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">Peak Bag</div>
+            <div className="text-lg font-black text-green-400">${fMny(peaks.peakB)}</div>
+          </div>
+          <div className="bg-black/50 p-4 rounded-xl border border-slate-800">
+            <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">Peak Aura</div>
+            <div className="text-lg font-black text-yellow-400">{peaks.peakA}</div>
+          </div>
+          <div className="bg-black/50 p-4 rounded-xl border border-slate-800">
+            <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">Peak Clout</div>
+            <div className="text-lg font-black text-red-400">{peaks.peakC}</div>
           </div>
         </div>
-        {top5.length > 0 && (
-          <div className="bg-black/50 p-4 rounded-lg mb-4 text-left">
-            <div className="text-xs text-yellow-500 mb-2 tracking-widest uppercase font-black text-center">🏆 Top 5 Plays</div>
-            {top5.map(([cat, val]) => (
-              <div key={cat} className="flex justify-between text-sm py-1 border-b border-slate-800 last:border-0">
-                <span className="text-slate-400">{catNames[cat] ?? cat}</span>
-                <span className="text-green-400 font-black">+${fMny(val)}</span>
+
+        <div className="bg-black/50 p-6 rounded-xl border border-slate-800 mb-8 text-left">
+          <div className="text-xs text-yellow-500 mb-4 tracking-widest uppercase font-black text-center">📊 Career Stats</div>
+          <div className="space-y-2">
+            {Object.entries(hustleClicks).map(([h, count]) => (
+              <div key={h} className="flex justify-between text-sm items-center">
+                <span className="text-slate-400 capitalize">{h}:</span>
+                <span className="font-black text-white">{count} ACTIONS</span>
               </div>
             ))}
           </div>
-        )}
-        {shame.length > 0 && (
-          <div className="bg-red-950/30 border border-red-900/60 p-4 rounded-lg mb-4 text-left">
-            <div className="text-xs text-red-500 mb-2 tracking-widest uppercase font-black text-center">🪦 Wall of Shame</div>
-            {shame.map((s, i) => <div key={i} className="text-[11px] text-red-400 py-1 border-b border-red-900/30 last:border-0">{s}</div>)}
-          </div>
-        )}
-        <div className="mb-4 text-2xl font-black text-slate-300">{alias || 'GHOST'} — {death.rank}</div>
-        <button onClick={() => window.location.reload()} className="w-full p-6 bg-white text-black font-black tracking-widest rounded-xl hover:bg-gray-200">PLUG BACK IN</button>
+        </div>
+
+        <div className="mb-8 flex flex-col items-center">
+          <div className="text-xs text-slate-500 font-bold uppercase mb-1">Final Status</div>
+          <div className="text-2xl font-black text-slate-300 tracking-tighter">{alias || 'ANON'} — {death.rank}</div>
+        </div>
+
+        <button onClick={() => window.location.reload()} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
       </div>
     </div>
   );
@@ -402,10 +409,10 @@ const TierHub = () => {
   const hustleMap = {
     'SW': { label: 'Streetwear', icon: '👕' },
     'DROP': { label: 'Dropship', icon: '📦' },
-    'TECH_FLIP': { label: 'Tech Flipping', icon: '💻', stub: true },
+    'TECH_FLIP': { label: 'Tech Flipping', icon: '💻' },
     'VINTAGE': { label: 'Vintage Reselling', icon: '👕' },
     'SMM': { label: 'SMM Micro-Agency', icon: '📱' },
-    'GIG': { label: 'Gig Runner Network', icon: '🏃', stub: true },
+    'GIG': { label: 'Gig Runner Network', icon: '🏃' },
     'CC': { label: 'Creator Lab', icon: '📱' },
     'POD': { label: 'Podcast Net', icon: '🎙️' },
     'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
@@ -521,6 +528,10 @@ const SwTab = () => {
   const { pl, up, sw, setSw, dUp, rSw, adv } = useGame();
   return (
     <LabShell t="STREETWEAR LAB" c="purple" fontCls="font-hype" onHub={() => useGame().setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-blue-400">15 STAMINA</div>
+      </div>
       {!up.swIp
         ? <UpgBtn onClk={() => dUp('swIp', 250000, 'IP Secured. 📜')} cost={250000} title="BUY IP" pB={pl.bag} />
         : !up.swFlg
@@ -546,7 +557,7 @@ const SwTab = () => {
         <Stepper val={sw.u} setVal={v => setSw(s => ({ ...s, u: v }))} min={10} max={up.swPar ? 50000 : up.swFlg ? 10000 : 2500} step={50} label="Units" isCurr={false} />
         <Stepper val={sw.p} setVal={v => setSw(s => ({ ...s, p: v }))} min={15} max={up.swPar ? 2500 : up.swFlg ? 1000 : 500} step={5} label="Price" />
         {!up.swFlg && <Stepper val={sw.a} setVal={v => setSw(s => ({ ...s, a: v }))} min={0} max={250000} step={5000} label="Ad Spend" />}
-        <FlashBtn onClick={rSw} dis={pl.bag < (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a)} label={`DROP - $${fMny((sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a))}`} />
+        <FlashBtn onClick={rSw} costStm={15} dis={pl.bag < (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a)} label={`DROP - $${fMny((sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a))}`} />
       </>}
     </LabShell>
   );
@@ -556,6 +567,10 @@ const VintageTab = () => {
   const { pl, rVintage, rVinCh, vinCh, setTab } = useGame();
   return (
     <LabShell t="VINTAGE RESELLING" c="amber" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-blue-400">10 STAMINA</div>
+      </div>
       <div className="flex flex-col gap-4">
         {vinCh === 'bootleg' ? (
           <div className="bg-red-900/40 border-2 border-red-500 p-4 rounded-xl flex flex-col gap-3 animate-pulse">
@@ -574,8 +589,9 @@ const VintageTab = () => {
             </div>
             <FlashBtn
               onClick={rVintage}
-              dis={pl.bag < 50 || pl.stm < 10}
-              label="HIT THE CLOTHING BINS ($50, -10 STM)"
+              costStm={10}
+              dis={pl.bag < 50}
+              label="HIT THE CLOTHING BINS ($50)"
               color="amber"
               txt="black"
             />
@@ -590,6 +606,10 @@ const SmmTab = () => {
   const { pl, smmClients, clientCrisis, rSmmPitch, rSmmFix, setTab } = useGame();
   return (
     <LabShell t="SMM MICRO-AGENCY" c="sky" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Pitch Cost</div>
+        <div className="text-xs font-black text-blue-400">20 STAMINA</div>
+      </div>
       <div className="flex flex-col gap-4">
         <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center ${clientCrisis ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
           <div className="text-[10px] text-slate-500 font-bold uppercase">Active Portfolio</div>
@@ -603,8 +623,8 @@ const SmmTab = () => {
             <p className="text-[9px] text-slate-300 text-center italic">Clients are panicking. Fix it now or lose 1 retainer next month.</p>
             <FlashBtn
               onClick={rSmmFix}
-              dis={pl.stm < 15}
-              label="FIX CONTENT STRATEGY (-15 STM)"
+              costStm={15}
+              label="FIX CONTENT STRATEGY"
               color="red"
               txt="white"
             />
@@ -613,8 +633,9 @@ const SmmTab = () => {
 
         <FlashBtn
           onClick={rSmmPitch}
-          dis={pl.clout < 15 || pl.stm < 20 || clientCrisis}
-          label={clientCrisis ? "🔒 CRISIS: SOLVE TO PITCH" : pl.clout >= 15 ? "PITCH LOCAL BUSINESS (-20 STM)" : "🔒 NEED 15 CLOUT TO PITCH"}
+          costStm={20}
+          dis={pl.clout < 15 || clientCrisis}
+          label={clientCrisis ? "🔒 CRISIS: SOLVE TO PITCH" : pl.clout >= 15 ? "PITCH LOCAL BUSINESS" : "🔒 NEED 15 CLOUT TO PITCH"}
           color="sky"
           txt="black"
         />
@@ -628,12 +649,100 @@ const DropTab = () => {
   const { pl, up, drp, setDrp, dUp, rDrp, setTab } = useGame();
   return (
     <LabShell t="DROPSHIPPING" c="blue" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Setup Cost</div>
+        <div className="text-xs font-black text-blue-400">10 STAMINA</div>
+      </div>
       <UpgBtn onClk={() => dUp('drpFac', 250000, 'Factory Secured. 🏭')} cost={250000} title="PRIVATE LABEL FACTORY" unl={up.drpFac} pB={pl.bag} />
       <Toggles opts={['LEDs', 'Fake Pods', 'Supps']} active={drp.i} setVal={v => setDrp(s => ({ ...s, i: v }))} color="blue" />
       <Stepper val={drp.u} setVal={v => setDrp(s => ({ ...s, u: v }))} min={50} max={10000} step={250} label="Units" isCurr={false} />
       <Stepper val={drp.p} setVal={v => setDrp(s => ({ ...s, p: v }))} min={15} max={up.drpFac ? 250 : 150} step={5} label="Price" />
       <Stepper val={drp.a} setVal={v => setDrp(s => ({ ...s, a: v }))} min={0} max={500000} step={5000} label="Ad Budget" />
-      <FlashBtn onClick={rDrp} dis={pl.bag < (drp.u * 10) + drp.a} label={`LAUNCH AD - $${fMny((drp.u * 10) + drp.a)}`} />
+      <FlashBtn onClick={rDrp} costStm={10} dis={pl.bag < (drp.u * 10) + drp.a} label={`LAUNCH AD - $${fMny((drp.u * 10) + drp.a)}`} />
+    </LabShell>
+  );
+};
+
+const TechFlipTab = () => {
+  const { pl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab } = useGame();
+  return (
+    <LabShell t="TECH FLIPPING" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Hardware Mastery</div>
+        <div className="text-2xl font-black text-cyan-400">{techFlipsComplete} FLIPS</div>
+      </div>
+
+      {!techItem ? (
+        <FlashBtn
+          onClick={rTechSource}
+          dis={pl.bag < 150}
+          label="SOURCE BRICKED UNIT ($150)"
+          color="cyan"
+          txt="black"
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="bg-cyan-900/20 border border-cyan-700 p-3 rounded-lg text-center">
+            <div className="text-xs font-bold text-cyan-400 uppercase">Item Sourced: {techItem.name}</div>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <FlashBtn
+              onClick={rTechFixA}
+              costStm={10}
+              dis={pl.bag < 30}
+              label="CHEAP PARTS ($30, 50% WIN)"
+              color="slate"
+              txt="white"
+            />
+            <FlashBtn
+              onClick={rTechFixB}
+              costStm={15}
+              dis={pl.bag < 100}
+              label="PREMIUM OEM PARTS ($100, 100% WIN)"
+              color="cyan"
+              txt="black"
+            />
+          </div>
+        </div>
+      )}
+      <p className="text-[9px] text-slate-500 text-center italic mt-2">"Cheap parts risk bricking the unit and losing Aura."</p>
+    </LabShell>
+  );
+};
+
+const GigTab = () => {
+  const { pl, runnerCount, runnerBurnout, rRunnerRecruit, rRunnerFix, setTab } = useGame();
+  return (
+    <LabShell t="GIG RUNNER NETWORK" c="orange" fontCls="font-tech" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border transition-all text-center mb-4 ${runnerBurnout ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-500 font-bold uppercase">Active Fleet</div>
+        <div className={`text-2xl font-black ${runnerBurnout ? 'text-red-500' : 'text-orange-400'}`}>{runnerCount} COURIERS</div>
+        <div className="text-[9px] text-slate-500 mt-1">Yield: +${fMny(runnerCount * 150)}/mo | +{runnerCount * 3} Aura/mo</div>
+      </div>
+
+      {runnerBurnout && (
+        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 FLEET BURNOUT!</h4>
+          <p className="text-[9px] text-slate-300 text-center italic">Runners are exhausted. Pay a bonus or lose 1 courier next month.</p>
+          <FlashBtn
+            onClick={rRunnerFix}
+            dis={pl.bag < 200}
+            label="PAY $200 BONUS"
+            color="red"
+            txt="white"
+          />
+        </div>
+      )}
+
+      <FlashBtn
+        onClick={rRunnerRecruit}
+        costStm={25}
+        dis={pl.clout < 20 || pl.bag < 300 || runnerBurnout}
+        label={runnerBurnout ? "🔒 RESOLVE BURNOUT" : pl.clout >= 20 ? "RECRUIT COURIER ($300)" : "🔒 NEED 20 CLOUT"}
+        color="orange"
+        txt="black"
+      />
+      <p className="text-[9px] text-slate-500 text-center italic mt-2">"High stamina cost to vet and onboard new runners."</p>
     </LabShell>
   );
 };
@@ -1111,8 +1220,8 @@ const GameInterface = () => {
               <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-red-500 h-full rounded-full clout-glow transition-all" style={{ width: `${Math.min(100, ((pl?.clout || 0) / (cap || 500)) * 100)}%` }}></div></div>
             </div>
             <div>
-              <div className="flex justify-between text-[9px] font-bold text-blue-400 tracking-widest leading-none"><span>STAMINA</span><span>{pl?.stm || 0}/100</span></div>
-              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${Math.min(100, (pl?.stm || 0))}%` }}></div></div>
+              <div className="flex justify-between text-[9px] font-bold text-blue-400 tracking-widest leading-none"><span>STAMINA</span><span>{pl?.stamina || 0}/{pl?.maxStamina || 100}</span></div>
+              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${Math.min(100, ((pl?.stamina || 0) / (pl?.maxStamina || 100)) * 100)}%` }}></div></div>
             </div>
           </div>
           <div className="text-[9px] font-hack text-slate-400 text-right leading-relaxed flex-shrink-0">
@@ -1152,6 +1261,8 @@ const GameInterface = () => {
           {tab === 'DROP' && (isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />)}
           {tab === 'VINTAGE' && (isTierUnlocked?.(0) ? <VintageTab /> : <LockedTierScreen section={0} />)}
           {tab === 'SMM' && (isTierUnlocked?.(0) ? <SmmTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'TECH_FLIP' && (isTierUnlocked?.(0) ? <TechFlipTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'GIG' && (isTierUnlocked?.(0) ? <GigTab /> : <LockedTierScreen section={0} />)}
           {tab === 'CC'   && (isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />)}
           {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
           {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
@@ -1194,7 +1305,7 @@ const BagChaserInner = () => {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
-      {death       && !cancelIntro ? <LegacyAutopsy /> : null}
+      {death       && !cancelIntro ? <AutopsyReport /> : null}
       {!death      && ph === 'PROLOGUE' ? <Prologue /> : null}
       {!death      && ph === 'PLAYING'  ? <GameInterface /> : null}
     </>

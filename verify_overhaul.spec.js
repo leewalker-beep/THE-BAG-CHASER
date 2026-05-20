@@ -28,7 +28,7 @@ test('verify overhaul tabs', async ({ page }) => {
 
   // Switch to STREET (Locked)
   await page.click('text=🔒 STREET');
-  await expect(page.locator('text=STREET LOCKED')).toBeVisible();
+  await expect(page.locator('text=CREATOR LAB')).toBeVisible();
   await page.screenshot({ path: 'locked_street.png' });
 
   // Return to HUB
