@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 export const TIERS = [
-  { id: 0, label: 'Mud',       req: { bag: 0,         clout: 0,   aura: 0  }, hustles: ['SW', 'DROP'] },
-  { id: 1, label: 'Street',    req: { bag: 500000,    clout: 0,   aura: 0  }, hustles: ['CC', 'POD']  },
-  { id: 2, label: 'Corporate', req: { bag: 0,         clout: 200, aura: 50 }, hustles: ['BOX', 'TECH'] },
-  { id: 3, label: 'Elite',     req: { bag: 100000000, clout: 0,   aura: 0  }, hustles: ['CRYP', 'TOUR'] },
-  { id: 4, label: 'President', req: { bag: 500000000, clout: 0,   aura: 0  }, hustles: ['HF', 'AI']   },
+  { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG'] },
+  { id: 1, label: 'Street',    req: { bag: 100000,      clout: 50,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
+  { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
+  { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
+  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'COMMODITIES', 'PMC', 'SOVEREIGN'] },
+  { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
 ];
 
 const GameContext = createContext();
@@ -54,7 +55,7 @@ export const GameProvider = ({ children }) => {
   const [mov, setMov] = useState({ g: 1, w: 1, d: 1, s: 1, m: 5000000 });
   const [hf, setHf] = useState({ r: 0, t: 'NVDA', c: 5000000, l: 5 });
   const [ai, setAi] = useState({ ig: false, p: 0, r: 0, d: 1, c: 1, s: 1, dj: 0 });
-  const [prs, setPrs] = useState({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false } });
+  const [prs, setPrs] = useState({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
 
   // Legacy Registry
   const [peaks, setPeaks] = useState({ peakB: 25000, peakA: 100, peakC: 20 });
@@ -63,37 +64,39 @@ export const GameProvider = ({ children }) => {
 
   // Keep Track of Records & Auto Failures
   useEffect(() => {
-    if (ph !== 'PLAYING') return;
-    if (pl.bag > peaks.peakB || pl.aura > peaks.peakA || pl.clout > peaks.peakC) {
+    if (ph !== 'PLAYING' || !pl) return;
+    if ((pl.bag || 0) > (peaks?.peakB || 0) || (pl.aura || 0) > (peaks?.peakA || 0) || (pl.clout || 0) > (peaks?.peakC || 0)) {
       setPeaks(prev => ({
-        peakB: Math.max(prev.peakB, pl.bag),
-        peakA: Math.max(prev.peakA, pl.aura),
-        peakC: Math.max(prev.peakC, pl.clout)
+        peakB: Math.max(prev?.peakB || 0, pl.bag || 0),
+        peakA: Math.max(prev?.peakA || 0, pl.aura || 0),
+        peakC: Math.max(prev?.peakC || 0, pl.clout || 0)
       }));
     }
-    if (pl.bag <= 0) {
+    if ((pl.bag || 0) <= 0) {
       setDeath({ r: "BANKRUPTCY PROCEEDINGS INDICTED", i: "Your liquid assets reached absolute zero. The banks claimed your enterprise assets.", rank: "BROKE HUSTLER" });
     }
-    if (pl.aura <= 0) {
+    if ((pl.aura || 0) <= 0) {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
     }
   }, [pl, ph, peaks]);
 
   // Tier Progression System
   useEffect(() => {
-    if (ph !== 'PLAYING') return;
-    let nextTier = pl.tier;
-    for (let i = pl.tier + 1; i < TIERS.length; i++) {
-      const { req } = TIERS[i];
-      if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura) {
+    if (ph !== 'PLAYING' || !pl) return;
+    let nextTier = pl.tier || 0;
+    const tiersCount = TIERS?.length || 0;
+    for (let i = nextTier + 1; i < tiersCount; i++) {
+      const req = TIERS[i]?.req;
+      if (!req) break;
+      if ((peaks?.peakB || 0) >= (req.bag || 0) && (peaks?.peakC || 0) >= (req.clout || 0) && (peaks?.peakA || 0) >= (req.aura || 0)) {
         nextTier = i;
       } else {
         break;
       }
     }
-    if (nextTier !== pl.tier) {
+    if (nextTier !== (pl.tier || 0)) {
       setPl(prev => ({ ...prev, tier: nextTier }));
-      setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier].label} Tier.`, ...prev.slice(0, 15)]);
+      setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier]?.label || 'Next'} Tier.`, ...prev.slice(0, 15)]);
     }
   }, [peaks, ph, pl.tier]);
 
@@ -103,10 +106,20 @@ export const GameProvider = ({ children }) => {
     setPl(prev => {
       let expenseBurn = 500;
       if (mkt === 2) expenseBurn *= 2;
-      if (ass.mtgPent) expenseBurn += 60000;
-      if (ass.mtgMans) expenseBurn += 250000;
-      if (ass.mtgJet) expenseBurn += 1500000;
-      if (ass.mtgYct) expenseBurn += 3000000;
+
+      // Asset Yield and Maintenance
+      let yieldIncome = 0;
+      if (ass?.watch) yieldIncome += 750;
+      if (ass?.pent) yieldIncome += 15000;
+
+      if (ass?.pent && ass?.mtgPent) expenseBurn += 60000;
+      if (ass?.mans && ass?.mtgMans) expenseBurn += 250000;
+      if (ass?.jet && ass?.mtgJet) expenseBurn += 1500000;
+      if (ass?.yct && ass?.mtgYct) expenseBurn += 3000000;
+
+      // New balance sheet impacts
+      if (ass?.car) expenseBurn += 8000;
+      if (ass?.yct && !ass?.mtgYct) expenseBurn += 250000;
 
       // Deducting level perk buffs
       const reduction = 1 - (skl.tax * 0.04);
@@ -120,7 +133,7 @@ export const GameProvider = ({ children }) => {
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv
+        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome
       };
     });
 
@@ -177,11 +190,16 @@ export const GameProvider = ({ children }) => {
     }
   };
 
-  const bAss = (key, cost, label) => {
+  const bAss = (key, cost, label, cloutBump = 45, auraBump = 0) => {
     if (pl.bag >= cost) {
-      setPl(p => ({ ...p, bag: p.bag - cost, clout: Math.min(cap, p.clout + 45) }));
+      setPl(p => ({
+        ...p,
+        bag: p.bag - cost,
+        clout: Math.min(cap, p.clout + cloutBump),
+        aura: Math.min(cap, p.aura + auraBump)
+      }));
       setAss(a => ({ ...a, [key]: true }));
-      setNews(n => [`💎 FLEET UPGRADE: Acquired ownership rights to ${label}.`, ...n.slice(0, 15)]);
+      setNews(n => [`💎 FLEET UPGRADE: Acquired ownership rights to ${label}. Balance sheet updated.`, ...n.slice(0, 15)]);
     }
   };
 
@@ -275,6 +293,7 @@ export const GameProvider = ({ children }) => {
       profit = Math.floor(Math.random() * 75000); cloutGain = 20;
       setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(cap, p.clout + cloutGain) }));
     }
+    setHl(h => ({ ...h, cc: h.cc + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
     return profit;
@@ -353,6 +372,7 @@ export const GameProvider = ({ children }) => {
       setPl(p => ({ ...p, bag: p.bag + value }));
       setTch({ l: false, u: 0, srv: 0.1, pw: false, vc: false, m: 2000 });
       setTab('HUB');
+      setHl(h => ({ ...h, tch: h.tch + value }));
       triggerImpact('bag', value);
       setNews(n => [`🔔 WALL STREET EXIT: IPO finalized. Listed holdings liquidated into $${value.toLocaleString()}.`, ...n.slice(0, 15)]);
       return value;
@@ -379,6 +399,7 @@ export const GameProvider = ({ children }) => {
       setCrp({ l: 0, t: '', i: 5000, m: 5000 });
       setTally(t => ({ ...t, cryp: t.cryp + 1 }));
       setTab('HUB');
+      setHl(h => ({ ...h, cryp: h.cryp + reward }));
       triggerImpact('bag', reward);
       setNews(n => [`💀 LIQUIDITY RUGGED: Contract liquidity drained. Net reward: $${reward.toLocaleString()}. Aura crashed.`, ...n.slice(0, 15)]);
       return reward;
@@ -412,6 +433,7 @@ export const GameProvider = ({ children }) => {
 
     setPl(p => ({ ...p, bag: p.bag + Math.floor(finalReturn) }));
     setTally(t => ({ ...t, hf: t.hf + 1 }));
+    setHl(h => ({ ...h, hf: h.hf + Math.max(0, netPayout) }));
     triggerImpact('bag', netPayout);
     adv();
     return netPayout;

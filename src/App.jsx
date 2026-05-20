@@ -116,15 +116,52 @@ const UpgBtn = ({ onClk, cost, title, unl, reqA = 0, reqC = 0, pB, pA = 0, pC = 
   return <button onClick={onClk} disabled={!meets} className={`w-full py-2 px-2 font-black text-[10px] tracking-widest rounded-xl flex justify-center gap-2 ${meets ? 'bg-yellow-900/20 border border-yellow-600 text-yellow-500 hover:bg-yellow-900/40' : 'bg-slate-900 border border-slate-800 text-slate-600'}`}>🔒 {title} (${fMny(cost)}) {rT}</button>;
 };
 
+const LockedTierScreen = ({ section }) => {
+  const { setTab } = useGame();
+  const tier = TIERS?.[section];
+  if (!tier) return null;
+
+  return (
+    <div className="flex flex-col items-center justify-center p-8 bg-slate-900/80 border border-slate-700 rounded-2xl text-center gap-4">
+      <div className="text-6xl">🔒</div>
+      <h2 className="text-2xl font-black text-white uppercase tracking-widest">{tier.label} LOCKED</h2>
+      <p className="text-slate-400 text-sm">Reach the required milestones to unlock this sector.</p>
+      <div className="bg-black/50 p-4 rounded-xl border border-slate-800 w-full max-w-xs">
+        <div className="text-[10px] text-slate-500 font-bold mb-2 uppercase">Requirements</div>
+        <div className="flex flex-col gap-1 text-xs font-bold">
+          <div className="flex justify-between">
+            <span className="text-slate-500">Wealth:</span>
+            <span className="text-green-400">${fMny(tier.req.bag)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">Clout:</span>
+            <span className="text-red-400">{tier.req.clout}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">Aura:</span>
+            <span className="text-yellow-400">{tier.req.aura}</span>
+          </div>
+        </div>
+      </div>
+      <button onClick={() => setTab('HUB')} className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors">RETURN TO HUB</button>
+    </div>
+  );
+};
+
 const ExpView = () => {
-  const { pl, peaks, cap } = useGame();
+  const { pl, peaks, cap, hl } = useGame();
+
+  const totalLifetimeIncome = Object.values(hl || {}).reduce((a, b) => a + b, 0);
+  const globalLevel = Math.floor(Math.sqrt(totalLifetimeIncome / 10000)) || 1;
+  const nextMilestone = Math.pow(globalLevel + 1, 2) * 10000;
+  const progress = (totalLifetimeIncome / nextMilestone) * 100;
 
   const stats = [
-    { label: 'Current Aura', val: pl.aura, max: cap, color: 'text-yellow-400', bar: 'bg-yellow-400' },
-    { label: 'Current Clout', val: pl.clout, max: cap, color: 'text-red-400', bar: 'bg-red-400' },
-    { label: 'Peak Wealth', val: `$${fMny(peaks.peakB)}`, color: 'text-green-400' },
-    { label: 'Peak Aura', val: peaks.peakA, color: 'text-yellow-500' },
-    { label: 'Peak Clout', val: peaks.peakC, color: 'text-red-500' },
+    { label: 'Current Aura', val: pl?.aura || 0, max: cap, color: 'text-yellow-400', bar: 'bg-yellow-400' },
+    { label: 'Current Clout', val: pl?.clout || 0, max: cap, color: 'text-red-400', bar: 'bg-red-400' },
+    { label: 'Peak Wealth', val: `$${fMny(peaks?.peakB || 0)}`, color: 'text-green-400' },
+    { label: 'Peak Aura', val: peaks?.peakA || 0, color: 'text-yellow-500' },
+    { label: 'Peak Clout', val: peaks?.peakC || 0, color: 'text-red-500' },
   ];
 
   return (
@@ -132,6 +169,29 @@ const ExpView = () => {
       <div className="bg-slate-900/80 border border-blue-600/50 p-4 rounded-2xl shadow-2xl text-center">
         <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest font-tech">EXP & METRICS</h3>
         <p className="text-[10px] text-slate-500 italic mt-1">"Tracking your ascent to godhood."</p>
+      </div>
+
+      <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex flex-col gap-3">
+        <div className="flex justify-between items-end">
+          <div>
+            <div className="text-[10px] text-slate-500 font-bold uppercase">Global Level</div>
+            <div className="text-3xl font-black text-blue-400">LVL {globalLevel}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-slate-500 font-bold uppercase">Prestige Multiplier</div>
+            <div className="text-xl font-black text-purple-400">1.0x</div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-[10px] font-bold mb-1">
+            <span className="text-slate-400 uppercase">Lifetime Income: ${fMny(totalLifetimeIncome)}</span>
+            <span className="text-blue-400">Next: ${fMny(nextMilestone)}</span>
+          </div>
+          <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
+            <div className="bg-blue-500 h-full transition-all duration-500" style={{ width: `${Math.min(100, progress)}%` }}></div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-2">
@@ -154,15 +214,14 @@ const ExpView = () => {
 };
 
 const FlexesView = () => {
-  const { ass, setAss, pl, setPl, bAss } = useGame();
+  const { ass, pl, bAss } = useGame();
 
   const flexItems = [
-    { key: 'watch', label: 'Luxury Watch', cost: 50000, icon: '⌚' },
-    { key: 'pent',  label: 'Penthouse',     cost: 1000000, icon: '🏢' },
-    { key: 'mans',  label: 'Mansion',      cost: 5000000, icon: '🏡' },
-    { key: 'jet',   label: 'Private Jet',  cost: 20000000, icon: '🛩️' },
-    { key: 'spt',   label: 'Sports Team',  cost: 2000000000, icon: '🏟️' },
-    { key: 'spc',   label: 'Space Corp',   cost: 10000000000, icon: '🚀' },
+    { key: 'watch', label: 'Patek Philippe Watch', cost: 150000, icon: '⌚', clout: 25, yield: 750, yieldType: 'appr' },
+    { key: 'car',   label: 'F1 Precision Supercar', cost: 450000, icon: '🏎️', clout: 150, yield: -8000, yieldType: 'maint' },
+    { key: 'pent',  label: 'Skyline Penthouse',     cost: 8500000, icon: '🏢', clout: 500, aura: 200, yield: 15000, yieldType: 'yield' },
+    { key: 'yct',   label: 'Mega Yacht',            cost: 65000000, icon: '🛥️', clout: 2000, aura: 500, yield: -250000, yieldType: 'maint' },
+    { key: 'spt',   label: 'Pro Basketball Team',   cost: 400000000, icon: '🏀', clout: 10000, aura: 5000, yield: 0, yieldType: 'dynamic' },
   ];
 
   return (
@@ -174,24 +233,34 @@ const FlexesView = () => {
 
       <div className="grid grid-cols-1 gap-2">
         {flexItems.map(item => {
-          const owned = ass[item.key];
-          const canAfford = pl.bag >= item.cost;
+          const owned = ass?.[item.key];
+          const canAfford = (pl?.bag || 0) >= item.cost;
           return (
             <div key={item.key} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${owned ? 'bg-green-900/20 border-green-700' : 'bg-slate-900/60 border-slate-800'}`}>
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{item.icon}</span>
-                <div>
-                  <div className={`font-black tracking-widest ${owned ? 'text-green-400' : 'text-white'}`}>{item.label.toUpperCase()}</div>
-                  <div className="text-xs text-slate-500 font-bold">${fMny(item.cost)}</div>
+                <div className="flex flex-col">
+                  <div className={`font-black tracking-widest text-xs ${owned ? 'text-green-400' : 'text-white'}`}>{item.label.toUpperCase()}</div>
+                  <div className="text-[10px] text-slate-400 font-bold">Cost: ${fMny(item.cost)}</div>
+                  <div className="text-[9px] text-slate-500">
+                    {item.clout && <span className="text-red-400">+{item.clout} Clout </span>}
+                    {item.aura && <span className="text-yellow-400">+{item.aura} Aura </span>}
+                  </div>
+                  <div className={`text-[9px] font-bold ${item.yield > 0 ? 'text-green-500' : item.yield < 0 ? 'text-red-500' : 'text-blue-400'}`}>
+                    {item.yieldType === 'appr' && `Yield: +$${fMny(item.yield)}/mo appreciation`}
+                    {item.yieldType === 'maint' && `Maint: -$${fMny(Math.abs(item.yield))}/mo depreciation`}
+                    {item.yieldType === 'yield' && `Yield: +$${fMny(item.yield)}/mo rental income`}
+                    {item.yieldType === 'dynamic' && `Maint: Dynamic Payroll Modifiers`}
+                  </div>
                 </div>
               </div>
               {owned ? (
-                <div className="text-green-500 font-black text-xs tracking-widest">OWNED ✓</div>
+                <div className="text-green-500 font-black text-xs tracking-widest shrink-0">OWNED ✓</div>
               ) : (
                 <button
-                  onClick={() => bAss(item.key, item.cost, item.label)}
+                  onClick={() => bAss(item.key, item.cost, item.label, item.clout || 0, item.aura || 0)}
                   disabled={!canAfford}
-                  className={`px-4 py-2 rounded-lg font-black text-xs tracking-widest transition-all ${canAfford ? 'bg-yellow-500 text-black hover:bg-yellow-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                  className={`px-4 py-2 rounded-lg font-black text-xs tracking-widest transition-all shrink-0 ${canAfford ? 'bg-yellow-500 text-black hover:bg-yellow-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
                 >
                   BUY
                 </button>
@@ -333,17 +402,30 @@ const TierHub = () => {
   const hustleMap = {
     'SW': { label: 'Streetwear', icon: '👕' },
     'DROP': { label: 'Dropship', icon: '📦' },
+    'TECH_FLIP': { label: 'Tech Flipping', icon: '💻', stub: true },
+    'VINTAGE': { label: 'Vintage Reselling', icon: '👕', stub: true },
+    'SMM': { label: 'SMM Micro-Agency', icon: '📱', stub: true },
+    'GIG': { label: 'Gig Runner Network', icon: '🏃', stub: true },
     'CC': { label: 'Creator Lab', icon: '📱' },
     'POD': { label: 'Podcast Net', icon: '🎙️' },
     'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
+    'AUDIO': { label: 'Indie Audio Syndicate', icon: '🎵', stub: true },
     'TECH': { label: 'SaaS Startup', icon: '💻' },
+    'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖', stub: true },
+    'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢', stub: true },
+    'FRANCHISE': { label: 'National Franchise', icon: '🍟', stub: true },
     'CRYP': { label: 'Web3 Hedge', icon: '🪙' },
     'TOUR': { label: 'Events', icon: '🎪' },
+    'PE_ROLLUP': { label: 'Private Equity', icon: '📊', stub: true },
+    'ART_SPEC': { label: 'Art Speculation', icon: '🎨', stub: true },
     'HF': { label: 'Hedge Fund', icon: '📈' },
-    'AI': { label: 'AGI Super-Lab', icon: '🧠' },
-    'MOV': { label: 'Movie Studio', icon: '🎬' },
-    'BILL': { label: 'Flex & Legacy', icon: '💎' },
-    'PRES': { label: 'POTUS', icon: '🇺🇸' }
+    'COMMODITIES': { label: 'Lithium Supply Chain', icon: '🔋', stub: true },
+    'PMC': { label: 'Private Military', icon: '🎖️', stub: true },
+    'SOVEREIGN': { label: 'Sovereign Debt', icon: '📜', stub: true },
+    'PAC': { label: 'Super PAC', icon: '🇺🇸' },
+    'BLITZ': { label: 'Media Blitz', icon: '📣' },
+    'SMEAR': { label: 'Smear Campaigns', icon: '🔥' },
+    'ELECTION': { label: 'ELECTION DAY', icon: '🗳️' }
   };
 
   return (
@@ -354,37 +436,51 @@ const TierHub = () => {
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">CASH FLOW</div>
-                <div className="text-2xl font-black text-green-400 font-hack">${fMny(displayBag)}</div>
+                <div className="text-2xl font-black text-green-400 font-hack">${fMny(displayBag || 0)}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">AURA / CLOUT</div>
-                <div className="text-lg font-black text-white">{pl.aura} <span className="text-yellow-500">A</span> / {pl.clout} <span className="text-red-500">C</span></div>
+                <div className="text-lg font-black text-white">{pl?.aura || 0} <span className="text-yellow-500">A</span> / {pl?.clout || 0} <span className="text-red-500">C</span></div>
               </div>
             </div>
           </div>
 
           <div className="col-span-2 bg-slate-900/80 rounded-xl p-3 border border-slate-700">
             <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center uppercase">📡 MARKET INTEL</div>
-            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt].n}</div>
-            <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt].desc}</p>
+            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
+            <p className="text-slate-400 text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
           </div>
         </>
       )}
 
-      {tier.hustles.map(hKey => {
+      {tier?.hustles?.map(hKey => {
         const h = hustleMap[hKey];
+        if (!h) return null;
+        const isStub = h.stub;
+
         return (
-          <button
-            key={hKey}
-            onClick={() => !isLocked && setTab(hKey)}
-            className={`py-6 px-2 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
-              ${isLocked
-                ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
-                : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
-          >
-            <span className="text-2xl">{h.icon}</span>
-            <span>{isLocked ? '🔒 ' : ''}{h.label.toUpperCase()}</span>
-          </button>
+          <div key={hKey} className="relative">
+            <button
+              onClick={() => !isLocked && !isStub && setTab?.(hKey)}
+              className={`w-full py-6 px-2 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-center gap-2
+                ${isLocked || isStub
+                  ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                  : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
+            >
+              <span className="text-2xl">{h.icon}</span>
+              <span>{h.label.toUpperCase()}</span>
+              {isStub && <span className="text-[8px] text-yellow-600">UNDER CONSTRUCTION</span>}
+            </button>
+            {isLocked && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-2 text-center border border-slate-800 pointer-events-none">
+                <span className="text-xl mb-1">🔒</span>
+                <div className="text-[8px] font-black text-red-500 uppercase tracking-tighter">Locked Sector</div>
+                <div className="text-[7px] text-slate-400 mt-1">
+                  Req: ${fMny(tier.req.bag)} | {tier.req.clout} C | {tier.req.aura} A
+                </div>
+              </div>
+            )}
+          </div>
         );
       })}
 
@@ -726,56 +822,153 @@ const BillTab = () => {
   );
 };
 
-const PresTab = () => {
-  const { pl, prs, setPrs, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, setTab, adv, setPl } = useGame();
+const SuperPacTab = () => {
+  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
+  const [deposit, setDeposit] = useState(10000000);
+
   return (
-    <LabShell t="POTUS WAR ROOM" c="red" fontCls="font-gov" onHub={() => setTab('HUB')}>
-      {prs.cd > 0 ? (
-        <div className="p-8 text-center bg-red-900/20 text-red-500 font-black tracking-widest rounded-xl font-gov">POLITICAL EXILE ({prs.cd} MO)</div>
-      ) : !prs.r ? <>
-        <div className="bg-red-900/20 border border-red-800/50 p-3 rounded-xl text-center">
-          <div className="text-red-400 font-black text-sm tracking-widest font-gov">PHASE 1: SHADOW CAMPAIGN</div>
-          <div className="text-slate-500 text-[10px] mt-1">One-time pre-campaign moves. Stack tokens before going public.</div>
+    <LabShell t="SUPER PAC FUNDRAISING" c="red" fontCls="font-gov" onHub={() => setTab('HUB')}>
+      <div className="bg-slate-900/80 p-6 rounded-2xl border border-red-800 text-center flex flex-col gap-4">
+        <div className="text-4xl font-black text-white font-gov">${fMny(prs?.chest || 0)}</div>
+        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Campaign War Chest</div>
+
+        <Stepper val={deposit} setVal={setDeposit} min={1000000} max={pl?.bag || 0} step={1000000} label="Deposit Amt" />
+
+        <FlashBtn
+          onClick={async () => {
+            if ((pl?.bag || 0) < deposit) return;
+            setPl(p => ({ ...p, bag: p.bag - deposit }));
+            setPrs(p => ({ ...p, chest: (p.chest || 0) + deposit }));
+            return -deposit;
+          }}
+          dis={(pl?.bag || 0) < deposit}
+          label={`DEPOSIT INTO PAC - $${fMny(deposit)}`}
+          color="red"
+          txt="white"
+        />
+      </div>
+    </LabShell>
+  );
+};
+
+const BlitzTab = () => {
+  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
+
+  const runBlitz = async () => {
+    const cost = 50000000;
+    const cloutCost = 100;
+    if ((pl?.bag || 0) < cost || (pl?.clout || 0) < cloutCost) return;
+
+    setPl(p => ({ ...p, bag: p.bag - cost, clout: p.clout - cloutCost }));
+    const gain = 2 + Math.random() * 3;
+    setPrs(p => ({ ...p, polls: Math.min(100, (p.polls || 0) + gain) }));
+    adv();
+    return -cost;
+  };
+
+  return (
+    <LabShell t="MEDIA BLITZ & PROPAGANDA" c="blue" fontCls="font-gov" onHub={() => setTab('HUB')}>
+      <div className="bg-slate-900/80 p-6 rounded-2xl border border-blue-800 text-center flex flex-col gap-4">
+        <div className="text-5xl font-black text-blue-400 font-gov">{(prs?.polls || 0).toFixed(1)}%</div>
+        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Current Polls</div>
+
+        <div className="bg-black/50 h-4 rounded-full border border-slate-800 overflow-hidden">
+          <div className="bg-blue-500 h-full transition-all duration-1000 shadow-[0_0_15px_#3b82f6]" style={{ width: `${prs?.polls || 0}%` }}></div>
         </div>
-        {prs.p1tt
-          ? <div className="w-full p-2 bg-green-900/30 border border-green-700 text-green-400 text-center font-bold text-[10px] tracking-widest rounded-xl">✓ THINK TANK {prs.sh ? '— 🛡️ MEDIA SHIELD READY' : '(FAILED)'}</div>
-          : <FlashBtn onClick={rPrs1TT} dis={pl.bag < 100000000 || pl.clout < 20} label="FUND THINK TANK ($100M + 20 CLOUT)" />}
-        {prs.p1op
-          ? <div className="w-full p-2 bg-green-900/30 border border-green-700 text-green-400 text-center font-bold text-[10px] tracking-widest rounded-xl">✓ OPPO RESEARCH {prs.ot ? '— 💣 OCT SURPRISE LOADED' : '(FAILED — DOJ FINE)'}</div>
-          : <FlashBtn onClick={rPrs1OP} dis={pl.bag < 150000000 || pl.aura < 30} label="OPPO RESEARCH ($150M + 30 AURA)" />}
-        {prs.p1et
-          ? <div className="w-full p-2 bg-green-900/30 border border-green-700 text-green-400 text-center font-bold text-[10px] tracking-widest rounded-xl">✓ EXPLORATORY TOUR — BASE POLLS +2% ALL</div>
-          : <FlashBtn onClick={rPrs1ET} dis={pl.bag < 50000000 || pl.clout < 25} label="EXPLORATORY TOUR ($50M + 25 CLOUT)" />}
-        <div className="border-t border-slate-700 pt-2 mt-1">
-          <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-2 text-center">SELECT VP PICK</div>
-          <Toggles opts={['Establishment', 'Maverick', 'Nepo']} active={prs.vp} setVal={v => setPrs(pr => ({ ...pr, vp: v }))} color="red" />
-          <div className="mt-2">
-            <FlashBtn onClick={async () => {
-              if (pl.bag < 105000000) return undefined;
-              await new Promise(r => setTimeout(r, 2000));
-              setPl(p => ({ ...p, bag: p.bag - 100000000 }));
-              setPrs({ r: true, m: 0, cd: 0, rem: prs.rem, rst: (prs.rem ? 42 : 35) + (prs.p1et ? 2 : 0), sun: (prs.rem ? 42 : 35) + (prs.p1et ? 2 : 0), sub: (prs.rem ? 42 : 35) + (prs.p1et ? 2 : 0), vp: prs.vp, fr: false, vu: false, du: false, sh: prs.sh, ot: prs.ot, p1tt: prs.p1tt, p1op: prs.p1op, p1et: prs.p1et, ev: { d1: false, d2: false, o: false } });
-              adv(); return -100000000;
-            }} dis={pl.bag < 105000000} label="ANNOUNCE CANDIDACY ($100M — REQUIRES $105M BUFFER)" color="red" txt="white" />
+
+        <FlashBtn
+          onClick={runBlitz}
+          dis={(pl?.bag || 0) < 50000000 || (pl?.clout || 0) < 100}
+          label="RUN NATIONAL BLITZ ($50M + 100 CLOUT)"
+          color="blue"
+          txt="white"
+        />
+        <p className="text-[9px] text-slate-500 italic">"Flood the airwaves with tailored narratives."</p>
+      </div>
+    </LabShell>
+  );
+};
+
+const SmearTab = () => {
+  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
+
+  const runSmear = async () => {
+    const cost = 25000000;
+    const auraCost = 50;
+    if ((pl?.bag || 0) < cost || (pl?.aura || 0) < auraCost) return;
+
+    setPl(p => ({ ...p, bag: p.bag - cost, aura: p.aura - auraCost }));
+    // In this simplified version, smear increases your lead
+    const gain = 1 + Math.random() * 2;
+    setPrs(p => ({ ...p, polls: Math.min(100, (p.polls || 0) + gain) }));
+    adv();
+    return -cost;
+  };
+
+  return (
+    <LabShell t="SMEAR CAMPAIGNS" c="orange" fontCls="font-gov" onHub={() => setTab('HUB')}>
+      <div className="bg-slate-900/80 p-6 rounded-2xl border border-orange-800 text-center flex flex-col gap-4">
+        <div className="text-3xl font-black text-orange-500 uppercase tracking-tighter">Mudslinging Active</div>
+        <FlashBtn
+          onClick={runSmear}
+          dis={(pl?.bag || 0) < 25000000 || (pl?.aura || 0) < 50}
+          label="SMEAR RIVAL ($25M + 50 AURA)"
+          color="orange"
+          txt="white"
+        />
+        <p className="text-[9px] text-slate-500">Target rival's character to swing undecided voters.</p>
+      </div>
+    </LabShell>
+  );
+};
+
+const ElectionTab = () => {
+  const { prs, pl, setTab, setMod } = useGame();
+  const ready = (prs?.polls || 0) >= 51;
+  const tier6Achieved = (pl?.tier || 0) >= 5;
+
+  return (
+    <LabShell t="ELECTION DAY" c="green" fontCls="font-gov" onHub={() => setTab('HUB')}>
+      <div className="bg-slate-900/80 p-8 rounded-2xl border border-green-800 text-center flex flex-col gap-6">
+        <div className="text-6xl mb-2">{ready ? '🗳️' : '🔒'}</div>
+        <h3 className="text-2xl font-black text-white uppercase tracking-widest">The Ballot</h3>
+
+        <div className="bg-black/40 p-4 rounded-xl border border-slate-800">
+          <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Threshold Required</div>
+          <div className="text-xl font-black text-green-400">51.0% POLLS</div>
+          <div className="text-sm text-slate-400 mt-1">Current: {(prs?.polls || 0).toFixed(1)}%</div>
+        </div>
+
+        <button
+          onClick={() => {
+            if (!ready) return;
+            setMod({
+              s: true,
+              t: "PRESIDENTIAL VICTORY",
+              m: "The people have spoken. You are the Commander in Chief.",
+              o: [{ label: "ASCEND TO OVAL OFFICE", action: () => window.location.reload() }],
+              ui: "ui-modal"
+            });
+          }}
+          disabled={!ready}
+          className={`w-full py-6 rounded-2xl font-black text-xl tracking-widest transition-all ${ready ? 'bg-green-600 text-white shadow-[0_0_30px_#16a34a] hover:bg-green-500' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+        >
+          {ready ? 'SUBMIT BALLOT' : 'BALLOT LOCKED'}
+        </button>
+
+        <div className="mt-4 pt-6 border-t border-slate-800 text-left">
+          <h4 className="text-[10px] text-slate-500 font-bold uppercase mb-3 tracking-widest">Special Sub-Section</h4>
+          <div className={`p-4 rounded-xl border transition-all flex items-center gap-4 ${tier6Achieved ? 'bg-indigo-900/20 border-indigo-700' : 'bg-slate-800/40 border-slate-700 opacity-50 grayscale'}`}>
+            <span className="text-3xl">🤖</span>
+            <div>
+              <div className="font-black text-xs text-white uppercase tracking-wide">Mud Tier AI Overseer Bot</div>
+              <div className="text-[9px] text-slate-400 font-bold">
+                {tier6Achieved ? 'SYSTEM ONLINE - AUTOMATING LOW-TIER OPERATIONS' : 'LOCKED - REQUIRES TIER 6 ASCENSION'}
+              </div>
+            </div>
           </div>
         </div>
-      </> : <div className="flex flex-col gap-2">
-        <div className="text-center font-black text-xl text-white bg-slate-900 p-2 rounded-lg border border-slate-700 font-gov">{12 - prs.m} MO LEFT</div>
-        {['rst', 'sun', 'sub'].map(r => (
-          <div key={r} className="bg-black/50 p-2 rounded-lg border border-slate-800">
-            <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-1"><span className={r === 'rst' ? 'text-yellow-400' : r === 'sun' ? 'text-green-400' : 'text-red-400'}>{r === 'rst' ? 'Rust Belt' : r === 'sun' ? 'Sun Belt' : 'Suburbs'}</span><span className="text-white">{prs[r].toFixed(1)}%</span></div>
-            <div className="bg-slate-900 h-2 rounded-full"><div className={`${prs[r] >= 51 ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-slate-500'} h-full rounded-full transition-all`} style={{ width: `${Math.min(100, prs[r])}%` }}></div></div>
-          </div>
-        ))}
-        <div className="text-[10px] text-slate-500 font-bold tracking-widest text-center mt-1">AIR WAR & GROUND GAME</div>
-        <FlashBtn onClick={() => rPrsA('tv')} dis={pl.bag < 100000000 || pl.clout < 10} label="NATIONAL TV BUY ($100M + 10 C)" color="blue" txt="white" />
-        <FlashBtn onClick={() => rPrsA('smear')} dis={pl.aura < 25} label="SMEAR OPP (25 AURA)" />
-        <FlashBtn onClick={() => rPrsA('gala')} label="GALA (+$200M)" color="yellow" txt="black" />
-        <div className="grid grid-cols-2 gap-2 mt-1 pt-2 border-t border-slate-700">
-          <button onClick={dVp} disabled={prs.vu} className={`w-full p-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors ${!prs.vu ? 'bg-slate-800 text-white border border-slate-600 hover:bg-slate-700' : 'bg-slate-900 text-slate-700 border border-slate-800 cursor-not-allowed'}`}>Deploy VP Action</button>
-          <button onClick={() => { void dDef(); }} disabled={prs.du || pl.bag < 75000000 || pl.clout < 20} className={`w-full p-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors ${(!prs.du && pl.bag >= 75000000 && pl.clout >= 20) ? 'bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60' : 'bg-slate-900 text-slate-700 border border-slate-800 cursor-not-allowed'}`}>Black Ops ($75M)</button>
-        </div>
-      </div>}
+      </div>
     </LabShell>
   );
 };
@@ -783,8 +976,12 @@ const PresTab = () => {
 // ─── Main game interface ──────────────────────────────────────────────────────
 
 const GameInterface = () => {
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks } = useGame();
-  const busy = gBusy || imp.some(i => !i.w);
+  const game = useGame();
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier } = game || {};
+
+  if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
+
+  const busy = gBusy || imp?.some(i => !i.w);
   const cancelIntroStyles = { userSelect: 'none', pointerEvents: 'none' };
 
   if (cancelIntro) {
@@ -792,17 +989,17 @@ const GameInterface = () => {
       <div className="min-h-screen bg-black text-white font-hack flex flex-col items-center justify-center p-4 text-center animate-shake-hard select-none" style={cancelIntroStyles}>
         <div className="text-8xl mb-6 animate-pulse">🚫</div>
         <h1 className="text-6xl font-black text-red-500 mb-4 tracking-widest drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] font-hype">CANCELLED</h1>
-        <p className="text-slate-300 text-xl max-w-sm leading-relaxed mb-6">{cancelIntro.r}</p>
-        <p className="text-pink-400 font-bold text-lg italic">"{cancelIntro.i}"</p>
+        <p className="text-slate-300 text-xl max-w-sm leading-relaxed mb-6">{cancelIntro?.r}</p>
+        <p className="text-pink-400 font-bold text-lg italic">"{cancelIntro?.i}"</p>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${prs.r ? 'bg-oval' : ass.mans ? 'bg-mansion' : ass.pent ? 'bg-penthouse' : 'bg-basement'} ${busy ? 'animate-shake-hard' : ''} ${pl.aura < 20 ? 'aura-panic' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${busy ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
 
       {/* Floating impacts */}
-      {imp.map(i => i.kind === 'bag'
+      {imp?.map(i => i.kind === 'bag'
         ? <div key={i.id} className={`impact-text ${i.w ? 'text-green-400' : 'text-red-500'}`}>{i.w ? '+' : '-'}${fMny(Math.abs(i.a))}</div>
         : i.kind === 'aura'
         ? <div key={i.id} className="impact-aura">{i.a > 0 ? '+' : ''}{i.a} AURA</div>
@@ -813,12 +1010,12 @@ const GameInterface = () => {
       ))}
 
       {/* Modal */}
-      {mod.s && (
+      {mod?.s && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
-          <div className={`p-8 w-full max-w-sm ${mod.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)]`}>
-            <h2 className="text-3xl font-black mb-4 text-white tracking-widest">{mod.t}</h2>
-            <p className="mb-8 text-slate-300 text-lg">{mod.m}</p>
-            <div className="flex flex-col gap-3">{mod.o.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">{o.label}</button>)}</div>
+          <div className={`p-8 w-full max-w-sm ${mod?.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)]`}>
+            <h2 className="text-3xl font-black mb-4 text-white tracking-widest">{mod?.t}</h2>
+            <p className="mb-8 text-slate-300 text-lg">{mod?.m}</p>
+            <div className="flex flex-col gap-3">{mod?.o?.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700">{o.label}</button>)}</div>
           </div>
         </div>
       )}
@@ -829,68 +1026,79 @@ const GameInterface = () => {
           <div className="flex-shrink-0">
             <div className="text-[9px] font-bold text-slate-400 tracking-widest leading-none mb-0.5 font-hack">NET WORTH — {alias || 'ANON'}</div>
             <div className="flex items-center gap-1.5">
-              {displayBag >= 1000000000
-                ? <div className="text-2xl font-black billionaire-bag leading-none">${fMny(displayBag)}</div>
-                : <div className="text-2xl font-black text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)] leading-none font-hack">${fMny(displayBag)}</div>
+              {(displayBag || 0) >= 1000000000
+                ? <div className="text-2xl font-black billionaire-bag leading-none">${fMny(displayBag || 0)}</div>
+                : <div className="text-2xl font-black text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)] leading-none font-hack">${fMny(displayBag || 0)}</div>
               }
-              <div className="text-lg">{prs.r ? '🇺🇸' : ass.mans ? '🤳😎' : ass.pent ? '🕴️💎' : '🧢🎒'}</div>
+              <div className="text-lg">{prs?.r ? '🇺🇸' : ass?.mans ? '🤳😎' : ass?.pent ? '🕴️💎' : '🧢🎒'}</div>
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-1 min-w-0">
             <div>
-              <div className="flex justify-between text-[9px] font-bold text-yellow-400 tracking-widest leading-none"><span>AURA</span><span>{pl.aura}/{cap}</span></div>
-              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-yellow-400 h-full rounded-full aura-glow transition-all" style={{ width: `${Math.min(100, (pl.aura / cap) * 100)}%` }}></div></div>
+              <div className="flex justify-between text-[9px] font-bold text-yellow-400 tracking-widest leading-none"><span>AURA</span><span>{pl?.aura || 0}/{cap || 500}</span></div>
+              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-yellow-400 h-full rounded-full aura-glow transition-all" style={{ width: `${Math.min(100, ((pl?.aura || 0) / (cap || 500)) * 100)}%` }}></div></div>
             </div>
             <div>
-              <div className="flex justify-between text-[9px] font-bold text-red-400 tracking-widest leading-none"><span>CLOUT</span><span>{pl.clout}/{cap}</span></div>
-              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-red-500 h-full rounded-full clout-glow transition-all" style={{ width: `${Math.min(100, (pl.clout / cap) * 100)}%` }}></div></div>
+              <div className="flex justify-between text-[9px] font-bold text-red-400 tracking-widest leading-none"><span>CLOUT</span><span>{pl?.clout || 0}/{cap || 500}</span></div>
+              <div className="bg-black/50 h-1.5 rounded-full mt-0.5 border border-slate-700"><div className="bg-red-500 h-full rounded-full clout-glow transition-all" style={{ width: `${Math.min(100, ((pl?.clout || 0) / (cap || 500)) * 100)}%` }}></div></div>
             </div>
           </div>
           <div className="text-[9px] font-hack text-slate-400 text-right leading-relaxed flex-shrink-0">
             <div>AGE <span className="text-white font-bold">{age}</span></div>
-            <div>MO <span className="text-white font-bold">{pl.mo % 12 + 1}</span></div>
-            <div><span className={`font-bold ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt].n}</span></div>
+            <div>MO <span className="text-white font-bold">{(pl?.mo || 0) % 12 + 1}</span></div>
+            <div><span className={`font-bold ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</span></div>
           </div>
         </div>
         {/* Tab bar */}
-        <div className="flex gap-1 overflow-x-auto mt-2 pb-1 scrollbar-hide">
-          {TABS.map(tb => {
-            const unlocked = tb.id === 'HUB' || isTierUnlocked(tb.section);
-            const req = TIER_UNLOCKS[tb.section];
+        <div className="flex gap-1 overflow-x-auto mt-2 pb-1 scrollbar-hide items-center">
+          {TIERS?.map((t, idx) => {
+            const unlocked = (pl?.tier || 0) >= idx;
             return (
-              <button key={tb.id} onClick={() => unlocked && setTab(tb.id)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-colors ${tb.cls} ${!unlocked ? 'bg-slate-900/80 text-slate-600 cursor-not-allowed border border-slate-800' : tab === tb.id ? 'bg-white text-black' : tb.section === 'pres' ? 'bg-red-900/40 text-red-400 border border-red-800/60' : tb.section === 'god' ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                {unlocked ? tb.label : `🔒 ${tb.label}`}
+              <button key={t.id} onClick={() => { setSelTier(idx.toString()); setTab('HUB'); }}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === idx.toString() ? 'bg-white text-black' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'} ${!unlocked ? 'opacity-60' : ''}`}>
+                {unlocked ? t.label.toUpperCase() : `🔒 ${t.label.toUpperCase()}`}
               </button>
             );
           })}
+          <span className="text-slate-700 mx-1">|</span>
+          <button onClick={() => { setSelTier('flexes'); setTab('HUB'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === 'flexes' ? 'bg-white text-black' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+            FLEXES
+          </button>
+          <button onClick={() => { setSelTier('exp'); setTab('HUB'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === 'exp' ? 'bg-white text-black' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+            EXP POINTS
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-3 pb-16">
         <div className="max-w-xl mx-auto">
-          {tab === 'HUB'  && <HubTab />}
-          {tab === 'SW'   && (isTierUnlocked('core') ? <SwTab /> : <LockedTierScreen section="core" />)}
-          {tab === 'DROP' && (isTierUnlocked('core') ? <DropTab /> : <LockedTierScreen section="core" />)}
-          {tab === 'CC'   && (isTierUnlocked('core') ? <CcTab /> : <LockedTierScreen section="core" />)}
-          {tab === 'POD'  && (isTierUnlocked('core') ? <PodTab /> : <LockedTierScreen section="core" />)}
-          {tab === 'BOX'  && (isTierUnlocked('empire') ? <BoxTab /> : <LockedTierScreen section="empire" />)}
-          {tab === 'TOUR' && (isTierUnlocked('empire') ? <TourTab /> : <LockedTierScreen section="empire" />)}
-          {tab === 'TECH' && (isTierUnlocked('empire') ? <TechTab /> : <LockedTierScreen section="empire" />)}
-          {tab === 'CRYP' && (isTierUnlocked('empire') ? <CrpTab /> : <LockedTierScreen section="empire" />)}
-          {tab === 'MOV'  && (isTierUnlocked('god') ? <MovTab /> : <LockedTierScreen section="god" />)}
-          {tab === 'HF'   && (isTierUnlocked('god') ? <HfTab /> : <LockedTierScreen section="god" />)}
-          {tab === 'AI'   && (isTierUnlocked('god') ? <AiTab /> : <LockedTierScreen section="god" />)}
-          {tab === 'BILL' && (isTierUnlocked('god') ? <BillTab /> : <LockedTierScreen section="god" />)}
-          {tab === 'PRES' && (isTierUnlocked('pres') ? <PresTab /> : <LockedTierScreen section="pres" />)}
+          {tab === 'HUB'  && <TierHub />}
+          {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'DROP' && (isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />)}
+          {tab === 'CC'   && (isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />)}
+          {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
+          {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
+          {tab === 'TECH' && (isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />)}
+          {tab === 'CRYP' && (isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />)}
+          {tab === 'TOUR' && (isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />)}
+          {tab === 'MOV'  && (isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'HF'   && (isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'AI'   && (isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'BILL' && (isTierUnlocked?.(4) ? <BillTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'PAC'      && (isTierUnlocked?.(5) ? <SuperPacTab /> : <LockedTierScreen section={5} />)}
+          {tab === 'BLITZ'    && (isTierUnlocked?.(5) ? <BlitzTab />    : <LockedTierScreen section={5} />)}
+          {tab === 'SMEAR'    && (isTierUnlocked?.(5) ? <SmearTab />    : <LockedTierScreen section={5} />)}
+          {tab === 'ELECTION' && (isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />)}
         </div>
       </div>
 
       {/* News ticker */}
       <div className="ticker-wrap">
         <div className="ticker">
-          {news.map((n, i) => <span key={i} className="mx-12" dangerouslySetInnerHTML={{ __html: n }} />)}
+          {news?.map((n, i) => <span key={i} className="mx-12" dangerouslySetInnerHTML={{ __html: n }} />)}
           <span className="mx-12 text-slate-500">/// END FEED ///</span>
         </div>
       </div>
