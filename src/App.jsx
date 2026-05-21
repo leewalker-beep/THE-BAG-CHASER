@@ -482,7 +482,7 @@ const Prologue = () => {
 // ─── HUB tab ──────────────────────────────────────────────────────────────────
 
 const TierHub = () => {
-  const { pl, mkt, news, skl, diff, cap, adv, setTab, selTier, setSelTier, displayBag, rRest } = useGame();
+  const { pl, mkt, news, skl, diff, cap, adv, setTab, selTier, setSelTier, displayBag, rRest, rRetire, setMod } = useGame();
 
   if (selTier === 'flexes') return <FlexesView />;
   if (selTier === 'flexShop') return <FlexShopView />;
@@ -551,6 +551,27 @@ const TierHub = () => {
           ENTER THE FLEX SHOP
         </button>
       </div>
+
+      {(pl.tier >= 5 && pl.bag >= 500000000) && (
+        <div className="grid grid-cols-1">
+          <button
+            onClick={() => setMod({
+              s: true,
+              t: "ASCEND & RETIRE",
+              m: "Hand down your empire to your heir. You will lose your current cash, assets, and tiers, but your heir will inherit a permanent +25% multiplier to all future income. Continue the dynasty?",
+              o: [
+                { label: "CONFIRM ASCENSION", action: () => { rRetire(); setMod({ s: false }); } },
+                { label: "CANCEL", action: () => setMod({ s: false }) }
+              ],
+              ui: "ui-modal"
+            })}
+            className="w-full py-4 bg-yellow-900/40 border-2 border-yellow-500 rounded-xl font-black text-yellow-400 tracking-widest hover:bg-yellow-800/40 transition-all active:scale-95 duration-100 flex items-center justify-center gap-3 animate-pulse"
+          >
+            <span className="text-2xl">👑</span>
+            RETIRE & HAND DOWN EMPIRE
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-5">
 
@@ -1679,7 +1700,7 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge, karmaFlags } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge, karmaFlags, generationCount } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
@@ -1711,6 +1732,12 @@ const GameInterface = () => {
           </span>
         </div>
         <div className="flex gap-4 items-center">
+          {generationCount > 0 && (
+            <div className="flex flex-col items-center px-3 border-x border-slate-800">
+              <span className="text-[8px] font-black text-blue-400 uppercase tracking-tighter leading-none mb-1">Dynasty</span>
+              <span className="text-sm font-black text-blue-400 leading-none">GEN #{generationCount} HEIR</span>
+            </div>
+          )}
           <div className="flex flex-col items-center">
             <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Clout</span>
             <span className="text-sm font-black text-red-500 leading-none">{pl?.clout || 0}</span>
