@@ -108,7 +108,7 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
 };
 
 const LabShell = ({ t, c, f, onHub, children, fontCls = '', hustleKey }) => {
-  const { hustleFatigue } = useGame();
+  const { hustleFatigue, setTab } = useGame();
   const fatigue = hustleFatigue?.[hustleKey] || 0;
   const isFatigued = fatigue > 50;
 
@@ -124,7 +124,7 @@ const LabShell = ({ t, c, f, onHub, children, fontCls = '', hustleKey }) => {
         {f && <p className="text-[10px] text-slate-300 drop-shadow-sm italic">"{f}"</p>}
       </div>
       {children}
-      <button onClick={onHub} className="w-full py-2 px-3 mt-1 bg-slate-800 text-white text-xs font-bold tracking-widest rounded-xl hover:bg-slate-700">🏠 EMPIRE HUB</button>
+      <button onClick={() => setTab('HUB')} className="w-full py-2 px-3 mt-1 bg-slate-800 text-white text-xs font-bold tracking-widest rounded-xl hover:bg-slate-700">🏠 EMPIRE HUB</button>
     </div>
   );
 };
@@ -229,6 +229,61 @@ const ExpView = () => {
           </div>
         ))}
       </div>
+    </div>
+  );
+};
+
+const FlexShopView = () => {
+  const { ass, pl, bAss, setTab, setSelTier } = useGame();
+
+  const shopItems = [
+    { key: 'hePent',    label: 'Ultra High-End Penthouse', cost: 5000000,  icon: '🏙️', desc: 'Accelerates Mental Health recovery speed by 100%.' },
+    { key: 'cmYct',     label: 'Custom Mega-Yacht',        cost: 50000000, icon: '🛳️', desc: 'Massively expands max Clout caps by 10x.' },
+    { key: 'legalTeam', label: 'Elite Legal Defense',      cost: 0,        icon: '⚖️', desc: 'Halves risk metrics and reduces tragedy penalties. Monthly $1M retainer.', retainer: 1000000 },
+  ];
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="bg-slate-900/80 border border-blue-600/50 p-4 rounded-2xl shadow-2xl text-center">
+        <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest font-hype">THE FLEX SHOP</h3>
+        <p className="text-[10px] text-slate-300 drop-shadow-sm italic mt-1">"Scalable money sinks for the late-game elite."</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        {shopItems.map(item => {
+          const owned = ass?.[item.key];
+          const canAfford = (pl?.bag || 0) >= item.cost;
+          return (
+            <div key={item.key} className={`p-6 rounded-xl border flex flex-col gap-3 transition-all ${owned ? 'bg-blue-900/20 border-blue-700' : 'bg-slate-900/60 border-slate-800'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{item.icon}</span>
+                  <div className="flex flex-col">
+                    <div className={`font-black tracking-widest text-xs ${owned ? 'text-blue-400' : 'text-white'}`}>{item.label.toUpperCase()}</div>
+                    <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold">
+                      {item.cost > 0 ? `Cost: $${fMny(item.cost)}` : 'RETAINER ONLY'}
+                      {item.retainer && <span className="text-red-400"> | Retainer: ${fMny(item.retainer)}/mo</span>}
+                    </div>
+                  </div>
+                </div>
+                {owned ? (
+                  <div className="text-blue-500 font-black text-xs tracking-widest shrink-0">ACTIVE ✓</div>
+                ) : (
+                  <button
+                    onClick={() => bAss(item.key, item.cost, item.label, 0, 0)}
+                    disabled={!canAfford}
+                    className={`px-4 py-2 rounded-lg font-black text-xs tracking-widest transition-all shrink-0 ${canAfford ? 'bg-blue-500 text-white hover:bg-blue-400 shadow-[0_0_15px_#3b82f6]' : 'bg-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}
+                  >
+                    ACQUIRE
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-300 leading-relaxed italic">"{item.desc}"</p>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={() => { setSelTier(pl.tier.toString()); setTab('HUB'); }} className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors">RETURN TO HUB</button>
     </div>
   );
 };
@@ -415,9 +470,10 @@ const Prologue = () => {
 // ─── HUB tab ──────────────────────────────────────────────────────────────────
 
 const TierHub = () => {
-  const { pl, mkt, news, skl, diff, cap, adv, setTab, selTier, displayBag } = useGame();
+  const { pl, mkt, news, skl, diff, cap, adv, setTab, selTier, setSelTier, displayBag, rRest } = useGame();
 
   if (selTier === 'flexes') return <FlexesView />;
+  if (selTier === 'flexShop') return <FlexShopView />;
   if (selTier === 'exp') return <ExpView />;
 
   const tierIdx = parseInt(selTier);
@@ -453,8 +509,6 @@ const TierHub = () => {
     'ELECTION': { label: 'ELECTION DAY', icon: '🗳️' }
   };
 
-  const { rRest } = useGame();
-
   return (
     <div className="flex flex-col gap-5 mb-8">
       <div className="grid grid-cols-1">
@@ -464,6 +518,16 @@ const TierHub = () => {
         >
           <span className="text-2xl">😴</span>
           TAKE A BREAK (+50 MH, ADVANCE 1 MO)
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1">
+        <button
+          onClick={() => { setSelTier('flexShop'); setTab('HUB'); }}
+          className="w-full py-4 bg-blue-900/40 border-2 border-blue-500 rounded-xl font-black text-blue-400 tracking-widest hover:bg-blue-800/40 transition-all flex items-center justify-center gap-3"
+        >
+          <span className="text-2xl">💎</span>
+          ENTER THE FLEX SHOP
         </button>
       </div>
 
@@ -545,7 +609,7 @@ const SkillBuyBtn = ({ skill, lvl, cost, penalty, ok, btnCls, statLabel, diff, c
 const SwTab = () => {
   const { pl, up, sw, setSw, dUp, rSw, adv, karmaFlags, setKarmaFlags } = useGame();
   return (
-    <LabShell hustleKey="streetwear" t="STREETWEAR LAB" c="purple" fontCls="font-hype" onHub={() => useGame().setTab('HUB')}>
+    <LabShell hustleKey="streetwear" t="STREETWEAR LAB" c="purple" fontCls="font-hype">
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
         <div className="text-[10px] font-black text-slate-300 drop-shadow-sm uppercase tracking-widest">USE CHEAP BLANKS (RISK)</div>
         <button
@@ -1572,6 +1636,10 @@ const GameInterface = () => {
           <button onClick={() => { setSelTier('flexes'); setTab('HUB'); }}
             className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === 'flexes' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
             FLEXES
+          </button>
+          <button onClick={() => { setSelTier('flexShop'); setTab('HUB'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === 'flexShop' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
+            FLEX SHOP
           </button>
           <button onClick={() => { setSelTier('exp'); setTab('HUB'); }}
             className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all ${selTier === 'exp' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
