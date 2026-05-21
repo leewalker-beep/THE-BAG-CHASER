@@ -108,6 +108,8 @@ export const GameProvider = ({ children }) => {
   const [peaks, setPeaks] = useState({ peakB: 25000, peakA: 100, peakC: 20 });
   const [hl, setHl] = useState({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
   const [tally, setTally] = useState({ cryp: 0, box: 0, hf: 0, pres: 0 });
+  const [generationCount, setGenerationCount] = useState(0);
+  const legacyMultiplier = 1 + (generationCount * 0.25);
 
   // Persistent Save Engine Ref for Stable Background Saves
   const stateRef = React.useRef();
@@ -120,7 +122,7 @@ export const GameProvider = ({ children }) => {
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
     artMarketSentiment, artHoldings, conglomActive, antitrustRisk, swfInvestment,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
-    box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally
+    box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
 
   useEffect(() => {
@@ -194,6 +196,7 @@ export const GameProvider = ({ children }) => {
         if (d.peaks) setPeaks(d.peaks);
         if (d.hl) setHl(d.hl);
         if (d.tally) setTally(d.tally);
+        if (d.generationCount !== undefined) setGenerationCount(d.generationCount);
       } catch (e) {
         console.error("Failed to load save data", e);
       }
@@ -511,14 +514,14 @@ export const GameProvider = ({ children }) => {
       const artClout = artHoldings * 20;
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      let basePassive = passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev;
+      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
       if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + yieldIncome + basePassive + swfYield + conglomBonus,
+        bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
         clout: Math.min(prev.maxClout, prev.clout + artClout),
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
@@ -806,10 +809,11 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
 
     if (Math.random() < 0.5) {
-      setPl(p => ({ ...p, bag: p.bag + 750 }));
+      const payout = Math.floor(750 * legacyMultiplier);
+      setPl(p => ({ ...p, bag: p.bag + payout }));
       setTechItem(null);
-      triggerImpact('bag', 720);
-      setNews(n => ["✅ TECH: Repair successful with cheap parts! Sold for $750.", ...n.slice(0, 15)]);
+      triggerImpact('bag', payout - 30);
+      setNews(n => [`✅ TECH: Repair successful with cheap parts! Sold for $${payout.toLocaleString()}.`, ...n.slice(0, 15)]);
     } else {
       setPl(p => ({ ...p, aura: Math.max(0, p.aura - 5) }));
       setTechItem(null);
@@ -823,10 +827,11 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - 15, clout: Math.min(p.maxClout, p.clout + 2), aura: Math.min(p.maxAura, p.aura + 1) }));
     setTechFlipsComplete(prev => prev + 1);
     await new Promise(r => setTimeout(r, 1000));
-    setPl(p => ({ ...p, bag: p.bag + 750 }));
+    const payout = Math.floor(750 * legacyMultiplier);
+    setPl(p => ({ ...p, bag: p.bag + payout }));
     setTechItem(null);
-    triggerImpact('bag', 650);
-    setNews(n => ["✅ TECH: Premium repair successful! Sold for $750. Hardware Mastery increased.", ...n.slice(0, 15)]);
+    triggerImpact('bag', payout - 100);
+    setNews(n => [`✅ TECH: Premium repair successful! Sold for $${payout.toLocaleString()}. Hardware Mastery increased.`, ...n.slice(0, 15)]);
     adv();
     return 650;
   };
@@ -1017,7 +1022,7 @@ export const GameProvider = ({ children }) => {
     setArtHoldings(a => a - 1);
 
     const roll = Math.random() - 0.5;
-    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll));
+    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll) * legacyMultiplier);
     yieldAmt = Math.max(500000, yieldAmt);
 
     setPl(p => ({ ...p, bag: p.bag + yieldAmt }));
@@ -1105,7 +1110,7 @@ export const GameProvider = ({ children }) => {
     let unitsSold = Math.floor(Math.min(sw.u, Math.max(0, hype * (5 + Math.random() * 5))));
     unitsSold = Math.max(0, unitsSold);
 
-    const revenue = unitsSold * sw.p;
+    const revenue = Math.floor(unitsSold * sw.p * legacyMultiplier);
     const profit = revenue - totalOut;
 
     setSwFatigue(prev => prev + (sw.u / 1000));
@@ -1163,7 +1168,7 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
 
     const modifier = up.drpFac ? 1.5 : 1.1;
-    const revenue = Math.floor((drp.u * drp.p) * (Math.random() * modifier));
+    const revenue = Math.floor((drp.u * drp.p) * (Math.random() * modifier) * legacyMultiplier);
     const profit = revenue - costBasis;
 
     setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 3) }));
@@ -1178,14 +1183,14 @@ export const GameProvider = ({ children }) => {
     let profit = 0; let cloutGain = 0; let auraGain = 0;
 
     if (type === 'sol') {
-      profit = Math.floor(Math.random() * 2500);
+      profit = Math.floor(Math.random() * 2500 * legacyMultiplier);
       cloutGain = 5;
       setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
     } else if (type === 'feu') {
       profit = -25000; cloutGain = 35; auraGain = -15;
       setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain), aura: Math.max(0, p.aura + auraGain) }));
     } else {
-      profit = Math.floor(Math.random() * 75000); cloutGain = 20;
+      profit = Math.floor(Math.random() * 75000 * legacyMultiplier); cloutGain = 20;
       setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
     }
     setHl(h => ({ ...h, cc: h.cc + Math.max(0, profit) }));
@@ -1202,7 +1207,7 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({ ...p, bag: p.bag - totalOut }));
     await new Promise(r => setTimeout(r, 1000));
 
-    let revenue = Math.floor(totalOut * (1.2 + Math.random() * 1.8));
+    let revenue = Math.floor(totalOut * (1.2 + Math.random() * 1.8) * legacyMultiplier);
     let profit = revenue - totalOut;
 
     setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 15) }));
@@ -1224,11 +1229,11 @@ export const GameProvider = ({ children }) => {
     let heatGain = 0;
 
     if (up.boxBrd) {
-      revenue = 12000 + (pl.clout * 250);
+      revenue = Math.floor((12000 + (pl.clout * 250)) * legacyMultiplier);
       cloutGain = 5;
       heatGain = 10;
     } else {
-      revenue = Math.floor(totalOut * (1.1 + Math.random() * 2.2));
+      revenue = Math.floor(totalOut * (1.1 + Math.random() * 2.2) * legacyMultiplier);
     }
 
     let profit = revenue - totalOut;
@@ -1252,7 +1257,7 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 1500));
 
     const revMult = up.trFst ? 2.5 : 1.6;
-    const revenue = Math.floor(totalOut * (Math.random() * revMult));
+    const revenue = Math.floor(totalOut * (Math.random() * revMult) * legacyMultiplier);
     const profit = revenue - totalOut;
 
     setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 55), aura: Math.min(p.maxAura, p.aura + 15) }));
@@ -1278,7 +1283,7 @@ export const GameProvider = ({ children }) => {
       return 0;
     }
     if (action === 'ipo') {
-      let value = tch.u * pl.aura;
+      let value = Math.floor(tch.u * pl.aura * legacyMultiplier);
       if (tch.vc) value = Math.floor(value * 0.7);
       setPl(p => ({ ...p, bag: p.bag + value }));
       setTch({ l: false, u: 0, srv: 0.1, pw: false, vc: false, m: 2000 });
@@ -1305,7 +1310,7 @@ export const GameProvider = ({ children }) => {
       return 0;
     }
     if (action === 'rug') {
-      let reward = crp.l;
+      let reward = Math.floor(crp.l * legacyMultiplier);
       setPl(p => ({ ...p, bag: p.bag + reward, aura: Math.max(0, p.aura - 120) }));
       setCrp({ l: 0, t: '', i: 5000, m: 5000 });
       setTally(t => ({ ...t, cryp: t.cryp + 1 }));
@@ -1323,7 +1328,7 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 2000));
 
     const success = Math.random() * (up.movUni ? 3.0 : 1.8);
-    const revenue = Math.floor(cst * success);
+    const revenue = Math.floor(cst * success * legacyMultiplier);
     const profit = revenue - cst;
 
     setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 75) }));
@@ -1338,7 +1343,7 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 1500));
 
     const accurate = Math.random() > 0.45;
-    const variance = (hf.l * 0.04) * Math.random();
+    const variance = (hf.l * 0.04) * Math.random() * legacyMultiplier;
     const finalReturn = accurate ? hf.c * (1 + variance) : hf.c * (1 - variance);
     const netPayout = Math.floor(finalReturn - hf.c);
 
@@ -1374,6 +1379,77 @@ export const GameProvider = ({ children }) => {
   const dVp = () => { setPrs(p => ({ ...p, vu: true, rst: p.rst + 4 })); };
   const dDef = () => { setPl(p => ({ ...p, bag: p.bag - 75000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, du: true, sub: p.sub + 5 })); };
 
+  const rRetire = () => {
+    setGenerationCount(g => g + 1);
+
+    // Reset core stats based on difficulty
+    if (diff === 1) { // TRUST FUND
+      setPl({ bag: 25000, aura: 30, clout: 30, mo: 0, tier: 0, mentalHealth: 300, maxMentalHealth: 300, heat: 0, maxClout: 100, maxAura: 100 });
+    } else if (diff === 2) { // HUSTLER
+      setPl({ bag: 5000, clout: 15, aura: 15, mo: 0, tier: 0, mentalHealth: 150, maxMentalHealth: 150, heat: 0, maxClout: 100, maxAura: 100 });
+    } else { // GRINDER
+      setPl({ bag: 1000, clout: 5, aura: 5, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
+    }
+
+    // Reset everything else
+    setTab('HUB');
+    setSelTier('0');
+    setDeath(null);
+    setGBusy(false);
+    setSwFatigue(0);
+    setHustleFatigue({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+    setKarmaFlags({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
+    setFatalTragedyMessage(null);
+    setLastHustle(null);
+    setDropshipLock(0);
+    setVintageLock(0);
+    setSmmPenalty(false);
+    setTechSourceCost(150);
+    setSmmClients(0);
+    setClientCrisis(false);
+    setVinCh(null);
+    setHustleClicks({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
+    setTechItem(null);
+    setTechFlipsComplete(0);
+    setRunnerCount(0);
+    setRunnerBurnout(false);
+    setSaasUsers(0);
+    setSaasPrice(50);
+    setSaasChurn(0.05);
+    setSaasPenaltyActive(false);
+    setCorpClients(0);
+    setApiLockoutMonths(0);
+    setCreOfficeCount(0);
+    setCreRetailCount(0);
+    setFranchiseCount(0);
+    setUnionStrikeActive(false);
+    setUnionStrikeIgnored(false);
+    setPeProgress(0);
+    setGuttedFirms(0);
+    setSupplyChainDisruption(false);
+    setPeCompoundingYield(1.0);
+    setArtMarketSentiment(0);
+    setArtHoldings(0);
+    setConglomActive(false);
+    setAntitrustRisk(0);
+    setSwfInvestment(0);
+    setGeoStability(1.0);
+    setSwfFrozen(false);
+    setIsBreakdownActive(false);
+    setPassiveFrozen(false);
+    setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
+    setSkl({ neg: 0, tax: 0, inf: 0 });
+    setAss({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
+    setPeaks({ peakB: 25000, peakA: 100, peakC: 20 });
+    setHl({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
+    setTally({ cryp: 0, box: 0, hf: 0, pres: 0 });
+    setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
+
+    setPh('PROLOGUE');
+    setProSt(0);
+    setNews(['Your legacy continues... A new generation begins.', 'Market Cycle initialized: NORMAL economy.']);
+  };
+
   const isTierUnlocked = useMemo(() => {
     return (tierIdx) => {
       return pl.tier >= tierIdx;
@@ -1392,7 +1468,8 @@ export const GameProvider = ({ children }) => {
       artMarketSentiment, artHoldings,
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
       passiveFrozen, setPassiveFrozen,
-      rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw
+      rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
+      generationCount, legacyMultiplier, rRetire
     }}>
       {children}
     </GameContext.Provider>
