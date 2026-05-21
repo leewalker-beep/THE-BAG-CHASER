@@ -28,6 +28,7 @@ const styles = `
   .mobile-hud { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
   .ticker-wrap { position: fixed; bottom: 0; width: 100%; overflow: hidden; background-color: rgba(0,0,0,0.95); border-top: 2px solid #3b82f6; height: 3rem; z-index: 100; display: flex; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
   .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 45s linear infinite; font-family: 'Share Tech Mono', monospace; font-size: 1.05rem; font-weight: bold; color: #10b981; text-shadow: 0 0 8px #10b981; }
+  .ticker-paused { animation-play-state: paused !important; }
   @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
   .news-bag { color: #22c55e; font-weight: 900; } .news-scandal { color: #ef4444; font-weight: 900; } .news-viral { color: #ec4899; font-weight: 900; }
   @keyframes floatUpStat { 0% { opacity: 1; transform: translateY(0) scale(0.9); } 100% { opacity: 0; transform: translateY(-60px) scale(1); } }
@@ -1398,7 +1399,7 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
@@ -1560,7 +1561,7 @@ const GameInterface = () => {
 
       {/* News ticker */}
       <div className="ticker-wrap">
-        <div className="ticker">
+        <div className={`ticker ${fatalTragedyMessage ? 'ticker-paused' : ''}`}>
           {news?.map((n, i) => <span key={i} className="mx-12" dangerouslySetInnerHTML={{ __html: n }} />)}
           <span className="mx-12 text-slate-300 drop-shadow-sm">/// END FEED ///</span>
         </div>
@@ -1638,9 +1639,6 @@ const BagChaserInner = () => {
               {fatalTragedyMessage}
             </p>
             <button
-              onClick={() => {
-                setFatalTragedyMessage(null);
-              }}
               className="w-full py-5 bg-red-600 text-white font-black tracking-widest text-xl rounded-2xl hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all"
             >
               REVIEW YOUR LEGACY
