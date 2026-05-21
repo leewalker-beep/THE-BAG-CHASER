@@ -72,6 +72,7 @@ export const GameProvider = ({ children }) => {
 
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
   const [shakeActive, setShakeActive] = useState(false);
+  const [passiveFrozen, setPassiveFrozen] = useState(false);
 
   // Financial Systems & Vital Signs
   const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
@@ -118,7 +119,7 @@ export const GameProvider = ({ children }) => {
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
     artMarketSentiment, artHoldings, conglomActive, antitrustRisk, swfInvestment,
-    geoStability, swfFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
+    geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally
   };
 
@@ -171,6 +172,7 @@ export const GameProvider = ({ children }) => {
         if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
         if (d.geoStability !== undefined) setGeoStability(d.geoStability);
         if (d.swfFrozen !== undefined) setSwfFrozen(d.swfFrozen);
+        if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d.pl) setPl(d.pl);
         if (d.mkt !== undefined) setMkt(d.mkt);
         if (d.news) setNews(d.news);
@@ -323,6 +325,73 @@ export const GameProvider = ({ children }) => {
     }
   }, [peaks, ph, pl.tier]);
 
+  // Random Chaos & Empire Alert Engine
+  useEffect(() => {
+    if (ph !== 'PLAYING') return;
+
+    const interval = setInterval(() => {
+      // Tiny chance (5%) for a random event every 30 seconds
+      if (Math.random() > 0.05) return;
+
+      const { conglomActive, ass, pl, saasUsers, artHoldings } = stateRef.current;
+      const roll = Math.random();
+
+      // 1. IRS Audit / Anti-Trust Sweep (Requires Conglomerate)
+      if (roll < 0.33 && conglomActive) {
+        if (ass.legalTeam) {
+          setNews(prev => ["⚖️ LEGAL: Elite defense team blocked a surprise IRS audit.", ...prev.slice(0, 15)]);
+        } else {
+          const penalty = Math.floor(pl.bag * 0.1);
+          setPl(prev => ({ ...prev, bag: prev.bag - penalty }));
+          setMod({
+            s: true,
+            t: "IRS ANTI-TRUST SWEEP",
+            m: `The feds raided your holding company. Regulators seized $${penalty.toLocaleString()} in 'unaccounted' assets.`,
+            o: [{ label: "COMPLY", action: () => setMod({ s: false }) }],
+            ui: "ui-crisis"
+          });
+        }
+      }
+      // 2. Viral Market Windfall
+      else if (roll < 0.66 && (saasUsers > 0 || artHoldings > 0)) {
+        const cloutBonus = Math.floor(pl.clout / 10);
+        if (saasUsers > 0 && Math.random() > 0.5) {
+          const gain = 500 + (cloutBonus * 100);
+          setSaasUsers(prev => prev + gain);
+          setMod({
+            s: true,
+            t: "VIRAL PRODUCT REACTION",
+            m: `An A-list celebrity tagged your SaaS. You just gained ${gain.toLocaleString()} new users overnight!`,
+            o: [{ label: "RIDE THE WAVE", action: () => setMod({ s: false }) }],
+            ui: "ui-modal"
+          });
+        } else if (artHoldings > 0) {
+          setArtMarketSentiment(prev => Math.min(1, prev + 0.5));
+          setMod({
+            s: true,
+            t: "ART MARKET MANIA",
+            m: "A global auction record just shattered. Your fine art collection's valuation is skyrocketing.",
+            o: [{ label: "EXCELLENT", action: () => setMod({ s: false }) }],
+            ui: "ui-modal"
+          });
+        }
+      }
+      // 3. Burnout Crisis
+      else if (pl.mentalHealth < 20) {
+        setPassiveFrozen(true);
+        setMod({
+          s: true,
+          t: "EMPIRE BURNOUT",
+          m: "Your mental state is critical. You've gone AWOL, and passive operations have frozen until you rest or upgrade your lifestyle.",
+          o: [{ label: "I NEED A BREAK", action: () => setMod({ s: false }) }],
+          ui: "ui-crisis"
+        });
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [ph]);
+
   // Click Chaos Helpers
   const triggerChaos = (hustleKey) => {
     const fatigue = hustleFatigue[hustleKey] || 0;
@@ -442,7 +511,8 @@ export const GameProvider = ({ children }) => {
       const artClout = artHoldings * 20;
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      const basePassive = passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev;
+      let basePassive = passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev;
+      if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
       return {
@@ -582,6 +652,7 @@ export const GameProvider = ({ children }) => {
         aura: Math.min(p.maxAura, p.aura + auraBump)
       }));
       setAss(a => ({ ...a, [key]: true }));
+      if (key === 'pent' || key === 'hePent') setPassiveFrozen(false);
       setNews(n => [`💎 FLEET UPGRADE: Acquired ownership rights to ${label}. Balance sheet updated.`, ...n.slice(0, 15)]);
     }
   };
@@ -697,8 +768,9 @@ export const GameProvider = ({ children }) => {
 
   const rRest = async () => {
     setPl(p => ({ ...p, mentalHealth: Math.min(p.maxMentalHealth, p.mentalHealth + 50) }));
+    setPassiveFrozen(false);
     adv();
-    setNews(prev => ["😴 Resting... MentalHealth recovered.", ...prev.slice(0, 15)]);
+    setNews(prev => ["😴 Resting... MentalHealth recovered. Passive income resumes.", ...prev.slice(0, 15)]);
   };
 
   const rTechSource = async () => {
@@ -1319,6 +1391,7 @@ export const GameProvider = ({ children }) => {
       supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
       artMarketSentiment, artHoldings,
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
+      passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw
     }}>
       {children}
