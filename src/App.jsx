@@ -1469,7 +1469,7 @@ const BagChaserInner = () => {
             </p>
             <button
               onClick={() => {
-                setFatalTragedyMessage(null);
+                // setFatalTragedyMessage(null); // Brutal Hammer: Uncloseable
               }}
               className="w-full py-5 bg-red-600 text-white font-black tracking-widest text-xl rounded-2xl hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all"
             >

@@ -346,6 +346,9 @@ export const GameProvider = ({ children }) => {
   const exStart = () => {
     if (alias.length < 3) return;
 
+    setTab('HUB');
+    setSelTier('0');
+
     if (diff === 1) { // TRUST FUND (Easy)
       setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 300, mentalHealth: 300, heat: 0, maxClout: 100, maxAura: 100 }));
     } else if (diff === 2) { // HUSTLER (Normal)
