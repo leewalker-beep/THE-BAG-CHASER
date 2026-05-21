@@ -1704,6 +1704,11 @@ const GameInterface = () => {
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
+  const handleHardReset = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
   const busy = gBusy || imp?.some(i => !i.w);
 
   const karmaScore = karmaFlags ? 100 - (Object.values(karmaFlags).filter(Boolean).length * 15) : 100;
@@ -1773,7 +1778,15 @@ const GameInterface = () => {
       <div className="px-3 pt-6 pb-2 relative">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
-            <div className="text-[9px] font-bold text-slate-300 drop-shadow-sm tracking-widest leading-none mb-0.5 font-hack">NET WORTH — {alias || 'ANON'}</div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <div className="text-[9px] font-bold text-slate-300 drop-shadow-sm tracking-widest leading-none font-hack">NET WORTH — {alias || 'ANON'}</div>
+              <button
+                onClick={handleHardReset}
+                className="text-[8px] font-black text-red-500 hover:text-red-400 border border-red-500/30 hover:border-red-500 px-1.5 py-0.5 rounded bg-red-900/10 transition-all active:scale-95 uppercase tracking-widest font-hack"
+              >
+                Wipe Save
+              </button>
+            </div>
             <div className="flex items-center gap-1.5">
               {(displayBag || 0) >= 1000000000
                 ? <div className="text-2xl font-black billionaire-bag leading-none">${fMny(displayBag || 0)}</div>
