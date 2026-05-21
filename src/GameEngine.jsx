@@ -455,7 +455,14 @@ export const GameProvider = ({ children }) => {
 
     if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
     if (saasPenaltyActive) setSaasPenaltyActive(false);
-    setSaasUsers(prev => Math.floor(prev * (1 - saasChurn)));
+    setSaasUsers(prev => {
+      const churned = Math.floor(prev * saasChurn);
+      let growth = 0;
+      if (corpClients > 0) {
+        growth = corpClients * (10 + Math.floor(stateRef.current.pl.clout / 20));
+      }
+      return Math.max(0, prev - churned + growth);
+    });
 
     setGeoStability(prev => {
       const next = prev + (Math.random() - 0.5) * 0.1;
@@ -465,6 +472,7 @@ export const GameProvider = ({ children }) => {
     setPl(prev => {
       let expenseBurn = 500;
       if (mkt === 2) expenseBurn *= 2;
+      if (corpClients > 0) expenseBurn += 10000; // AI Agency ad spend overhead
 
       // Asset Yield and Maintenance
       let yieldIncome = 0;
@@ -507,7 +515,7 @@ export const GameProvider = ({ children }) => {
       }
       const creNet = (creGross * vacancyMult) - (creOfficeCount * 20000) - (creRetailCount * 5000);
 
-      const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
+      const franchiseRev = (unionStrikeActive || supplyChainDisruption) ? 0 : (franchiseCount * 25000);
       let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
       const auraBleed = unionStrikeIgnored ? 50 : 0;
@@ -576,13 +584,16 @@ export const GameProvider = ({ children }) => {
       return Math.min(1, Math.max(-1, prev + shift));
     });
 
-    // Private Equity Disruption & Compounding
-    if (guttedFirms > 0) {
+    // Private Equity & Franchise Disruption
+    if (guttedFirms > 0 || franchiseCount > 0) {
       if (Math.random() < 0.02) {
         setSupplyChainDisruption(true);
-        setNews(prev => ["🚨 PE ALERT: Supply Chain Disruption! National franchise operations frozen. High overhead spike detected.", ...prev.slice(0, 15)]);
+        const alertMsg = franchiseCount > 0
+          ? "🚨 EMPIRE ALERT: Supply Chain Disruption! National franchise operations frozen."
+          : "🚨 PE ALERT: Supply Chain Disruption! Operations frozen. High overhead spike detected.";
+        setNews(prev => [alertMsg, ...prev.slice(0, 15)]);
       }
-      if (!supplyChainDisruption) {
+      if (!supplyChainDisruption && guttedFirms > 0) {
         setPeCompoundingYield(prev => prev + 0.02);
       }
     }
@@ -966,7 +977,7 @@ export const GameProvider = ({ children }) => {
     if (pl.bag < 2000000) return;
     setPl(p => ({ ...p, bag: p.bag - 2000000 }));
     setSupplyChainDisruption(false);
-    setNews(prev => ["✅ PE: Supply chain stabilized. Operations resumed.", ...prev.slice(0, 15)]);
+    setNews(prev => ["✅ SUPPLY CHAIN: Logistics stabilized. Operations resumed.", ...prev.slice(0, 15)]);
   };
 
   const rPeClick = async () => {

@@ -513,9 +513,9 @@ const TierHub = () => {
     'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
     'AUDIO': { label: 'Indie Audio Syndicate', icon: '🎵', stub: true },
     'TECH': { label: 'SaaS Startup', icon: '💻' },
-    'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖', stub: true },
-    'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢', stub: true },
-    'FRANCHISE': { label: 'National Franchise', icon: '🍟', stub: true },
+    'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖' },
+    'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢' },
+    'FRANCHISE': { label: 'National Franchise', icon: '🍟' },
     'CRYP': { label: 'Web3 Hedge', icon: '🪙' },
     'TOUR': { label: 'Events', icon: '🎪' },
     'PE_ROLLUP': { label: 'Private Equity', icon: '📊' },
@@ -1056,6 +1056,8 @@ const AiAgencyTab = () => {
 
   if (locked) return <LockedTierScreen section={2} />;
 
+  const growthPerTick = corpClients * (10 + Math.floor(pl.clout / 20));
+
   return (
     <LabShell t="AI MARKETING AGENCY" c="indigo" fontCls="font-tech" onHub={() => setTab('HUB')} tier={2}>
       <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${apiLockoutMonths > 0 ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
@@ -1064,6 +1066,13 @@ const AiAgencyTab = () => {
         <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
           {apiLockoutMonths > 0 ? `API LOCKOUT: ${apiLockoutMonths} MO REMAINING` : `Passive: +$${fMny(corpClients * 8000)}/mo`}
         </div>
+        {corpClients > 0 && !apiLockoutMonths && (
+          <div className="mt-2 pt-2 border-t border-slate-800">
+            <div className="text-[9px] text-cyan-400 font-bold uppercase">SaaS Multiplier Active</div>
+            <div className="text-[9px] text-slate-300">+ {growthPerTick} Passive Users / month</div>
+            <div className="text-[9px] text-red-400">Ad Spend: -$10K/mo</div>
+          </div>
+        )}
       </div>
 
       <FlashBtn
@@ -1099,6 +1108,11 @@ const CreTab = () => {
         <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
           Mortgage: -${fMny(totalMortgage)}/mo | Net: ${fMny((isVulnerable ? 0 : grossYield) - totalMortgage)}/mo
         </div>
+        {isVulnerable && (
+          <div className="text-[9px] text-red-500 font-bold uppercase mt-1 animate-pulse">
+            ⚠️ MARKET CRISIS: VACANCY RISK 100%
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -1138,18 +1152,20 @@ const CreTab = () => {
 };
 
 const FranchiseTab = () => {
-  const { pl, franchiseCount, unionStrikeActive, rFranchiseClick, rResolveUnionStrike, setTab } = useGame();
+  const { pl, franchiseCount, unionStrikeActive, supplyChainDisruption, rFranchiseClick, rResolveUnionStrike, rResolveSupplyChain, setTab } = useGame();
   const locked = pl.bag < 5000000 || pl.clout < 300 || pl.aura < 200;
 
   if (locked) return <LockedTierScreen section={2} />;
 
+  const isHalted = unionStrikeActive || supplyChainDisruption;
+
   return (
     <LabShell t="NATIONAL FRANCHISE" c="yellow" fontCls="font-hype" onHub={() => setTab('HUB')} tier={2}>
-      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${unionStrikeActive ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${isHalted ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Territories</div>
-        <div className={`text-2xl font-black ${unionStrikeActive ? 'text-red-500' : 'text-yellow-400'}`}>{franchiseCount} UNITS</div>
+        <div className={`text-2xl font-black ${isHalted ? 'text-red-500' : 'text-yellow-400'}`}>{franchiseCount} UNITS</div>
         <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
-          {unionStrikeActive ? "UNION STRIKE: INCOME HALTED" : `Passive: +$${fMny(franchiseCount * 25000)}/mo`}
+          {unionStrikeActive ? "UNION STRIKE: INCOME HALTED" : supplyChainDisruption ? "SUPPLY CHAIN SHOCK: INCOME HALTED" : `Passive: +$${fMny(franchiseCount * 25000)}/mo`}
         </div>
       </div>
 
@@ -1157,6 +1173,16 @@ const FranchiseTab = () => {
         <div className="flex flex-col gap-2">
           <button onClick={() => rResolveUnionStrike('settle')} className="w-full py-3 bg-green-600 text-white font-black text-xs rounded-xl hover:bg-green-500 active:scale-95 transition-all duration-100">PAY $100,000 WAGE SETTLEMENT</button>
           <button onClick={() => rResolveUnionStrike('ignore')} className="w-full py-3 bg-red-600 text-white font-black text-xs rounded-xl hover:bg-red-500 active:scale-95 transition-all duration-100">IGNORE (AURA PENALTY)</button>
+        </div>
+      ) : supplyChainDisruption ? (
+        <div className="flex flex-col gap-2">
+          <FlashBtn
+            onClick={rResolveSupplyChain}
+            dis={pl.bag < 2000000}
+            label="STABILIZE LOGISTICS ($2M)"
+            color="red-600"
+            txt="white"
+          />
         </div>
       ) : (
         <FlashBtn
