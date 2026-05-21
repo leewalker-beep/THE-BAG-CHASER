@@ -43,12 +43,14 @@ export const GameProvider = ({ children }) => {
   const [runnerCount, setRunnerCount] = useState(0);
   const [runnerBurnout, setRunnerBurnout] = useState(false);
 
-  const [saasProgress, setSaasProgress] = useState(0);
-  const [saasLaunches, setSaasLaunches] = useState(0);
+  const [saasUsers, setSaasUsers] = useState(0);
+  const [saasPrice, setSaasPrice] = useState(50);
+  const [saasChurn, setSaasChurn] = useState(0.05);
   const [saasPenaltyActive, setSaasPenaltyActive] = useState(false);
   const [corpClients, setCorpClients] = useState(0);
   const [apiLockoutMonths, setApiLockoutMonths] = useState(0);
-  const [towerCount, setTowerCount] = useState(0);
+  const [creOfficeCount, setCreOfficeCount] = useState(0);
+  const [creRetailCount, setCreRetailCount] = useState(0);
   const [franchiseCount, setFranchiseCount] = useState(0);
   const [unionStrikeActive, setUnionStrikeActive] = useState(false);
   const [unionStrikeIgnored, setUnionStrikeIgnored] = useState(false);
@@ -268,6 +270,7 @@ export const GameProvider = ({ children }) => {
 
     if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
     if (saasPenaltyActive) setSaasPenaltyActive(false);
+    setSaasUsers(prev => Math.floor(prev * (1 - saasChurn)));
 
     setPl(prev => {
       let expenseBurn = 500;
@@ -299,12 +302,18 @@ export const GameProvider = ({ children }) => {
       const smmRev = smmClients * 300;
       const runnerRev = runnerCount * 150;
 
-      const saasRev = (saasLaunches * 15000) * (saasPenaltyActive ? 0.5 : 1);
+      const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
+      const saasOverhead = saasUsers * 2;
       const aiRev = apiLockoutMonths > 0 ? 0 : (corpClients * 8000);
 
-      let creGross = towerCount * 45000;
+      let creGross = (creOfficeCount * 45000) + (creRetailCount * 15000);
       if (mkt === 2 || mkt === 3) creGross = 0; // Mass Commercial Vacancy
-      const creNet = creGross - (towerCount * 20000);
+
+      let vacancyMult = 1.0;
+      if ((creOfficeCount > 0 || creRetailCount > 0) && Math.random() < 0.15) {
+        vacancyMult = 0.5 + (Math.random() * 0.4);
+      }
+      const creNet = (creGross * vacancyMult) - (creOfficeCount * 20000) - (creRetailCount * 5000);
 
       const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
       const peRev = guttedFirms * 100000;
@@ -315,7 +324,7 @@ export const GameProvider = ({ children }) => {
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev + saasRev + aiRev + creNet + franchiseRev + peRev,
+        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
         clout: Math.min(prev.maxClout, prev.clout + artClout),
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + 15)
@@ -630,16 +639,9 @@ export const GameProvider = ({ children }) => {
       return undefined;
     }
 
-    const gain = techFlipsComplete >= 10 ? 12 : 10;
-    setSaasProgress(p => {
-      const next = p + gain;
-      if (next >= 100) {
-        setSaasLaunches(l => l + 1);
-        setNews(prev => ["🚀 SAAS: New version deployed! Passive revenue increased.", ...prev.slice(0, 15)]);
-        return 0;
-      }
-      return next;
-    });
+    const userGain = techFlipsComplete >= 10 ? 120 : 100;
+    setSaasUsers(prev => prev + userGain);
+    setNews(prev => [`📈 SAAS: Marketing push successful! +${userGain} users acquired.`, ...prev.slice(0, 15)]);
     adv();
   };
 
@@ -664,12 +666,21 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
-  const rCreClick = async () => {
-    if (pl.bag < 1000000 || pl.mentalHealth < 30 || pl.bag < 15000000 || pl.clout < 200 || pl.aura < 250) return;
-    setPl(p => ({ ...p, bag: p.bag - 1000000, mentalHealth: p.mentalHealth - 30 }));
-    setTowerCount(t => t + 1);
+  const rCreBuyOffice = async () => {
+    if (pl.bag < 15000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
+    setPl(p => ({ ...p, bag: p.bag - 15000000, mentalHealth: p.mentalHealth - 30 }));
+    setCreOfficeCount(t => t + 1);
     setHustleClicks(prev => ({ ...prev, cre: (prev.cre || 0) + 1 }));
-    setNews(prev => ["🏢 CRE: Tower acquisition complete. Mortgage liability added to books.", ...prev.slice(0, 15)]);
+    setNews(prev => ["🏢 CRE: Office Tower acquisition complete. Massive passive rent added.", ...prev.slice(0, 15)]);
+    adv();
+  };
+
+  const rCreBuyRetail = async () => {
+    if (pl.bag < 5000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
+    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 30 }));
+    setCreRetailCount(t => t + 1);
+    setHustleClicks(prev => ({ ...prev, cre: (prev.cre || 0) + 1 }));
+    setNews(prev => ["🏢 CRE: Retail Strip acquisition complete. Monthly yield increased.", ...prev.slice(0, 15)]);
     adv();
   };
 
@@ -1095,8 +1106,8 @@ export const GameProvider = ({ children }) => {
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
-      saasProgress, saasLaunches, saasPenaltyActive, corpClients, apiLockoutMonths, towerCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
-      rSaasClick, rAiAgencyClick, rCreClick, rFranchiseClick, rResolveUnionStrike
+      saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
+      rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike
     }}>
       {children}
     </GameContext.Provider>

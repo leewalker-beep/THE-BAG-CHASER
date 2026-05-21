@@ -477,9 +477,9 @@ const TierHub = () => {
         return (
           <div key={hKey} className="relative aspect-[4/3]">
             <button
-              onClick={() => !isLocked && !isStub && setTab?.(hKey)}
+              onClick={() => !isStub && setTab?.(hKey)}
               className={`w-full h-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all shadow-lg flex flex-col items-center justify-between
-                ${isLocked || isStub
+                ${isStub
                   ? 'bg-slate-900/40 border-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'
                   : 'bg-slate-900/90 border-slate-700 text-white hover:bg-slate-800'}`}
             >
@@ -904,36 +904,40 @@ const TourTab = () => {
 };
 
 const TechTab = () => {
-  const { pl, saasProgress, saasLaunches, techFlipsComplete, rSaasClick, setTab } = useGame();
+  const { pl, saasUsers, saasPrice, saasChurn, saasPenaltyActive, techFlipsComplete, rSaasClick, setTab } = useGame();
+  const locked = (pl?.bag || 0) < 1000000 || (pl?.clout || 0) < 150 || (pl?.aura || 0) < 50;
+
+  if (locked) return <LockedTierScreen section={2} />;
+
   const speedBoost = techFlipsComplete >= 10;
+  const mrr = saasUsers * saasPrice * (saasPenaltyActive ? 0.5 : 1);
 
   return (
-    <LabShell t="SAAS STARTUP" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
+    <LabShell t="SAAS AUTOMATION" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')}>
       <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Active Versions</div>
-        <div className="text-2xl font-black text-cyan-400">{saasLaunches} LAUNCHES</div>
-        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(saasLaunches * 15000)}/mo</div>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Monthly Recurring Revenue</div>
+        <div className="text-2xl font-black text-cyan-400">${fMny(mrr)}/mo</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          {saasUsers.toLocaleString()} Users @ ${saasPrice}/mo | {(saasChurn * 100).toFixed(0)}% Churn
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase px-1">
-          <span>Sprint Progress</span>
-          <span className={speedBoost ? 'text-green-400' : ''}>{saasProgress}% {speedBoost && '(BOOSTED)'}</span>
-        </div>
-        <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
-          <div className="bg-cyan-500 h-full transition-all duration-300" style={{ width: `${saasProgress}%` }}></div>
+        <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
+          <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Server Costs</div>
+          <div className="text-lg font-black text-red-400">-${fMny(saasUsers * 2)}/mo</div>
         </div>
 
         <FlashBtn
           onClick={rSaasClick}
           costStm={20}
           dis={pl.bag < 5000}
-          label="RUN A CODE SPRINT ($5,000)"
+          label="MARKETING PUSH ($5,000)"
           color="cyan-600"
           txt="white"
         />
         <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">
-          {speedBoost ? "Hardware Mastery accelerating code sprints by 20%." : "Master 10 Tech Flips to accelerate SaaS development."}
+          {speedBoost ? "Hardware Mastery boosting acquisition by 20%." : "Master 10 Tech Flips to boost user acquisition."}
         </p>
       </div>
     </LabShell>
@@ -970,32 +974,59 @@ const AiAgencyTab = () => {
 };
 
 const CreTab = () => {
-  const { pl, towerCount, mkt, rCreClick, setTab } = useGame();
+  const { pl, creOfficeCount, creRetailCount, mkt, rCreBuyOffice, rCreBuyRetail, setTab } = useGame();
   const locked = pl.bag < 15000000 || pl.clout < 200 || pl.aura < 250;
   const isVulnerable = mkt === 2 || mkt === 3;
 
   if (locked) return <LockedTierScreen section={2} />;
 
+  const grossYield = (creOfficeCount * 45000) + (creRetailCount * 15000);
+  const totalMortgage = (creOfficeCount * 20000) + (creRetailCount * 5000);
+
   return (
     <LabShell t="COMMERCIAL REAL ESTATE" c="slate" fontCls="font-hype" onHub={() => setTab('HUB')}>
       <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${isVulnerable ? 'border-red-500' : 'border-slate-800'}`}>
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Portfolio</div>
-        <div className={`text-2xl font-black ${isVulnerable ? 'text-red-500' : 'text-white'}`}>{towerCount} TOWERS</div>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Portfolio Yield</div>
+        <div className={`text-2xl font-black ${isVulnerable ? 'text-red-500' : 'text-white'}`}>
+          ${fMny(isVulnerable ? 0 : grossYield)}/mo
+        </div>
         <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
-          {isVulnerable ? "MASS VACANCY: GROSS PAYOUT $0" : `Gross: +$${fMny(towerCount * 45000)}/mo`}
-          <br />Mortgage: -${fMny(towerCount * 20000)}/mo
+          Mortgage: -${fMny(totalMortgage)}/mo | Net: ${fMny((isVulnerable ? 0 : grossYield) - totalMortgage)}/mo
         </div>
       </div>
 
-      <FlashBtn
-        onClick={rCreClick}
-        costStm={30}
-        dis={pl.bag < 1000000}
-        label="LEVERAGE DEBT FOR TOWER ($1,000,000)"
-        color="slate-100"
-        txt="black"
-      />
-      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Towers bleed capital during Bear Markets or Crackdowns."</p>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Office Towers</div>
+          <div className="text-xl font-black text-white">{creOfficeCount}</div>
+        </div>
+        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Retail Strips</div>
+          <div className="text-xl font-black text-white">{creRetailCount}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <FlashBtn
+          onClick={rCreBuyOffice}
+          costStm={30}
+          dis={pl.bag < 15000000}
+          label="BUY OFFICE TOWER ($15M)"
+          color="slate-100"
+          txt="black"
+        />
+        <FlashBtn
+          onClick={rCreBuyRetail}
+          costStm={30}
+          dis={pl.bag < 5000000}
+          label="BUY RETAIL STRIP ($5M)"
+          color="slate-600"
+          txt="white"
+        />
+      </div>
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">
+        "Assets subject to background vacancy risk and market volatility."
+      </p>
     </LabShell>
   );
 };
