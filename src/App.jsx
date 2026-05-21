@@ -649,7 +649,7 @@ const SkillBuyBtn = ({ skill, lvl, cost, penalty, ok, btnCls, statLabel, diff, c
 // ─── Individual tab panels ────────────────────────────────────────────────────
 
 const SwTab = () => {
-  const { pl, up, sw, setSw, dUp, rSw, adv, karmaFlags, setKarmaFlags } = useGame();
+  const { pl, setPl, up, sw, setSw, dUp, rSw, adv, karmaFlags, setKarmaFlags } = useGame();
   return (
     <LabShell hustleKey="streetwear" t="STREETWEAR LAB" c="purple" fontCls="font-hype" tier={0}>
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -682,7 +682,7 @@ const SwTab = () => {
           else if (roll < 0.80) { rev = Math.floor(1000000 * (2.5 + Math.random() * 1.5)); msg = 'Units moved worldwide. Net +$' + fMny(rev - 1000000); }
           else { rev = Math.floor(1000000 * (5 + Math.random() * 3)); msg = 'VIRAL SELLOUT GLOBALLY! Net +$' + fMny(rev - 1000000); }
           console.log(msg);
-          useGame().setPl(p => ({ ...p, bag: p.bag - 1000000 + rev }));
+          setPl(p => ({ ...p, bag: p.bag - 1000000 + rev }));
           adv(); return rev - 1000000;
         }} label="SUPPLY GLOBAL - COST: $1M" />
       ) : <>
@@ -1324,7 +1324,14 @@ const CrpTab = () => {
 
 const MovTab = () => {
   const { pl, up, mov, setMov, dUp, rMov, setTab } = useGame();
-  const cst = (mov.g === 1 ? 2000000 : mov.g === 2 ? 15000000 : 100000000) + (mov.s === 3 ? 10000000 : mov.s === 2 ? 5000000 : 1000000) + (mov.w === 2 ? 2000000 : mov.w === 3 ? 10000000 : 0) + (mov.d === 1 ? 1000000 : mov.d === 2 ? 5000000 : 20000000) + mov.m;
+  const cst = React.useMemo(() => {
+    return (mov.g === 1 ? 2000000 : mov.g === 2 ? 15000000 : 100000000) +
+           (mov.s === 3 ? 10000000 : mov.s === 2 ? 5000000 : 1000000) +
+           (mov.w === 2 ? 2000000 : mov.w === 3 ? 10000000 : 0) +
+           (mov.d === 1 ? 1000000 : mov.d === 2 ? 5000000 : 20000000) +
+           mov.m;
+  }, [mov.g, mov.s, mov.w, mov.d, mov.m]);
+
   return (
     <LabShell t="HOLLYWOOD STUDIO" c="yellow" onHub={() => setTab('HUB')} tier={4}>
       <UpgBtn onClk={() => dUp('movStr', 500000000, 'Streaming Platform Owned. 📺')} cost={500000000} title="STREAMING PLATFORM" unl={up.movStr} pB={pl.bag} />
@@ -1344,13 +1351,13 @@ const MovTab = () => {
 };
 
 const HfTab = () => {
-  const { pl, hf, setHf, rHf, setTab } = useGame();
+  const { pl, setPl, hf, setHf, rHf, setTab } = useGame();
   return (
     <LabShell t="HEDGE FUND" c="yellow" fontCls="font-hack" onHub={() => setTab('HUB')} tier={4}>
       <div className="bg-blue-900/20 border border-blue-500/50 p-4 rounded-xl font-hack text-sm text-blue-300 mb-2">TERMINAL: {HF_RUMORS[hf.r].tick} is volatile.</div>
       <div className="flex gap-2">
         <input type="text" value={hf.t} placeholder="TICKER" onChange={e => setHf(h => ({ ...h, t: e.target.value }))} className="p-4 w-2/3 bg-black border border-slate-700 rounded font-hack text-yellow-400 font-bold uppercase text-center" />
-        <button onClick={() => { if (pl.bag >= 5000000) { useGame().setPl(p => ({ ...p, bag: p.bag - 5000000 })); alert(`INTEL: ${HF_RUMORS[hf.r].tick} going ${HF_RUMORS[hf.r].dir === 1 ? 'UP' : 'DOWN'}`); } }} className="w-1/3 bg-slate-800 text-xs font-bold rounded hover:bg-slate-700 text-white active:scale-95 transition-all duration-100">INTEL ($5M)</button>
+        <button onClick={() => { if (pl.bag >= 5000000) { setPl(p => ({ ...p, bag: p.bag - 5000000 })); alert(`INTEL: ${HF_RUMORS[hf.r].tick} going ${HF_RUMORS[hf.r].dir === 1 ? 'UP' : 'DOWN'}`); } }} className="w-1/3 bg-slate-800 text-xs font-bold rounded hover:bg-slate-700 text-white active:scale-95 transition-all duration-100">INTEL ($5M)</button>
       </div>
       <Stepper val={hf.c} setVal={v => setHf(h => ({ ...h, c: v }))} min={100000} max={100000000} step={5000000} label="Capital" />
       <Stepper val={hf.l} setVal={v => setHf(h => ({ ...h, l: v }))} min={1} max={50} step={1} label="Leverage" isCurr={false} />
@@ -1443,20 +1450,26 @@ const ConglomerateTab = () => {
     tch, smmClients, runnerCount } = useGame();
 
   const locked = pl.bag < 250000000;
-  if (locked) return <LockedTierScreen section={4} />;
 
   // Estimate monthly yields for display (simplified clone of adv logic)
-  const passiveSrv = (tch.l && tch.pw) ? Math.floor(500 + (tch.u * tch.srv)) : 0;
-  const smmRev = smmClients * 300;
-  const runnerRev = runnerCount * 150;
-  const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1) - (saasUsers * 2);
-  const aiRev = apiLockoutMonths > 0 ? 0 : (corpClients * 8000);
-  const creNet = (creOfficeCount * 25000) + (creRetailCount * 10000); // Rough net
-  const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
-  const peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
+  const basePassive = React.useMemo(() => {
+    const passiveSrv = (tch.l && tch.pw) ? Math.floor(500 + (tch.u * tch.srv)) : 0;
+    const smmRev = smmClients * 300;
+    const runnerRev = runnerCount * 150;
+    const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1) - (saasUsers * 2);
+    const aiRev = apiLockoutMonths > 0 ? 0 : (corpClients * 8000);
+    const creNet = (creOfficeCount * 25000) + (creRetailCount * 10000); // Rough net
+    const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
+    const peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
-  const basePassive = passiveSrv + smmRev + runnerRev + saasRev + aiRev + creNet + franchiseRev + peRev;
-  const currentBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
+    return passiveSrv + smmRev + runnerRev + saasRev + aiRev + creNet + franchiseRev + peRev;
+  }, [tch.l, tch.pw, tch.u, tch.srv, smmClients, runnerCount, saasUsers, saasPrice, saasPenaltyActive, apiLockoutMonths, corpClients, creOfficeCount, creRetailCount, unionStrikeActive, franchiseCount, supplyChainDisruption, guttedFirms, peCompoundingYield]);
+
+  const currentBonus = React.useMemo(() => {
+    return conglomActive ? Math.floor(basePassive * 0.25) : 0;
+  }, [conglomActive, basePassive]);
+
+  if (locked) return <LockedTierScreen section={4} />;
 
   return (
     <LabShell t="GLOBAL CONGLOMERATE" c="slate" fontCls="font-hype" onHub={() => setTab('HUB')} tier={4}>
@@ -1872,34 +1885,40 @@ const GameInterface = () => {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-3 pb-16">
         <div key={tab + selTier} className="max-w-xl mx-auto animate-fadeIn">
-          {tab === 'HUB'  && <TierHub />}
-          {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'DROP' && (isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'VINTAGE' && (isTierUnlocked?.(0) ? <VintageTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'SMM' && (isTierUnlocked?.(0) ? <SmmTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'TECH_FLIP' && (isTierUnlocked?.(0) ? <TechFlipTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'GIG' && (isTierUnlocked?.(0) ? <GigTab /> : <LockedTierScreen section={0} />)}
-          {tab === 'CC'   && (isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />)}
-          {tab === 'POD'  && (isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />)}
-          {tab === 'BOX'  && (isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />)}
-          {tab === 'TECH' && (isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />)}
-          {tab === 'AI_AGENCY' && (isTierUnlocked?.(2) ? <AiAgencyTab /> : <LockedTierScreen section={2} />)}
-          {tab === 'CRE_FLIP' && (isTierUnlocked?.(2) ? <CreTab /> : <LockedTierScreen section={2} />)}
-          {tab === 'FRANCHISE' && (isTierUnlocked?.(2) ? <FranchiseTab /> : <LockedTierScreen section={2} />)}
-          {tab === 'CRYP' && (isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />)}
-          {tab === 'TOUR' && (isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />)}
-          {tab === 'PE_ROLLUP' && (isTierUnlocked?.(3) ? <PeTab /> : <LockedTierScreen section={3} />)}
-          {tab === 'ART_SPEC' && (isTierUnlocked?.(3) ? <ArtTab /> : <LockedTierScreen section={3} />)}
-          {tab === 'MOV'  && (isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'HF'   && (isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'AI'   && (isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'CONGLOMERATE' && (isTierUnlocked?.(4) ? <ConglomerateTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'SOVEREIGN' && (isTierUnlocked?.(4) ? <SovereignTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'BILL' && (isTierUnlocked?.(4) ? <BillTab /> : <LockedTierScreen section={4} />)}
-          {tab === 'PAC'      && (isTierUnlocked?.(5) ? <SuperPacTab /> : <LockedTierScreen section={5} />)}
-          {tab === 'BLITZ'    && (isTierUnlocked?.(5) ? <BlitzTab />    : <LockedTierScreen section={5} />)}
-          {tab === 'SMEAR'    && (isTierUnlocked?.(5) ? <SmearTab />    : <LockedTierScreen section={5} />)}
-          {tab === 'ELECTION' && (isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />)}
+          {(() => {
+            const TAB_MAP = {
+              'HUB':          () => <TierHub />,
+              'SW':           () => isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />,
+              'DROP':         () => isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />,
+              'VINTAGE':      () => isTierUnlocked?.(0) ? <VintageTab /> : <LockedTierScreen section={0} />,
+              'SMM':          () => isTierUnlocked?.(0) ? <SmmTab /> : <LockedTierScreen section={0} />,
+              'TECH_FLIP':    () => isTierUnlocked?.(0) ? <TechFlipTab /> : <LockedTierScreen section={0} />,
+              'GIG':          () => isTierUnlocked?.(0) ? <GigTab /> : <LockedTierScreen section={0} />,
+              'CC':           () => isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />,
+              'POD':          () => isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />,
+              'BOX':          () => isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />,
+              'TECH':         () => isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />,
+              'AI_AGENCY':    () => isTierUnlocked?.(2) ? <AiAgencyTab /> : <LockedTierScreen section={2} />,
+              'CRE_FLIP':     () => isTierUnlocked?.(2) ? <CreTab /> : <LockedTierScreen section={2} />,
+              'FRANCHISE':    () => isTierUnlocked?.(2) ? <FranchiseTab /> : <LockedTierScreen section={2} />,
+              'CRYP':         () => isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />,
+              'TOUR':         () => isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />,
+              'PE_ROLLUP':    () => isTierUnlocked?.(3) ? <PeTab /> : <LockedTierScreen section={3} />,
+              'ART_SPEC':     () => isTierUnlocked?.(3) ? <ArtTab /> : <LockedTierScreen section={3} />,
+              'MOV':          () => isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />,
+              'HF':           () => isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />,
+              'AI':           () => isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />,
+              'CONGLOMERATE': () => isTierUnlocked?.(4) ? <ConglomerateTab /> : <LockedTierScreen section={4} />,
+              'SOVEREIGN':    () => isTierUnlocked?.(4) ? <SovereignTab /> : <LockedTierScreen section={4} />,
+              'BILL':         () => isTierUnlocked?.(4) ? <BillTab /> : <LockedTierScreen section={4} />,
+              'PAC':          () => isTierUnlocked?.(5) ? <SuperPacTab /> : <LockedTierScreen section={5} />,
+              'BLITZ':        () => isTierUnlocked?.(5) ? <BlitzTab /> : <LockedTierScreen section={5} />,
+              'SMEAR':        () => isTierUnlocked?.(5) ? <SmearTab /> : <LockedTierScreen section={5} />,
+              'ELECTION':     () => isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />,
+            };
+            const Component = TAB_MAP[tab];
+            return Component ? <Component /> : null;
+          })()}
 
           <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 my-6">
             <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold tracking-widest mb-2 text-center uppercase">📡 REAL WORLD MONITOR</div>

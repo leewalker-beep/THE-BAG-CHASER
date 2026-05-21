@@ -205,6 +205,7 @@ export const GameProvider = ({ children }) => {
 
   useEffect(() => {
     window.autoSaveInterval = setInterval(() => {
+      if (window.isResetting) return;
       localStorage.setItem(SAVE_KEY, JSON.stringify(stateRef.current));
     }, 10000);
     return () => clearInterval(window.autoSaveInterval);
@@ -1468,10 +1469,12 @@ export const GameProvider = ({ children }) => {
   }, [pl.tier]);
 
   const performHardReset = () => {
+    window.isResetting = true;
     if (window.autoSaveInterval) {
       window.clearInterval(window.autoSaveInterval);
     }
     localStorage.clear();
+    sessionStorage.clear();
 
     setPl({ bag: 0, aura: 0, clout: 0, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
     setPh('PROLOGUE');
@@ -1534,9 +1537,37 @@ export const GameProvider = ({ children }) => {
     setTally({ cryp: 0, box: 0, hf: 0, pres: 0 });
     setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
     setGenerationCount(0);
+    setSw({ i: 1, u: 250, p: 45, a: 5000 });
+    setDrp({ i: 1, u: 500, p: 35, a: 10000 });
+    setCc({ m: 'solo', v: 1, n: 1 });
+    setPod({ g: 1, q: 20000 });
+    setBox({ v: 1, t: 1, b: 100000, p: 1 });
+    setTur({ t: 1, m: 150000, a: 50000, l: 100000 });
+    setTch({ l: false, u: 1200, srv: 0.15, pw: false, vc: false, m: 15000 });
+    setCrp({ l: 0, t: '', i: 25000, m: 15000 });
+    setMov({ g: 1, w: 1, d: 1, s: 1, m: 5000000 });
+    setHf({ r: 0, t: 'NVDA', c: 5000000, l: 5 });
+    setAi({ ig: false, p: 0, r: 0, d: 1, c: 1, s: 1, dj: 0 });
+
+    setSmmClients(0);
+    setRunnerCount(0);
+    setSaasUsers(0);
+    setCorpClients(0);
+    setCreOfficeCount(0);
+    setCreRetailCount(0);
+    setFranchiseCount(0);
+    setGuttedFirms(0);
+    setSaasPrice(50);
+    setTechItem(null);
+    setClientCrisis(false);
+    setRunnerBurnout(false);
+    setUnionStrikeActive(false);
+    setSupplyChainDisruption(false);
+    setSaasPenaltyActive(false);
+    setApiLockoutMonths(0);
 
     setTimeout(() => {
-      window.location.reload();
+      window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
     }, 200);
   };
 
