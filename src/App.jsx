@@ -500,9 +500,9 @@ const TierHub = () => {
     'PE_ROLLUP': { label: 'Private Equity', icon: '📊' },
     'ART_SPEC': { label: 'Art Speculation', icon: '🎨' },
     'HF': { label: 'Hedge Fund', icon: '📈' },
-    'COMMODITIES': { label: 'Lithium Supply Chain', icon: '🔋', stub: true },
+    'CONGLOMERATE': { label: 'Global Conglomerate', icon: '🏢' },
     'PMC': { label: 'Private Military', icon: '🎖️', stub: true },
-    'SOVEREIGN': { label: 'Sovereign Debt', icon: '📜', stub: true },
+    'SOVEREIGN': { label: 'Sovereign Wealth Fund', icon: '🌍' },
     'PAC': { label: 'Super PAC', icon: '🇺🇸' },
     'BLITZ': { label: 'Media Blitz', icon: '📣' },
     'SMEAR': { label: 'Smear Campaigns', icon: '🔥' },
@@ -1367,6 +1367,142 @@ const BillTab = () => {
   );
 };
 
+const ConglomerateTab = () => {
+  const { pl, conglomActive, antitrustRisk, rFormConglom, rLobbyRegulators, setTab,
+    saasUsers, saasPrice, saasPenaltyActive, corpClients, apiLockoutMonths,
+    creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
+    guttedFirms, peCompoundingYield, supplyChainDisruption,
+    tch, smmClients, runnerCount } = useGame();
+
+  const locked = pl.bag < 250000000;
+  if (locked) return <LockedTierScreen section={4} />;
+
+  // Estimate monthly yields for display (simplified clone of adv logic)
+  const passiveSrv = (tch.l && tch.pw) ? Math.floor(500 + (tch.u * tch.srv)) : 0;
+  const smmRev = smmClients * 300;
+  const runnerRev = runnerCount * 150;
+  const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1) - (saasUsers * 2);
+  const aiRev = apiLockoutMonths > 0 ? 0 : (corpClients * 8000);
+  const creNet = (creOfficeCount * 25000) + (creRetailCount * 10000); // Rough net
+  const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
+  const peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
+
+  const basePassive = passiveSrv + smmRev + runnerRev + saasRev + aiRev + creNet + franchiseRev + peRev;
+  const currentBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
+
+  return (
+    <LabShell t="GLOBAL CONGLOMERATE" c="slate" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${conglomActive ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Conglomerate Status</div>
+        <div className={`text-2xl font-black ${conglomActive ? 'text-blue-400' : 'text-slate-500'}`}>
+          {conglomActive ? 'ACTIVE HOLDING CO' : 'INACTIVE'}
+        </div>
+        {conglomActive && (
+          <div className="text-[10px] text-green-400 font-bold mt-1">
+            Yield Bonus: +${fMny(currentBonus)}/mo (+25%)
+          </div>
+        )}
+      </div>
+
+      {conglomActive ? (
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="flex justify-between text-[10px] font-bold text-red-400 uppercase mb-1 tracking-widest">
+              <span>Anti-Trust Risk</span>
+              <span>{Math.floor(antitrustRisk)}%</span>
+            </div>
+            <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
+              <div className="bg-red-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" style={{ width: `${Math.min(100, antitrustRisk)}%` }}></div>
+            </div>
+          </div>
+
+          <FlashBtn
+            onClick={rLobbyRegulators}
+            dis={pl.bag < 10000000 || pl.aura < 20}
+            label={`LOBBY REGULATORS ($10M + 20 AURA)`}
+            color="slate-100"
+            txt="black"
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-[10px] text-slate-300 drop-shadow-sm text-center italic mb-2">
+            "Consolidate your Tier 3 and 4 assets into a mega-corporation to trigger massive global efficiency bonuses."
+          </p>
+          <FlashBtn
+            onClick={rFormConglom}
+            dis={pl.bag < 250000000}
+            label="FORM GLOBAL CONGLOMERATE ($250M)"
+            color="blue-600"
+            txt="white"
+          />
+        </div>
+      )}
+    </LabShell>
+  );
+};
+
+const SovereignTab = () => {
+  const { pl, swfInvestment, geoStability, swfFrozen, rSwfInvest, rSwfWithdraw, setTab } = useGame();
+  const locked = pl.bag < 250000000;
+
+  if (locked) return <LockedTierScreen section={4} />;
+
+  const currentYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
+  const stabilityLabel = geoStability > 1.2 ? "STABLE" : geoStability < 0.8 ? "VOLATILE" : "NORMAL";
+  const stabilityColor = geoStability > 1.2 ? "text-green-400" : geoStability < 0.8 ? "text-red-400" : "text-yellow-400";
+  const barColor = geoStability > 1.2 ? "bg-green-500" : geoStability < 0.8 ? "bg-red-500" : "bg-yellow-500";
+
+  return (
+    <LabShell t="SOVEREIGN WEALTH FUND" c="emerald" fontCls="font-hype" onHub={() => setTab('HUB')}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${swfFrozen ? 'border-red-600 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Invested Capital</div>
+        <div className="text-3xl font-black text-white">${fMny(swfInvestment)}</div>
+        {!swfFrozen && swfInvestment > 0 && (
+          <div className="text-[10px] text-green-400 font-bold mt-1">
+            Est. Monthly Yield: +${fMny(currentYield)}
+          </div>
+        )}
+        {swfFrozen && (
+          <div className="text-[10px] text-red-500 font-black mt-1 tracking-tighter">
+            ⚠️ ASSETS FROZEN DUE TO INSTABILITY
+          </div>
+        )}
+      </div>
+
+      <div className="mb-6">
+        <div className="flex justify-between text-[10px] font-bold uppercase mb-1 tracking-widest">
+          <span className="text-slate-300">Geopolitical Stability</span>
+          <span className={stabilityColor}>{stabilityLabel}</span>
+        </div>
+        <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
+          <div className={`h-full transition-all duration-1000 ${barColor}`} style={{ width: `${(geoStability / 1.5) * 100}%` }}></div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <FlashBtn
+          onClick={rSwfInvest}
+          dis={pl.bag < 100000000}
+          label="PARK $100M IN FOREIGN ASSETS"
+          color="emerald-600"
+          txt="white"
+        />
+        <button
+          onClick={rSwfWithdraw}
+          disabled={swfFrozen || swfInvestment <= 0}
+          className={`w-full py-3 rounded-xl font-black text-xs tracking-widest transition-all ${!swfFrozen && swfInvestment > 0 ? 'bg-white text-black hover:bg-gray-200' : 'bg-slate-800 text-slate-300 drop-shadow-sm opacity-40 cursor-not-allowed'}`}
+        >
+          WITHDRAW ALL CAPITAL
+        </button>
+      </div>
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-4">
+        "Yields scale with global stability. Instability risks permanent or temporary asset freezes."
+      </p>
+    </LabShell>
+  );
+};
+
 const SuperPacTab = () => {
   const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
   const [deposit, setDeposit] = useState(10000000);
@@ -1672,6 +1808,8 @@ const GameInterface = () => {
           {tab === 'MOV'  && (isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />)}
           {tab === 'HF'   && (isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />)}
           {tab === 'AI'   && (isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'CONGLOMERATE' && (isTierUnlocked?.(4) ? <ConglomerateTab /> : <LockedTierScreen section={4} />)}
+          {tab === 'SOVEREIGN' && (isTierUnlocked?.(4) ? <SovereignTab /> : <LockedTierScreen section={4} />)}
           {tab === 'BILL' && (isTierUnlocked?.(4) ? <BillTab /> : <LockedTierScreen section={4} />)}
           {tab === 'PAC'      && (isTierUnlocked?.(5) ? <SuperPacTab /> : <LockedTierScreen section={5} />)}
           {tab === 'BLITZ'    && (isTierUnlocked?.(5) ? <BlitzTab />    : <LockedTierScreen section={5} />)}

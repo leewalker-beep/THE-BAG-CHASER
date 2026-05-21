@@ -5,7 +5,7 @@ export const TIERS = [
   { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
   { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
-  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'COMMODITIES', 'PMC', 'SOVEREIGN'] },
+  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN'] },
   { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
 ];
 
@@ -64,6 +64,12 @@ export const GameProvider = ({ children }) => {
   const [artMarketSentiment, setArtMarketSentiment] = useState(0);
   const [artHoldings, setArtHoldings] = useState(0);
 
+  const [conglomActive, setConglomActive] = useState(false);
+  const [antitrustRisk, setAntitrustRisk] = useState(0);
+  const [swfInvestment, setSwfInvestment] = useState(0);
+  const [geoStability, setGeoStability] = useState(1.0);
+  const [swfFrozen, setSwfFrozen] = useState(false);
+
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
   const [shakeActive, setShakeActive] = useState(false);
 
@@ -111,7 +117,8 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artHoldings, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
+    artMarketSentiment, artHoldings, conglomActive, antitrustRisk, swfInvestment,
+    geoStability, swfFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally
   };
 
@@ -159,6 +166,11 @@ export const GameProvider = ({ children }) => {
         if (d.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
         if (d.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
         if (d.artHoldings !== undefined) setArtHoldings(d.artHoldings);
+        if (d.conglomActive !== undefined) setConglomActive(d.conglomActive);
+        if (d.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
+        if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
+        if (d.geoStability !== undefined) setGeoStability(d.geoStability);
+        if (d.swfFrozen !== undefined) setSwfFrozen(d.swfFrozen);
         if (d.pl) setPl(d.pl);
         if (d.mkt !== undefined) setMkt(d.mkt);
         if (d.news) setNews(d.news);
@@ -373,6 +385,11 @@ export const GameProvider = ({ children }) => {
     if (saasPenaltyActive) setSaasPenaltyActive(false);
     setSaasUsers(prev => Math.floor(prev * (1 - saasChurn)));
 
+    setGeoStability(prev => {
+      const next = prev + (Math.random() - 0.5) * 0.1;
+      return Math.min(1.5, Math.max(0.5, next));
+    });
+
     setPl(prev => {
       let expenseBurn = 500;
       if (mkt === 2) expenseBurn *= 2;
@@ -424,15 +441,41 @@ export const GameProvider = ({ children }) => {
       const auraBleed = unionStrikeIgnored ? 50 : 0;
       const artClout = artHoldings * 20;
 
+      const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
+      const basePassive = passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev;
+      const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
+
       return {
         ...prev,
         mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev,
+        bag: prev.bag - expenseBurn + yieldIncome + basePassive + swfYield + conglomBonus,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
         clout: Math.min(prev.maxClout, prev.clout + artClout),
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
       };
     });
+
+    // SWF Freeze / Unfreeze
+    if (geoStability < 0.7 && !swfFrozen && Math.random() < 0.15) {
+      setSwfFrozen(true);
+      setNews(prev => ["🌍 SWF ALERT: Geopolitical instability has triggered an international asset freeze.", ...prev.slice(0, 15)]);
+    } else if (geoStability > 1.1 && swfFrozen) {
+      setSwfFrozen(false);
+      setNews(prev => ["🌍 SWF: Global stability restored. Asset freeze lifted.", ...prev.slice(0, 15)]);
+    }
+
+    // Conglomerate Risk & Fines
+    if (conglomActive) {
+      setAntitrustRisk(prev => {
+        const next = prev + 3;
+        if (next > (Math.random() * 80 + 20)) {
+          setPl(p => ({ ...p, bag: p.bag - 50000000 }));
+          setNews(prevNews => ["🏛️ ANTI-TRUST: Monopoly investigation triggered a $50M regulatory fine.", ...prevNews.slice(0, 15)]);
+          return 0;
+        }
+        return next;
+      });
+    }
 
     // Market Cycle Shift Calculation
     if (Math.random() < 0.15) {
@@ -911,6 +954,35 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
+  const rFormConglom = async () => {
+    const hasAssets = saasUsers > 0 || corpClients > 0 || creOfficeCount > 0 || creRetailCount > 0 || franchiseCount > 0 || guttedFirms > 0 || artHoldings > 0 || tch.l || crp.l > 0 || tur.t > 1 || hf.c > 0;
+    if (pl.bag < 250000000 || !hasAssets) return;
+    setPl(p => ({ ...p, bag: p.bag - 250000000 }));
+    setConglomActive(true);
+    setNews(prev => ["🏢 CONGLOMERATE: Global Holding Co formed. Passive yields consolidated and boosted. -$250,000,000.", ...prev.slice(0, 15)]);
+  };
+
+  const rLobbyRegulators = async () => {
+    if (pl.bag < 10000000 || pl.aura < 20) return;
+    setPl(p => ({ ...p, bag: p.bag - 10000000, aura: Math.max(0, p.aura - 20) }));
+    setAntitrustRisk(prev => Math.max(0, prev - 40));
+    setNews(prev => ["⚖️ LOBBYING: Strategic donations made to key regulators. Anti-trust risk decreased.", ...prev.slice(0, 15)]);
+  };
+
+  const rSwfInvest = async () => {
+    if (pl.bag < 100000000) return;
+    setPl(p => ({ ...p, bag: p.bag - 100000000 }));
+    setSwfInvestment(prev => prev + 100000000);
+    setNews(prev => ["🌍 SWF: $100,000,000 parked in international sovereign assets.", ...prev.slice(0, 15)]);
+  };
+
+  const rSwfWithdraw = async () => {
+    if (swfFrozen || swfInvestment <= 0) return;
+    setPl(p => ({ ...p, bag: p.bag + swfInvestment }));
+    setSwfInvestment(0);
+    setNews(prev => ["🌍 SWF: International holdings liquidated into Bag.", ...prev.slice(0, 15)]);
+  };
+
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
       setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
@@ -1245,7 +1317,9 @@ export const GameProvider = ({ children }) => {
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
       rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
       supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
-      artMarketSentiment, artHoldings
+      artMarketSentiment, artHoldings,
+      conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
+      rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw
     }}>
       {children}
     </GameContext.Provider>
