@@ -57,6 +57,9 @@ export const GameProvider = ({ children }) => {
 
   const [peProgress, setPeProgress] = useState(0);
   const [guttedFirms, setGuttedFirms] = useState(0);
+  const [supplyChainDisruption, setSupplyChainDisruption] = useState(false);
+  const [peCompoundingYield, setPeCompoundingYield] = useState(1.0);
+  const [artMarketSentiment, setArtMarketSentiment] = useState(0);
   const [artHoldings, setArtHoldings] = useState(0);
 
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
@@ -316,7 +319,7 @@ export const GameProvider = ({ children }) => {
       const creNet = (creGross * vacancyMult) - (creOfficeCount * 20000) - (creRetailCount * 5000);
 
       const franchiseRev = unionStrikeActive ? 0 : (franchiseCount * 25000);
-      const peRev = guttedFirms * 100000;
+      let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
       const auraBleed = unionStrikeIgnored ? 50 : 0;
       const artClout = artHoldings * 20;
@@ -349,6 +352,23 @@ export const GameProvider = ({ children }) => {
     if (runnerCount > 0 && Math.random() < 0.15) {
       setRunnerBurnout(true);
       setNews(prev => ["🚨 RUNNER ALERT: Fleet Burnout! Bonus required to retain courier.", ...prev.slice(0, 15)]);
+    }
+
+    // Art Market Sentiment Shift
+    setArtMarketSentiment(prev => {
+      const shift = (Math.random() - 0.5) * 0.4;
+      return Math.min(1, Math.max(-1, prev + shift));
+    });
+
+    // Private Equity Disruption & Compounding
+    if (guttedFirms > 0) {
+      if (Math.random() < 0.02) {
+        setSupplyChainDisruption(true);
+        setNews(prev => ["🚨 PE ALERT: Supply Chain Disruption! National franchise operations frozen. High overhead spike detected.", ...prev.slice(0, 15)]);
+      }
+      if (!supplyChainDisruption) {
+        setPeCompoundingYield(prev => prev + 0.02);
+      }
     }
 
     // AI Engine Race Simulation
@@ -714,9 +734,16 @@ export const GameProvider = ({ children }) => {
     }
   };
 
+  const rResolveSupplyChain = async () => {
+    if (pl.bag < 2000000) return;
+    setPl(p => ({ ...p, bag: p.bag - 2000000 }));
+    setSupplyChainDisruption(false);
+    setNews(prev => ["✅ PE: Supply chain stabilized. Operations resumed.", ...prev.slice(0, 15)]);
+  };
+
   const rPeClick = async () => {
-    if (pl.bag < 5000000 || pl.mentalHealth < 40 || pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400) return;
-    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 40 }));
+    if (pl.bag < 25000000 || pl.mentalHealth < 40 || pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400) return;
+    setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - 40 }));
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
     // Click Catastrophe: SEC Pension Subpoena (2%)
@@ -740,8 +767,9 @@ export const GameProvider = ({ children }) => {
   };
 
   const rArtBuy = async () => {
-    if (pl.bag < 10000000 || pl.mentalHealth < 35 || pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450) return;
-    setPl(p => ({ ...p, bag: p.bag - 10000000, mentalHealth: p.mentalHealth - 35 }));
+    const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
+    if (pl.bag < acquisitionCost || pl.mentalHealth < 35 || pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450) return;
+    setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - 35 }));
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
 
     // Click Catastrophe: Forgery Scandal (2%)
@@ -760,20 +788,9 @@ export const GameProvider = ({ children }) => {
     if (artHoldings <= 0) return;
     setArtHoldings(a => a - 1);
 
-    const isBull = mkt === 1;
-    const isBear = mkt === 2 || mkt === 3;
-    const roll = Math.random();
-    let yieldAmt = 0;
-
-    if (isBull) {
-      if (roll < 0.7) yieldAmt = 40000000;
-      else yieldAmt = 10000000;
-    } else if (isBear) {
-      if (roll < 0.8) yieldAmt = 2000000;
-      else yieldAmt = 10000000;
-    } else {
-      yieldAmt = 15000000;
-    }
+    const roll = Math.random() - 0.5;
+    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll));
+    yieldAmt = Math.max(500000, yieldAmt);
 
     setPl(p => ({ ...p, bag: p.bag + yieldAmt }));
     setNews(prev => [`🖼️ ART AUCTION: Piece sold for $${fMny(yieldAmt)}.`, ...prev.slice(0, 15)]);
@@ -1107,7 +1124,9 @@ export const GameProvider = ({ children }) => {
       rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
-      rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike
+      rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
+      supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
+      artMarketSentiment, artHoldings
     }}>
       {children}
     </GameContext.Provider>

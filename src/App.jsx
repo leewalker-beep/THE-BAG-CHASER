@@ -441,8 +441,8 @@ const TierHub = () => {
     'FRANCHISE': { label: 'National Franchise', icon: '🍟', stub: true },
     'CRYP': { label: 'Web3 Hedge', icon: '🪙' },
     'TOUR': { label: 'Events', icon: '🎪' },
-    'PE_ROLLUP': { label: 'Private Equity', icon: '📊', stub: true },
-    'ART_SPEC': { label: 'Art Speculation', icon: '🎨', stub: true },
+    'PE_ROLLUP': { label: 'Private Equity', icon: '📊' },
+    'ART_SPEC': { label: 'Art Speculation', icon: '🎨' },
     'HF': { label: 'Hedge Fund', icon: '📈' },
     'COMMODITIES': { label: 'Lithium Supply Chain', icon: '🔋', stub: true },
     'PMC': { label: 'Private Military', icon: '🎖️', stub: true },
@@ -1067,18 +1067,40 @@ const FranchiseTab = () => {
 };
 
 const PeTab = () => {
-  const { pl, peProgress, guttedFirms, rPeClick, setTab } = useGame();
+  const { pl, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield, rPeClick, rResolveSupplyChain, setTab } = useGame();
   const locked = pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400;
 
   if (locked) return <LockedTierScreen section={3} />;
 
+  const basePassive = guttedFirms * 100000;
+  const currentPassive = supplyChainDisruption ? -500000 : Math.floor(basePassive * peCompoundingYield);
+
   return (
     <LabShell t="PRIVATE EQUITY" c="slate" fontCls="font-tech" onHub={() => setTab('HUB')}>
-      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${supplyChainDisruption ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Portfolio</div>
         <div className="text-2xl font-black text-slate-100">{guttedFirms} FIRMS GUTTED</div>
-        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Passive: +${fMny(guttedFirms * 100000)}/mo</div>
+        <div className={`text-[10px] font-bold mt-1 ${currentPassive >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          Yield: ${fMny(currentPassive)}/mo
+        </div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm">
+          Dividend Multiplier: {peCompoundingYield.toFixed(2)}x
+        </div>
       </div>
+
+      {supplyChainDisruption && (
+        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 SUPPLY CHAIN DISRUPTION!</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">National franchise operations are frozen. Overhead is spiking.</p>
+          <FlashBtn
+            onClick={rResolveSupplyChain}
+            dis={pl.bag < 2000000}
+            label="STABILIZE LOGISTICS ($2M)"
+            color="red-600"
+            txt="white"
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase px-1">
@@ -1092,37 +1114,43 @@ const PeTab = () => {
         <FlashBtn
           onClick={rPeClick}
           costStm={40}
-          dis={pl.bag < 5000000}
-          label="EXECUTE LEVERAGED BUYOUT ($5,000,000)"
+          dis={pl.bag < 25000000 || supplyChainDisruption}
+          label={supplyChainDisruption ? "🔒 RESOLVE DISRUPTION" : "EXECUTE LEVERAGED BUYOUT ($25M)"}
           color="slate-100"
           txt="black"
         />
-        <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"High risk of SEC Pension Subpoenas."</p>
+        <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Buyouts orchestrated via leveraged debt on national franchises."</p>
       </div>
     </LabShell>
   );
 };
 
 const ArtTab = () => {
-  const { pl, artHoldings, rArtBuy, rArtAuction, setTab } = useGame();
+  const { pl, artHoldings, artMarketSentiment, rArtBuy, rArtAuction, setTab } = useGame();
   const locked = pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450;
 
   if (locked) return <LockedTierScreen section={3} />;
 
+  const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
+  const sentimentLabel = artMarketSentiment > 0.3 ? "🔥 BULLISH" : artMarketSentiment < -0.3 ? "🧊 BEARISH" : "⚖️ NEUTRAL";
+  const sentimentColor = artMarketSentiment > 0.3 ? "text-green-400" : artMarketSentiment < -0.3 ? "text-red-400" : "text-slate-300";
+
   return (
     <LabShell t="ART SPECULATION" c="pink" fontCls="font-hype" onHub={() => setTab('HUB')}>
       <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Private Collection</div>
-        <div className="text-2xl font-black text-pink-400">{artHoldings} MASTERPIECES</div>
-        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">Yield: +{artHoldings * 20} Clout/mo</div>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Market Sentiment</div>
+        <div className={`text-2xl font-black ${sentimentColor}`}>{sentimentLabel}</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          Private Collection: {artHoldings} Pieces | +{artHoldings * 20} Clout/mo
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <FlashBtn
           onClick={rArtBuy}
           costStm={35}
-          dis={pl.bag < 10000000}
-          label="PURCHASE FINE ART ($10,000,000)"
+          dis={pl.bag < acquisitionCost}
+          label={`PURCHASE FINE ART ($${fMny(acquisitionCost)})`}
           color="pink-600"
           txt="white"
         />
@@ -1134,7 +1162,7 @@ const ArtTab = () => {
           AUCTION AT SOTHEBY'S
         </button>
       </div>
-      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Bull markets yield massive flips. Bear markets result in capital loss."</p>
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"High-volatility asset loops. Market sentiment drastically alters auction results."</p>
     </LabShell>
   );
 };
