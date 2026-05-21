@@ -12,6 +12,8 @@ export const TIERS = [
 const GameContext = createContext();
 export const useGame = () => useContext(GameContext);
 
+const SAVE_KEY = 'bag-chaser-save-v1';
+
 export const GameProvider = ({ children }) => {
   // Navigation & Core Frame
   const [ph, setPh] = useState('PROLOGUE');
@@ -79,7 +81,7 @@ export const GameProvider = ({ children }) => {
   // Tech Tree Infrastructure
   const [up, setUp] = useState({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
   const [skl, setSkl] = useState({ neg: 0, tax: 0, inf: 0 });
-  const [ass, setAss] = useState({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false });
+  const [ass, setAss] = useState({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
 
   // Active Venture Vectors
   const [sw, setSw] = useState({ i: 1, u: 250, p: 45, a: 5000 });
@@ -100,22 +102,117 @@ export const GameProvider = ({ children }) => {
   const [hl, setHl] = useState({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
   const [tally, setTally] = useState({ cryp: 0, box: 0, hf: 0, pres: 0 });
 
+  // Persistent Save Engine Ref for Stable Background Saves
+  const stateRef = React.useRef();
+  stateRef.current = {
+    ph, proSt, alias, diff, tab, selTier, swFatigue, hustleFatigue, karmaFlags,
+    lastHustle, dropshipLock, vintageLock, smmPenalty, techSourceCost, smmClients,
+    clientCrisis, vinCh, hustleClicks, techItem, techFlipsComplete, runnerCount,
+    runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
+    apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
+    unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
+    artMarketSentiment, artHoldings, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
+    box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      try {
+        const d = JSON.parse(saved);
+        if (d.ph) setPh(d.ph);
+        if (d.proSt !== undefined) setProSt(d.proSt);
+        if (d.alias) setAlias(d.alias);
+        if (d.diff !== undefined) setDiff(d.diff);
+        if (d.tab) setTab(d.tab);
+        if (d.selTier) setSelTier(d.selTier);
+        if (d.swFatigue !== undefined) setSwFatigue(d.swFatigue);
+        if (d.hustleFatigue) setHustleFatigue(d.hustleFatigue);
+        if (d.karmaFlags) setKarmaFlags(d.karmaFlags);
+        if (d.lastHustle) setLastHustle(d.lastHustle);
+        if (d.dropshipLock !== undefined) setDropshipLock(d.dropshipLock);
+        if (d.vintageLock !== undefined) setVintageLock(d.vintageLock);
+        if (d.smmPenalty !== undefined) setSmmPenalty(d.smmPenalty);
+        if (d.techSourceCost !== undefined) setTechSourceCost(d.techSourceCost);
+        if (d.smmClients !== undefined) setSmmClients(d.smmClients);
+        if (d.clientCrisis !== undefined) setClientCrisis(d.clientCrisis);
+        if (d.vinCh) setVinCh(d.vinCh);
+        if (d.hustleClicks) setHustleClicks(d.hustleClicks);
+        if (d.techItem) setTechItem(d.techItem);
+        if (d.techFlipsComplete !== undefined) setTechFlipsComplete(d.techFlipsComplete);
+        if (d.runnerCount !== undefined) setRunnerCount(d.runnerCount);
+        if (d.runnerBurnout !== undefined) setRunnerBurnout(d.runnerBurnout);
+        if (d.saasUsers !== undefined) setSaasUsers(d.saasUsers);
+        if (d.saasPrice !== undefined) setSaasPrice(d.saasPrice);
+        if (d.saasChurn !== undefined) setSaasChurn(d.saasChurn);
+        if (d.saasPenaltyActive !== undefined) setSaasPenaltyActive(d.saasPenaltyActive);
+        if (d.corpClients !== undefined) setCorpClients(d.corpClients);
+        if (d.apiLockoutMonths !== undefined) setApiLockoutMonths(d.apiLockoutMonths);
+        if (d.creOfficeCount !== undefined) setCreOfficeCount(d.creOfficeCount);
+        if (d.creRetailCount !== undefined) setCreRetailCount(d.creRetailCount);
+        if (d.franchiseCount !== undefined) setFranchiseCount(d.franchiseCount);
+        if (d.unionStrikeActive !== undefined) setUnionStrikeActive(d.unionStrikeActive);
+        if (d.unionStrikeIgnored !== undefined) setUnionStrikeIgnored(d.unionStrikeIgnored);
+        if (d.peProgress !== undefined) setPeProgress(d.peProgress);
+        if (d.guttedFirms !== undefined) setGuttedFirms(d.guttedFirms);
+        if (d.supplyChainDisruption !== undefined) setSupplyChainDisruption(d.supplyChainDisruption);
+        if (d.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
+        if (d.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
+        if (d.artHoldings !== undefined) setArtHoldings(d.artHoldings);
+        if (d.pl) setPl(d.pl);
+        if (d.mkt !== undefined) setMkt(d.mkt);
+        if (d.news) setNews(d.news);
+        if (d.up) setUp(d.up);
+        if (d.skl) setSkl(d.skl);
+        if (d.ass) setAss(d.ass);
+        if (d.sw) setSw(d.sw);
+        if (d.drp) setDrp(d.drp);
+        if (d.cc) setCc(d.cc);
+        if (d.pod) setPod(d.pod);
+        if (d.box) setBox(d.box);
+        if (d.tur) setTur(d.tur);
+        if (d.tch) setTch(d.tch);
+        if (d.crp) setCrp(d.crp);
+        if (d.mov) setMov(d.mov);
+        if (d.hf) setHf(d.hf);
+        if (d.ai) setAi(d.ai);
+        if (d.prs) setPrs(d.prs);
+        if (d.peaks) setPeaks(d.peaks);
+        if (d.hl) setHl(d.hl);
+        if (d.tally) setTally(d.tally);
+      } catch (e) {
+        console.error("Failed to load save data", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(stateRef.current));
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Dynamic Stat Caps
   useEffect(() => {
     if (ph !== 'PLAYING') return;
     const caps = [100, 250, 500, 2000, 10000, 999999999];
-    const currentCap = caps[pl.tier] || caps[0];
+    let currentCap = caps[pl.tier] || caps[0];
+    let cloutCap = currentCap;
+    if (ass.cmYct && pl.tier < 5) {
+      cloutCap = currentCap * 10;
+    }
     setPl(prev => {
-      if (prev.maxClout === currentCap && prev.maxAura === currentCap) return prev;
+      if (prev.maxClout === cloutCap && prev.maxAura === currentCap) return prev;
       return {
         ...prev,
-        maxClout: currentCap,
+        maxClout: cloutCap,
         maxAura: currentCap,
-        clout: Math.min(currentCap, prev.clout),
+        clout: Math.min(cloutCap, prev.clout),
         aura: Math.min(currentCap, prev.aura)
       };
     });
-  }, [pl.tier, ph]);
+  }, [pl.tier, ph, ass.cmYct]);
 
   // Keep Track of Records & Auto Failures
   useEffect(() => {
@@ -217,7 +314,8 @@ export const GameProvider = ({ children }) => {
   // Click Chaos Helpers
   const triggerChaos = (hustleKey) => {
     const fatigue = hustleFatigue[hustleKey] || 0;
-    const risk = 0.02 + (fatigue / 100);
+    let risk = 0.02 + (fatigue / 100);
+    if (ass.legalTeam) risk *= 0.5;
     return Math.random() < risk;
   };
 
@@ -294,6 +392,8 @@ export const GameProvider = ({ children }) => {
       if (ass?.yct && !ass?.mtgYct) expenseBurn += 250000;
 
       // Deducting level perk buffs
+      if (ass.legalTeam) expenseBurn += 1000000;
+
       const reduction = 1 - (skl.tax * 0.04);
       expenseBurn = Math.floor(expenseBurn * reduction);
 
@@ -330,7 +430,7 @@ export const GameProvider = ({ children }) => {
         bag: prev.bag - expenseBurn + passiveSrv + yieldIncome + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
         clout: Math.min(prev.maxClout, prev.clout + artClout),
-        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + 15)
+        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
       };
     });
 
@@ -652,8 +752,10 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, saas: (prev.saas || 0) + 1 }));
 
     // Click Catastrophe: Cyber Breach (2%)
-    if (Math.random() < 0.02) {
-      setPl(p => ({ ...p, bag: p.bag - 50000 }));
+    const risk = ass.legalTeam ? 0.01 : 0.02;
+    if (Math.random() < risk) {
+      const penalty = ass.legalTeam ? 25000 : 50000;
+      setPl(p => ({ ...p, bag: p.bag - penalty }));
       setSaasPenaltyActive(true);
       setNews(prev => ["🚨 CYBER BREACH: Hackers breached your SaaS servers. -$50,000 and 50% revenue cut next cycle.", ...prev.slice(0, 15)]);
       return undefined;
@@ -671,8 +773,9 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, ai_agency: (prev.ai_agency || 0) + 1 }));
 
     // Click Catastrophe: API Poisoning (2%)
-    if (Math.random() < 0.02) {
-      setApiLockoutMonths(3);
+    const risk = ass.legalTeam ? 0.01 : 0.02;
+    if (Math.random() < risk) {
+      setApiLockoutMonths(ass.legalTeam ? 1 : 3);
       setNews(prev => ["🚨 API POISONING: Your lead bots were flagged. Agency suspended for 3 game months.", ...prev.slice(0, 15)]);
       return undefined;
     }
@@ -710,9 +813,14 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, franchise: (prev.franchise || 0) + 1 }));
 
     // Click Catastrophe: Union Strike (2%)
-    if (Math.random() < 0.02) {
-      setUnionStrikeActive(true);
-      setNews(prev => ["🚨 UNION STRIKE: Franchise workers have walked out. Operations halted.", ...prev.slice(0, 15)]);
+    const risk = ass.legalTeam ? 0.01 : 0.02;
+    if (Math.random() < risk) {
+      if (ass.legalTeam && Math.random() < 0.5) {
+        setNews(prev => ["⚖️ LEGAL: Elite defense team blocked the union strike.", ...prev.slice(0, 15)]);
+      } else {
+        setUnionStrikeActive(true);
+        setNews(prev => ["🚨 UNION STRIKE: Franchise workers have walked out. Operations halted.", ...prev.slice(0, 15)]);
+      }
       return undefined;
     }
 
@@ -747,8 +855,11 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
     // Click Catastrophe: SEC Pension Subpoena (2%)
-    if (Math.random() < 0.02) {
-      setPl(p => ({ ...p, bag: p.bag - 10000000, aura: Math.max(0, p.aura - 150) }));
+    const risk = ass.legalTeam ? 0.01 : 0.02;
+    if (Math.random() < risk) {
+      const bagPen = ass.legalTeam ? 5000000 : 10000000;
+      const auraPen = ass.legalTeam ? 75 : 150;
+      setPl(p => ({ ...p, bag: p.bag - bagPen, aura: Math.max(0, p.aura - auraPen) }));
       setNews(prev => ["🚨 SEC SUBPOENA: Pension fund irregularities detected. -$10,000,000 and -150 Aura.", ...prev.slice(0, 15)]);
       return undefined;
     }
@@ -773,8 +884,10 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
 
     // Click Catastrophe: Forgery Scandal (2%)
-    if (Math.random() < 0.02) {
-      setPl(p => ({ ...p, clout: Math.max(0, p.clout - 200) }));
+    const risk = ass.legalTeam ? 0.01 : 0.02;
+    if (Math.random() < risk) {
+      const cloutPen = ass.legalTeam ? 100 : 200;
+      setPl(p => ({ ...p, clout: Math.max(0, p.clout - cloutPen) }));
       setNews(prev => ["🚨 FORGERY SCANDAL: Masterpiece proven fake. Piece confiscated and -200 Clout.", ...prev.slice(0, 15)]);
       return undefined;
     }
@@ -820,11 +933,15 @@ export const GameProvider = ({ children }) => {
 
     if (triggerChaos('streetwear')) {
       if (karmaFlags.usedCheapBlanks) {
-        setPl(p => ({ ...p, clout: Math.max(0, p.clout - 15) }));
-        setNews(n => ["💀 KARMA DETONATION: Influencer rips your stitching apart. -15 Clout, $0 yield.", ...n.slice(0, 15)]);
+        const cloutPen = ass.legalTeam ? 7 : 15;
+        setPl(p => ({ ...p, clout: Math.max(0, p.clout - cloutPen) }));
+        setNews(n => ["💀 KARMA DETONATION: Influencer rips your stitching apart. Penalty mitigated by legal.", ...n.slice(0, 15)]);
       } else {
-        setPl(p => ({ ...p, bag: p.bag - 400, clout: Math.max(0, p.clout - 15), mentalHealth: Math.max(0, p.mentalHealth - 25) }));
-        setNews(n => ["🚫 THE COPYRIGHT STRIKE: Lose -$400, -15 Clout, -25 Mental Health.", ...n.slice(0, 15)]);
+        const bagPen = ass.legalTeam ? 200 : 400;
+        const cloutPen = ass.legalTeam ? 7 : 15;
+        const mhPen = ass.legalTeam ? 12 : 25;
+        setPl(p => ({ ...p, bag: p.bag - bagPen, clout: Math.max(0, p.clout - cloutPen), mentalHealth: Math.max(0, p.mentalHealth - mhPen) }));
+        setNews(n => ["🚫 THE COPYRIGHT STRIKE: Legal team reduced damages.", ...n.slice(0, 15)]);
       }
       return undefined;
     }
@@ -887,12 +1004,14 @@ export const GameProvider = ({ children }) => {
 
     if (triggerChaos('dropship')) {
       if (karmaFlags.ignoredRefunds) {
-        setPl(p => ({ ...p, bag: p.bag - 600 }));
-        setNews(n => ["💸 KARMA DETONATION: Gateway freezes assets. -$600 deduction.", ...n.slice(0, 15)]);
+        const bagPen = ass.legalTeam ? 300 : 600;
+        setPl(p => ({ ...p, bag: p.bag - bagPen }));
+        setNews(n => ["💸 KARMA DETONATION: Gateway freezes assets. Legal mitigated loss.", ...n.slice(0, 15)]);
       } else {
-        setPl(p => ({ ...p, mentalHealth: Math.max(0, p.mentalHealth - 30) }));
-        setDropshipLock(2);
-        setNews(n => ["🚫 THE ALGORITHM LOCKDOWN: Income zeroed for 2 months, -30 MH.", ...n.slice(0, 15)]);
+        const mhPen = ass.legalTeam ? 15 : 30;
+        setPl(p => ({ ...p, mentalHealth: Math.max(0, p.mentalHealth - mhPen) }));
+        setDropshipLock(ass.legalTeam ? 1 : 2);
+        setNews(n => ["🚫 THE ALGORITHM LOCKDOWN: Income zeroed. Legal team accelerated resolution.", ...n.slice(0, 15)]);
       }
       return undefined;
     }
@@ -974,7 +1093,7 @@ export const GameProvider = ({ children }) => {
       ...p,
       bag: p.bag + revenue,
       clout: Math.min(p.maxClout, p.clout + cloutGain),
-      heat: p.heat + heatGain
+      heat: p.heat + (ass.legalTeam ? Math.floor(heatGain * 0.5) : heatGain)
     }));
     setTally(t => ({ ...t, box: t.box + 1 }));
     setHl(h => ({ ...h, box: h.box + Math.max(0, profit) }));
