@@ -126,8 +126,8 @@ export const GameProvider = ({ children }) => {
     const isMud = pl.tier === 0;
     const hasPassive = smmClients > 0 || runnerCount > 0 || ass?.watch || ass?.pent || (tch.l && tch.pw);
 
-    if ((pl.bag || 0) <= 0 && !hasPassive && !fatalTragedyMessage) {
-      setFatalTragedyMessage("BANKRUPTCY: Your cash reserves have hit zero and you have no passive income to keep the lights on. The hustle is over.");
+    if ((pl.bag || 0) < 0 && !fatalTragedyMessage) {
+      setFatalTragedyMessage("BANKRUPTCY: Your net worth has dipped into the negative. The creditors have arrived, and they aren't here to talk. The hustle is dead.");
     }
 
     if (((pl.bag || 0) <= 0 && !hasPassive) || fatalTragedyMessage) {
@@ -234,6 +234,7 @@ export const GameProvider = ({ children }) => {
 
   // Global Pulse Advance Logic
   const adv = (months = 1) => {
+    if (fatalTragedyMessage) return;
     setSwFatigue(prev => Math.max(0, prev - (0.25 * months)));
     setHustleFatigue(prev => {
       const next = { ...prev };
@@ -387,6 +388,8 @@ export const GameProvider = ({ children }) => {
       setPl(p => ({ ...p, bag: 1000, clout: 5, aura: 5, maxMentalHealth: 100, mentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 }));
     }
 
+    setSelTier('0');
+    setTab('HUB');
     setPh('PROLOGUE_INTRO');
   };
 
