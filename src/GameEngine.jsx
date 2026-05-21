@@ -1468,6 +1468,11 @@ export const GameProvider = ({ children }) => {
     };
   }, [pl.tier]);
 
+  const cap = useMemo(() => {
+    const caps = [100, 250, 500, 2000, 10000, 999999999];
+    return caps[pl.tier] || caps[0];
+  }, [pl.tier]);
+
   const performHardReset = () => {
     window.isResetting = true;
     if (window.autoSaveInterval) {
@@ -1476,6 +1481,7 @@ export const GameProvider = ({ children }) => {
     localStorage.clear();
     sessionStorage.clear();
 
+    // Group 1: Core Framework
     setPl({ bag: 0, aura: 0, clout: 0, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
     setPh('PROLOGUE');
     setProSt(0);
@@ -1495,48 +1501,19 @@ export const GameProvider = ({ children }) => {
     setVintageLock(0);
     setSmmPenalty(false);
     setTechSourceCost(150);
-    setSmmClients(0);
-    setClientCrisis(false);
     setVinCh(null);
     setHustleClicks({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
-    setTechItem(null);
     setTechFlipsComplete(0);
-    setRunnerCount(0);
-    setRunnerBurnout(false);
-    setSaasUsers(0);
-    setSaasPrice(50);
-    setSaasChurn(0.05);
-    setSaasPenaltyActive(false);
-    setCorpClients(0);
-    setApiLockoutMonths(0);
-    setCreOfficeCount(0);
-    setCreRetailCount(0);
-    setFranchiseCount(0);
-    setUnionStrikeActive(false);
-    setUnionStrikeIgnored(false);
-    setPeProgress(0);
-    setGuttedFirms(0);
-    setSupplyChainDisruption(false);
-    setPeCompoundingYield(1.0);
-    setArtMarketSentiment(0);
-    setArtHoldings(0);
-    setConglomActive(false);
-    setAntitrustRisk(0);
-    setSwfInvestment(0);
-    setGeoStability(1.0);
-    setSwfFrozen(false);
     setIsBreakdownActive(false);
     setPassiveFrozen(false);
     setMkt(0);
     setNews(['Booting life simulation... System optimal.', 'Market Cycle initialized: NORMAL economy.']);
-    setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
-    setSkl({ neg: 0, tax: 0, inf: 0 });
-    setAss({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
+    setGenerationCount(0);
     setPeaks({ peakB: 0, peakA: 0, peakC: 0 });
     setHl({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
     setTally({ cryp: 0, box: 0, hf: 0, pres: 0 });
-    setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
-    setGenerationCount(0);
+
+    // Group 2: Business Primitive Reset
     setSw({ i: 1, u: 250, p: 45, a: 5000 });
     setDrp({ i: 1, u: 500, p: 35, a: 10000 });
     setCc({ m: 'solo', v: 1, n: 1 });
@@ -1548,32 +1525,48 @@ export const GameProvider = ({ children }) => {
     setMov({ g: 1, w: 1, d: 1, s: 1, m: 5000000 });
     setHf({ r: 0, t: 'NVDA', c: 5000000, l: 5 });
     setAi({ ig: false, p: 0, r: 0, d: 1, c: 1, s: 1, dj: 0 });
+    setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
+    setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
+    setSkl({ neg: 0, tax: 0, inf: 0 });
+    setAss({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
 
+    // Group 3: Counters & Active Trackers
     setSmmClients(0);
     setRunnerCount(0);
     setSaasUsers(0);
+    setSaasPrice(50);
+    setSaasChurn(0.05);
     setCorpClients(0);
     setCreOfficeCount(0);
     setCreRetailCount(0);
     setFranchiseCount(0);
     setGuttedFirms(0);
-    setSaasPrice(50);
+    setPeProgress(0);
+    setPeCompoundingYield(1.0);
+    setArtHoldings(0);
+    setArtMarketSentiment(0);
+    setSwfInvestment(0);
+    setGeoStability(1.0);
+    setAntitrustRisk(0);
+
+    // Group 4: Crisis & Flag Clears
     setTechItem(null);
     setClientCrisis(false);
     setRunnerBurnout(false);
     setUnionStrikeActive(false);
+    setUnionStrikeIgnored(false);
     setSupplyChainDisruption(false);
     setSaasPenaltyActive(false);
     setApiLockoutMonths(0);
+    setSwfFrozen(false);
+    setConglomActive(false);
 
-    setTimeout(() => {
-      window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
-    }, 200);
+    window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
   };
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
