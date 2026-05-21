@@ -1658,11 +1658,13 @@ const ElectionTab = () => {
 
 const GameInterface = () => {
   const game = useGame();
-  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge } = game || {};
+  const { pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge, karmaFlags } = game || {};
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
   const busy = gBusy || imp?.some(i => !i.w);
+
+  const karmaScore = karmaFlags ? 100 - (Object.values(karmaFlags).filter(Boolean).length * 15) : 100;
   const cancelIntroStyles = { userSelect: 'none', pointerEvents: 'none' };
 
   if (cancelIntro) {
@@ -1678,6 +1680,30 @@ const GameInterface = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+
+      {/* Sticky Dashboard */}
+      <div className="sticky top-0 z-[100] bg-slate-950/95 backdrop-blur-md border-b-2 border-slate-800 px-4 py-2 flex justify-between items-center shadow-xl">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1 font-hack">Empire Liquidity</span>
+          <span className={`text-xl font-black font-hack leading-none ${displayBag >= 1000000000 ? 'billionaire-bag' : 'text-green-400'}`}>
+            ${fMny(displayBag || 0)}
+          </span>
+        </div>
+        <div className="flex gap-4 items-center">
+          <div className="flex flex-col items-center">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Clout</span>
+            <span className="text-sm font-black text-red-500 leading-none">{pl?.clout || 0}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Karma</span>
+            <span className={`text-sm font-black leading-none ${karmaScore > 70 ? 'text-blue-400' : karmaScore > 30 ? 'text-yellow-500' : 'text-red-600'}`}>{karmaScore}%</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">MH</span>
+            <span className="text-sm font-black text-purple-400 leading-none">{pl?.mentalHealth || 0}%</span>
+          </div>
+        </div>
+      </div>
 
       {isBreakdownActive && (
         <div className="fixed inset-0 bg-purple-900/90 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
@@ -1725,7 +1751,7 @@ const GameInterface = () => {
       )}
 
       {/* HUD */}
-      <div className="mobile-hud px-3 py-2">
+      <div className="px-3 py-2 relative">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
             <div className="text-[9px] font-bold text-slate-300 drop-shadow-sm tracking-widest leading-none mb-0.5 font-hack">NET WORTH — {alias || 'ANON'}</div>
@@ -1785,7 +1811,7 @@ const GameInterface = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 pt-6 pb-16">
+      <div className="flex-1 overflow-y-auto px-3 pb-16">
         <div className="max-w-xl mx-auto">
           {tab === 'HUB'  && <TierHub />}
           {tab === 'SW'   && (isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />)}
