@@ -1561,7 +1561,9 @@ export const GameProvider = ({ children }) => {
     setSwfFrozen(false);
     setConglomActive(false);
 
-    window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
+    setTimeout(() => {
+      window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
+    }, 150);
   };
 
   return (
