@@ -80,20 +80,24 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
   const hit = async () => {
     if (dis || exhausted || st !== 'idle' || (busy && st === 'idle')) return;
     const hr = cost !== undefined && pl.bag > 0 && cost >= pl.bag * 0.25;
-    if (hr) {
-      const actionPromise = onClick();
-      await new Promise(r => setTimeout(r, 1500));
-      setSt('sweat');
-      await new Promise(r => setTimeout(r, 500));
-      const res = await actionPromise;
-      await new Promise(r => setTimeout(r, 200));
-      if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1000); }
-      else setSt('idle');
-    } else {
-      setSt('calc');
-      const res = await onClick();
-      if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1500); }
-      else setSt('idle');
+    try {
+      if (hr) {
+        const actionPromise = onClick();
+        await new Promise(r => setTimeout(r, 1500));
+        setSt('sweat');
+        await new Promise(r => setTimeout(r, 500));
+        const res = await actionPromise;
+        await new Promise(r => setTimeout(r, 200));
+        if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1000); }
+        else setSt('idle');
+      } else {
+        setSt('calc');
+        const res = await onClick();
+        if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1500); }
+        else setSt('idle');
+      }
+    } catch (error) {
+      setSt('idle');
     }
   };
 
@@ -542,7 +546,7 @@ const TierHub = () => {
           className="w-full py-4 bg-purple-900/40 border-2 border-purple-500 rounded-xl font-black text-purple-400 tracking-widest hover:bg-purple-800/40 transition-all active:scale-95 duration-100 flex items-center justify-center gap-3"
         >
           <span className="text-2xl">😴</span>
-          TAKE A BREAK (+50 MH, ADVANCE 1 MO)
+          TAKE SOME MENTAL HEALTH DAYS (+50 MH, ADVANCE 1 MO)
         </button>
       </div>
 
@@ -1837,7 +1841,7 @@ const ElectionTab = () => {
 
 // ─── Main game interface ──────────────────────────────────────────────────────
 
-const TAB_CONFIG = {
+const TAB_MAP = {
   'HUB':          { component: TierHub },
   'SW':           { component: SwTab,           tier: 0 },
   'DROP':         { component: DropTab,         tier: 0 },
@@ -2020,7 +2024,7 @@ const GameInterface = () => {
       <div className="flex-1 overflow-y-auto px-3 pb-16">
         <div key={tab + selTier} className="max-w-xl mx-auto animate-fadeIn">
           {(() => {
-            const cfg = TAB_CONFIG[tab];
+            const cfg = TAB_MAP[tab];
             if (!cfg) return null;
             const Component = cfg.component;
             if (cfg.tier !== undefined && !isTierUnlocked?.(cfg.tier)) {
