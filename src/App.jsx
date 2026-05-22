@@ -181,7 +181,7 @@ const LockedTierScreen = ({ section }) => {
 };
 
 const ExpView = () => {
-  const { pl, peaks, hl, cap } = useGame();
+  const { cap, pl, peaks, hl } = useGame();
 
   const totalLifetimeIncome = Object.values(hl || {}).reduce((a, b) => a + b, 0);
   const globalLevel = Math.floor(Math.sqrt(totalLifetimeIncome / 10000)) || 1;
@@ -413,7 +413,11 @@ const AutopsyReport = () => {
           <div className="text-2xl font-black text-slate-300 drop-shadow-sm tracking-tighter">{alias || 'ANON'} — {death.rank}</div>
         </div>
 
-        <button onClick={() => window.location.reload()} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all active:scale-95 duration-100 shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
+        <button onClick={() => {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
+        }} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all active:scale-95 duration-100 shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
       </div>
     </div>
   );
