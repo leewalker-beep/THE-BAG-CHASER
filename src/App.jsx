@@ -515,7 +515,7 @@ const TierHub = () => {
     'CC': { label: 'Creator Lab', icon: '📱' },
     'POD': { label: 'Podcast Net', icon: '🎙️' },
     'BOX': { label: 'FIGHT Promoter', icon: '🥊' },
-    'AUDIO': { label: 'Indie Audio Syndicate', icon: '🎵', stub: true },
+    'AUDIO': { label: 'Indie Audio Syndicate', icon: '🎵' },
     'TECH': { label: 'SaaS Startup', icon: '💻' },
     'AI_AGENCY': { label: 'AI Marketing Agency', icon: '🤖' },
     'CRE_FLIP': { label: 'Commercial Real Estate', icon: '🏢' },
@@ -526,7 +526,7 @@ const TierHub = () => {
     'ART_SPEC': { label: 'Art Speculation', icon: '🎨' },
     'HF': { label: 'Hedge Fund', icon: '📈' },
     'CONGLOMERATE': { label: 'Global Conglomerate', icon: '🏢' },
-    'PMC': { label: 'Private Military', icon: '🎖️', stub: true },
+    'PMC': { label: 'Private Military', icon: '🎖️' },
     'SOVEREIGN': { label: 'Sovereign Wealth Fund', icon: '🌍' },
     'PAC': { label: 'Super PAC', icon: '🇺🇸' },
     'BLITZ': { label: 'Media Blitz', icon: '📣' },
@@ -1697,6 +1697,93 @@ const SmearTab = () => {
   );
 };
 
+const AudioTab = () => {
+  const { pl, audioTracks, sampleStrike, rAudioRelease, rAudioSettle, setTab } = useGame();
+  const locked = pl.bag < 100000 || pl.clout < 30;
+
+  if (locked) return <LockedTierScreen section={1} />;
+
+  return (
+    <LabShell t="INDIE AUDIO SYNDICATE" c="orange" fontCls="font-hype" onHub={() => setTab('HUB')} tier={1}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${sampleStrike ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Streaming Catalog</div>
+        <div className={`text-2xl font-black ${sampleStrike ? 'text-red-500' : 'text-orange-400'}`}>{audioTracks} TRACKS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          {sampleStrike ? "SAMPLE STRIKE: ROYALTIES FROZEN" : `Passive: +$${fMny(audioTracks * 400)}/mo | +${audioTracks * 2} Clout/mo`}
+        </div>
+      </div>
+
+      {sampleStrike && (
+        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 COPYRIGHT STRIKE!</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Royalties are escrowed. Pay legal to settle.</p>
+          <FlashBtn
+            onClick={rAudioSettle}
+            dis={pl.bag < 5000}
+            label="SETTLE STRIKE ($5,000)"
+            color="red-600"
+            txt="white"
+          />
+        </div>
+      )}
+
+      <FlashBtn
+        onClick={rAudioRelease}
+        costStm={15}
+        dis={pl.bag < 1000}
+        label="RELEASE SINGLE ($1,000)"
+        color="orange-600"
+        txt="white"
+      />
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"60% release success rate. High risk of sample clearance issues."</p>
+    </LabShell>
+  );
+};
+
+const PmcTab = () => {
+  const { pl, pmcSquads, intelLeak, rPmcDeploy, rPmcSettle, setTab } = useGame();
+  const locked = pl.bag < 250000000 || pl.clout < 1500 || pl.aura < 500;
+
+  if (locked) return <LockedTierScreen section={4} />;
+
+  return (
+    <LabShell t="PRIVATE MILITARY COMPANY" c="purple" fontCls="font-tech" onHub={() => setTab('HUB')} tier={4}>
+      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${intelLeak ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Deployed Forces</div>
+        <div className={`text-2xl font-black ${intelLeak ? 'text-red-500' : 'text-purple-400'}`}>{pmcSquads} SQUADS</div>
+        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
+          Passive: +${fMny(pmcSquads * 75000)}/mo | +{pmcSquads * 2} Heat/mo
+          {intelLeak && <div className="text-red-400 font-bold mt-1">⚠️ INTEL LEAK: -20 AURA/MO</div>}
+        </div>
+      </div>
+
+      {intelLeak && (
+        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
+          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 CLASSIFIED LEAK!</h4>
+          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Operations exposed. Aura is bleeding rapidly.</p>
+          <FlashBtn
+            onClick={rPmcSettle}
+            dis={pl.bag < 2500000}
+            label="SCRUB INTEL ($2.5M)"
+            color="red-600"
+            txt="white"
+          />
+        </div>
+      )}
+
+      <FlashBtn
+        onClick={rPmcDeploy}
+        costStm={40}
+        dis={pl.bag < 5000000}
+        label="DEPLOY TACTICAL SQUAD ($5M)"
+        color="purple-600"
+        txt="white"
+      />
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"50% mission success rate. Risk of massive aura bleed from leaks."</p>
+    </LabShell>
+  );
+};
+
 const ElectionTab = () => {
   const { prs, pl, setTab, setMod } = useGame();
   const ready = (prs?.polls || 0) >= 51;
@@ -1761,6 +1848,7 @@ const TAB_CONFIG = {
   'CC':           { component: CcTab,           tier: 1 },
   'POD':          { component: PodTab,          tier: 1 },
   'BOX':          { component: BoxTab,          tier: 1 },
+  'AUDIO':        { component: AudioTab,        tier: 1 },
   'TECH':         { component: TechTab,         tier: 2 },
   'AI_AGENCY':    { component: AiAgencyTab,     tier: 2 },
   'CRE_FLIP':     { component: CreTab,          tier: 2 },
@@ -1773,6 +1861,7 @@ const TAB_CONFIG = {
   'HF':           { component: HfTab,           tier: 4 },
   'AI':           { component: AiTab,           tier: 4 },
   'CONGLOMERATE': { component: ConglomerateTab, tier: 4 },
+  'PMC':          { component: PmcTab,          tier: 4 },
   'SOVEREIGN':    { component: SovereignTab,    tier: 4 },
   'BILL':         { component: BillTab,         tier: 4 },
   'PAC':          { component: SuperPacTab,     tier: 5 },
