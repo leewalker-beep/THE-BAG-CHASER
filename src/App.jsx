@@ -546,15 +546,6 @@ const TierHub = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1">
-        <button
-          onClick={() => { setSelTier('flexShop'); setTab('HUB'); }}
-          className="w-full py-4 bg-blue-900/40 border-2 border-blue-500 rounded-xl font-black text-blue-400 tracking-widest hover:bg-blue-800/40 transition-all active:scale-95 duration-100 flex items-center justify-center gap-3"
-        >
-          <span className="text-2xl">💎</span>
-          ENTER THE FLEX SHOP
-        </button>
-      </div>
 
       {(pl.tier >= 5 && pl.bag >= 500000000) && (
         <div className="grid grid-cols-1">
@@ -1485,7 +1476,7 @@ const ConglomerateTab = () => {
     const peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
     return passiveSrv + smmRev + runnerRev + saasRev + aiRev + creNet + franchiseRev + peRev;
-  }, [tch.l, tch.pw, tch.u, tch.srv, smmClients, runnerCount, saasUsers, saasPrice, saasPenaltyActive, apiLockoutMonths, corpClients, creOfficeCount, creRetailCount, unionStrikeActive, franchiseCount, supplyChainDisruption, guttedFirms, peCompoundingYield]);
+  }, [tch, smmClients, runnerCount, saasUsers, saasPrice, saasPenaltyActive, apiLockoutMonths, corpClients, creOfficeCount, creRetailCount, unionStrikeActive, franchiseCount, supplyChainDisruption, guttedFirms, peCompoundingYield]);
 
   const currentBonus = React.useMemo(() => {
     return conglomActive ? Math.floor(basePassive * 0.25) : 0;
@@ -1759,42 +1750,43 @@ const ElectionTab = () => {
 
 // ─── Main game interface ──────────────────────────────────────────────────────
 
+const TAB_CONFIG = {
+  'HUB':          { component: TierHub },
+  'SW':           { component: SwTab,           tier: 0 },
+  'DROP':         { component: DropTab,         tier: 0 },
+  'VINTAGE':      { component: VintageTab,      tier: 0 },
+  'SMM':          { component: SmmTab,          tier: 0 },
+  'TECH_FLIP':    { component: TechFlipTab,     tier: 0 },
+  'GIG':          { component: GigTab,          tier: 0 },
+  'CC':           { component: CcTab,           tier: 1 },
+  'POD':          { component: PodTab,          tier: 1 },
+  'BOX':          { component: BoxTab,          tier: 1 },
+  'TECH':         { component: TechTab,         tier: 2 },
+  'AI_AGENCY':    { component: AiAgencyTab,     tier: 2 },
+  'CRE_FLIP':     { component: CreTab,          tier: 2 },
+  'FRANCHISE':    { component: FranchiseTab,    tier: 2 },
+  'CRYP':         { component: CrpTab,          tier: 3 },
+  'TOUR':         { component: TourTab,         tier: 3 },
+  'PE_ROLLUP':    { component: PeTab,           tier: 3 },
+  'ART_SPEC':     { component: ArtTab,          tier: 3 },
+  'MOV':          { component: MovTab,          tier: 4 },
+  'HF':           { component: HfTab,           tier: 4 },
+  'AI':           { component: AiTab,           tier: 4 },
+  'CONGLOMERATE': { component: ConglomerateTab, tier: 4 },
+  'SOVEREIGN':    { component: SovereignTab,    tier: 4 },
+  'BILL':         { component: BillTab,         tier: 4 },
+  'PAC':          { component: SuperPacTab,     tier: 5 },
+  'BLITZ':        { component: BlitzTab,        tier: 5 },
+  'SMEAR':        { component: SmearTab,        tier: 5 },
+  'ELECTION':     { component: ElectionTab,     tier: 5 },
+};
+
 const GameInterface = () => {
   const game = useGame();
   const {
     pl, prs, ass, mkt, news, tab, setTab, imp, rain, mod, cancelIntro, fatalTragedyMessage, gBusy, displayBag, alias, age, cap, isTierUnlocked, peaks, selTier, setSelTier, isBreakdownActive, shakeActive, rDischarge, karmaFlags, generationCount, performHardReset
   } = game || {};
 
-  const TAB_MAP = React.useMemo(() => ({
-    'HUB':          () => <TierHub />,
-    'SW':           () => isTierUnlocked?.(0) ? <SwTab /> : <LockedTierScreen section={0} />,
-    'DROP':         () => isTierUnlocked?.(0) ? <DropTab /> : <LockedTierScreen section={0} />,
-    'VINTAGE':      () => isTierUnlocked?.(0) ? <VintageTab /> : <LockedTierScreen section={0} />,
-    'SMM':          () => isTierUnlocked?.(0) ? <SmmTab /> : <LockedTierScreen section={0} />,
-    'TECH_FLIP':    () => isTierUnlocked?.(0) ? <TechFlipTab /> : <LockedTierScreen section={0} />,
-    'GIG':          () => isTierUnlocked?.(0) ? <GigTab /> : <LockedTierScreen section={0} />,
-    'CC':           () => isTierUnlocked?.(1) ? <CcTab /> : <LockedTierScreen section={1} />,
-    'POD':          () => isTierUnlocked?.(1) ? <PodTab /> : <LockedTierScreen section={1} />,
-    'BOX':          () => isTierUnlocked?.(1) ? <BoxTab /> : <LockedTierScreen section={1} />,
-    'TECH':         () => isTierUnlocked?.(2) ? <TechTab /> : <LockedTierScreen section={2} />,
-    'AI_AGENCY':    () => isTierUnlocked?.(2) ? <AiAgencyTab /> : <LockedTierScreen section={2} />,
-    'CRE_FLIP':     () => isTierUnlocked?.(2) ? <CreTab /> : <LockedTierScreen section={2} />,
-    'FRANCHISE':    () => isTierUnlocked?.(2) ? <FranchiseTab /> : <LockedTierScreen section={2} />,
-    'CRYP':         () => isTierUnlocked?.(3) ? <CrpTab /> : <LockedTierScreen section={3} />,
-    'TOUR':         () => isTierUnlocked?.(3) ? <TourTab /> : <LockedTierScreen section={3} />,
-    'PE_ROLLUP':    () => isTierUnlocked?.(3) ? <PeTab /> : <LockedTierScreen section={3} />,
-    'ART_SPEC':     () => isTierUnlocked?.(3) ? <ArtTab /> : <LockedTierScreen section={3} />,
-    'MOV':          () => isTierUnlocked?.(4) ? <MovTab /> : <LockedTierScreen section={4} />,
-    'HF':           () => isTierUnlocked?.(4) ? <HfTab /> : <LockedTierScreen section={4} />,
-    'AI':           () => isTierUnlocked?.(4) ? <AiTab /> : <LockedTierScreen section={4} />,
-    'CONGLOMERATE': () => isTierUnlocked?.(4) ? <ConglomerateTab /> : <LockedTierScreen section={4} />,
-    'SOVEREIGN':    () => isTierUnlocked?.(4) ? <SovereignTab /> : <LockedTierScreen section={4} />,
-    'BILL':         () => isTierUnlocked?.(4) ? <BillTab /> : <LockedTierScreen section={4} />,
-    'PAC':          () => isTierUnlocked?.(5) ? <SuperPacTab /> : <LockedTierScreen section={5} />,
-    'BLITZ':        () => isTierUnlocked?.(5) ? <BlitzTab /> : <LockedTierScreen section={5} />,
-    'SMEAR':        () => isTierUnlocked?.(5) ? <SmearTab /> : <LockedTierScreen section={5} />,
-    'ELECTION':     () => isTierUnlocked?.(5) ? <ElectionTab /> : <LockedTierScreen section={5} />,
-  }), [isTierUnlocked]);
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
 
@@ -1939,8 +1931,13 @@ const GameInterface = () => {
       <div className="flex-1 overflow-y-auto px-3 pb-16">
         <div key={tab + selTier} className="max-w-xl mx-auto animate-fadeIn">
           {(() => {
-            const Component = TAB_MAP[tab];
-            return Component ? <Component /> : null;
+            const cfg = TAB_CONFIG[tab];
+            if (!cfg) return null;
+            const Component = cfg.component;
+            if (cfg.tier !== undefined && !isTierUnlocked?.(cfg.tier)) {
+              return <LockedTierScreen section={cfg.tier} />;
+            }
+            return <Component />;
           })()}
 
           <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 my-6">
