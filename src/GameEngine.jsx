@@ -64,6 +64,11 @@ export const GameProvider = ({ children }) => {
   const [artMarketSentiment, setArtMarketSentiment] = useState(0);
   const [artHoldings, setArtHoldings] = useState(0);
 
+  const [audioTracks, setAudioTracks] = useState(0);
+  const [sampleStrike, setSampleStrike] = useState(false);
+  const [pmcSquads, setPmcSquads] = useState(0);
+  const [intelLeak, setIntelLeak] = useState(false);
+
   const [conglomActive, setConglomActive] = useState(false);
   const [antitrustRisk, setAntitrustRisk] = useState(0);
   const [swfInvestment, setSwfInvestment] = useState(0);
@@ -120,7 +125,8 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artHoldings, conglomActive, antitrustRisk, swfInvestment,
+    artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    conglomActive, antitrustRisk, swfInvestment,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -169,6 +175,10 @@ export const GameProvider = ({ children }) => {
         if (d.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
         if (d.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
         if (d.artHoldings !== undefined) setArtHoldings(d.artHoldings);
+        if (d.audioTracks !== undefined) setAudioTracks(d.audioTracks);
+        if (d.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
+        if (d.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
+        if (d.intelLeak !== undefined) setIntelLeak(d.intelLeak);
         if (d.conglomActive !== undefined) setConglomActive(d.conglomActive);
         if (d.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
         if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
@@ -502,6 +512,8 @@ export const GameProvider = ({ children }) => {
 
       const smmRev = smmClients * 300;
       const runnerRev = runnerCount * 150;
+      const audioYield = sampleStrike ? 0 : (audioTracks * 400);
+      const pmcYield = pmcSquads * 75000;
 
       const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
       const saasOverhead = saasUsers * 2;
@@ -519,11 +531,13 @@ export const GameProvider = ({ children }) => {
       const franchiseRev = (unionStrikeActive || supplyChainDisruption) ? 0 : (franchiseCount * 25000);
       let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
-      const auraBleed = unionStrikeIgnored ? 50 : 0;
+      const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
       const artClout = artHoldings * 20;
+      const audioClout = audioTracks * 2;
+      const pmcHeat = pmcSquads * 2;
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
+      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
       if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
@@ -532,7 +546,8 @@ export const GameProvider = ({ children }) => {
         mo: prev.mo + months,
         bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
-        clout: Math.min(prev.maxClout, prev.clout + artClout),
+        clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
+        heat: prev.heat + pmcHeat,
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
       };
     });
@@ -1072,6 +1087,54 @@ export const GameProvider = ({ children }) => {
     setNews(prev => ["🌍 SWF: International holdings liquidated into Bag.", ...prev.slice(0, 15)]);
   };
 
+  const rAudioRelease = async () => {
+    if (pl.bag < 1000 || pl.mentalHealth < 15) return;
+    setPl(p => ({ ...p, bag: p.bag - 1000, mentalHealth: p.mentalHealth - 15 }));
+    await new Promise(r => setTimeout(r, 800));
+    if (Math.random() < 0.6) {
+      setAudioTracks(t => t + 1);
+      setNews(prev => ["🎵 AUDIO: New single released and trending.", ...prev.slice(0, 15)]);
+    } else {
+      setNews(prev => ["🎵 AUDIO: Single flopped. Market didn't vibe.", ...prev.slice(0, 15)]);
+    }
+    if (Math.random() < 0.02) {
+      setSampleStrike(true);
+      setNews(prev => ["🚨 AUDIO ALERT: Sample strike detected! Royalty yields frozen.", ...prev.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rAudioSettle = async () => {
+    if (pl.bag < 5000) return;
+    setPl(p => ({ ...p, bag: p.bag - 5000 }));
+    setSampleStrike(false);
+    setNews(prev => ["✅ AUDIO: Legal settlement paid. Royalties resumed.", ...prev.slice(0, 15)]);
+  };
+
+  const rPmcDeploy = async () => {
+    if (pl.bag < 5000000 || pl.mentalHealth < 40) return;
+    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 40 }));
+    await new Promise(r => setTimeout(r, 1200));
+    if (Math.random() < 0.5) {
+      setPmcSquads(s => s + 1);
+      setNews(prev => ["🎖️ PMC: Tactical squad deployed to conflict zone.", ...prev.slice(0, 15)]);
+    } else {
+      setNews(prev => ["🎖️ PMC: Mission failed. Assets lost in field.", ...prev.slice(0, 15)]);
+    }
+    if (Math.random() < 0.02) {
+      setIntelLeak(true);
+      setNews(prev => ["🚨 PMC ALERT: Intel leak detected! Aura bleeding due to scandal.", ...prev.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rPmcSettle = async () => {
+    if (pl.bag < 2500000) return;
+    setPl(p => ({ ...p, bag: p.bag - 2500000 }));
+    setIntelLeak(false);
+    setNews(prev => ["✅ PMC: Damage control complete. Intel leak scrubbed.", ...prev.slice(0, 15)]);
+  };
+
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
       setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
@@ -1442,6 +1505,10 @@ export const GameProvider = ({ children }) => {
     setPeCompoundingYield(1.0);
     setArtMarketSentiment(0);
     setArtHoldings(0);
+    setAudioTracks(0);
+    setSampleStrike(false);
+    setPmcSquads(0);
+    setIntelLeak(false);
     setConglomActive(false);
     setAntitrustRisk(0);
     setSwfInvestment(0);
@@ -1545,6 +1612,10 @@ export const GameProvider = ({ children }) => {
     setPeCompoundingYield(1.0);
     setArtHoldings(0);
     setArtMarketSentiment(0);
+    setAudioTracks(0);
+    setSampleStrike(false);
+    setPmcSquads(0);
+    setIntelLeak(false);
     setSwfInvestment(0);
     setGeoStability(1.0);
     setAntitrustRisk(0);
@@ -1579,6 +1650,8 @@ export const GameProvider = ({ children }) => {
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
+      audioTracks, setAudioTracks, sampleStrike, setSampleStrike, pmcSquads, setPmcSquads, intelLeak, setIntelLeak,
+      rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>
       {children}
