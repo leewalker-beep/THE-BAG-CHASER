@@ -1455,6 +1455,9 @@ export const GameProvider = ({ children }) => {
   const dDef = () => { setPl(p => ({ ...p, bag: p.bag - 75000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, du: true, sub: p.sub + 5 })); };
 
   const rRetire = () => {
+    window.isResetting = true;
+    setDeath(null);
+    setCancelIntro(null);
     setGenerationCount(g => g + 1);
 
     // Reset core stats based on difficulty
@@ -1527,6 +1530,7 @@ export const GameProvider = ({ children }) => {
     setPh('PROLOGUE');
     setProSt(0);
     setNews(['Your legacy continues... A new generation begins.', 'Market Cycle initialized: NORMAL economy.']);
+    setTimeout(() => { window.isResetting = false; }, 2000);
   };
 
   const isTierUnlocked = useMemo(() => {
