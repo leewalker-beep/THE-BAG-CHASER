@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { NOTIFICATION_DATABASE } from './data/notifications.js';
 
 export const TIERS = [
   { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG'] },
@@ -91,6 +92,9 @@ export const GameProvider = ({ children }) => {
   const [mediaBlitzCost, setMediaBlitzCost] = useState(10000000);
   const [isPresident, setIsPresident] = useState(false);
 
+  const [seenNotifications, setSeenNotifications] = useState([]);
+  const [activeNotification, setActiveNotification] = useState(null);
+
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
   const [shakeActive, setShakeActive] = useState(false);
   const [passiveFrozen, setPassiveFrozen] = useState(false);
@@ -136,6 +140,7 @@ export const GameProvider = ({ children }) => {
   const stateRef = React.useRef();
   stateRef.current = {
     ph, proSt, alias, diff, tab, selTier, swFatigue, hustleFatigue, karmaFlags,
+    seenNotifications,
     lastHustle, dropshipLock, vintageLock, smmPenalty, techSourceCost, smmClients,
     clientCrisis, vinCh, hustleClicks, techItem, techFlipsComplete, runnerCount,
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
@@ -214,6 +219,7 @@ export const GameProvider = ({ children }) => {
         if (d.lobbyistCost !== undefined) setLobbyistCost(d.lobbyistCost);
         if (d.mediaBlitzCost !== undefined) setMediaBlitzCost(d.mediaBlitzCost);
         if (d.isPresident !== undefined) setIsPresident(d.isPresident);
+        if (d.seenNotifications) setSeenNotifications(d.seenNotifications);
         if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d.pl) setPl(d.pl);
         if (d.mkt !== undefined) setMkt(d.mkt);
@@ -334,6 +340,15 @@ export const GameProvider = ({ children }) => {
       setShakeActive(true);
       setGBusy(true);
       setTimeout(() => setShakeActive(false), 500);
+    }
+
+    // Notification Trigger Evaluator
+    const financialPhase = pl.bag < 10000 ? 1 : pl.bag < 100000 ? 2 : pl.bag < 500000 ? 3 : 0;
+    if (financialPhase > 0) {
+      if (pl.bag <= 0 && financialPhase === 1) triggerNotification('BAG_FAIL_01');
+      if (pl.aura < 0 && financialPhase === 1) triggerNotification('AUR_LOW_01');
+      if (pl.mentalHealth < (pl.maxMentalHealth * 0.1) && financialPhase === 1) triggerNotification('HEA_LOW_01');
+      if (pl.mentalHealth <= 0 && financialPhase === 3) triggerNotification('HEA_FAIL_01');
     }
   }, [pl, ph, peaks, isBreakdownActive]);
 
@@ -775,7 +790,10 @@ export const GameProvider = ({ children }) => {
           t: "WAREHOUSE BRIBE",
           m: "The warehouse boss is still blocking your entry. Pay a $150 bribe to clear the blacklist?",
           o: [
-            { label: "PAY BRIBE ($150)", action: () => { setPl(p => ({ ...p, bag: p.bag - 150 })); setVintageLock(0); setMod({ s: false }); } },
+            { label: "PAY BRIBE ($150)", action: () => {
+              triggerNotification('HET_LOW_01');
+              setPl(p => ({ ...p, bag: p.bag - 150 })); setVintageLock(0); setMod({ s: false });
+            } },
             { label: "CANCEL", action: () => setMod({ s: false }) }
           ],
           ui: "ui-modal"
@@ -788,6 +806,9 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
 
     if (triggerChaos('vintage')) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 3) triggerNotification('AUR_FAIL_01');
+
       if (karmaFlags.soldBootleg) {
         setPl(p => ({ ...p, aura: Math.max(0, p.aura - 20) }));
         setSmmPenalty(true);
@@ -838,6 +859,9 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
 
     if (triggerChaos('smm')) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 3) triggerNotification('HET_CRASH_01');
+
       if (karmaFlags.ignoredSmmCrisis) {
         setSmmClients(c => Math.max(0, c - 2));
         setNews(n => ["📉 KARMA DETONATION: Disgruntled clients post terrible reviews. 2 clients lost.", ...n.slice(0, 15)]);
@@ -869,7 +893,25 @@ export const GameProvider = ({ children }) => {
     return undefined;
   };
 
+  const triggerNotification = (id) => {
+    if (stateRef.current.seenNotifications.includes(id)) return;
+    const data = NOTIFICATION_DATABASE[id];
+    if (!data) return;
+
+    setSeenNotifications(prev => [...prev, id]);
+    setActiveNotification(data);
+    setGBusy(true);
+  };
+
+  const closeNotification = () => {
+    setActiveNotification(null);
+    setGBusy(false);
+  };
+
   const rRest = async () => {
+    const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+    if (financialPhase === 2) triggerNotification('HEA_BOOST_01');
+
     setPl(p => ({ ...p, mentalHealth: Math.min(p.maxMentalHealth, p.mentalHealth + 50) }));
     setPassiveFrozen(false);
     adv();
@@ -909,6 +951,9 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
 
     if (Math.random() < 0.5) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 2) triggerNotification('BAG_BOOST_01');
+
       const payout = Math.floor(750 * legacyMultiplier);
       setPl(p => ({ ...p, bag: p.bag + payout }));
       setTechItem(null);
@@ -953,6 +998,9 @@ export const GameProvider = ({ children }) => {
       }
       return undefined;
     }
+
+    const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+    if (financialPhase === 2) triggerNotification('AUR_BOOST_01');
 
     setRunnerCount(prev => prev + 1);
     setNews(n => ["🏃 GIG: New fleet courier recruited.", ...n.slice(0, 15)]);
@@ -1236,6 +1284,7 @@ export const GameProvider = ({ children }) => {
       setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
       setNews(n => ["🔥 VINTAGE: Burned the bootleg. Street authenticity +1.", ...n.slice(0, 15)]);
     } else if (choice === 'pass') {
+      triggerNotification('CLT_FAIL_01');
       setPl(p => ({ ...p, bag: p.bag + 150, aura: Math.max(0, p.aura - 10) }));
       setNews(n => ["💀 VINTAGE: Passed off a rep. Reputation damaged, but bags secured.", ...n.slice(0, 15)]);
       triggerImpact('bag', 150);
@@ -1252,6 +1301,9 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
 
     if (triggerChaos('streetwear')) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 2) triggerNotification('HET_RISE_01');
+
       if (karmaFlags.usedCheapBlanks) {
         const cloutPen = ass.legalTeam ? 7 : 15;
         setPl(p => ({ ...p, clout: Math.max(0, p.clout - cloutPen) }));
@@ -1291,6 +1343,9 @@ export const GameProvider = ({ children }) => {
     let newsMsg = "";
 
     if (unitsSold >= sw.u * 0.8) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 3) triggerNotification('BAG_WIN_01');
+
       auraGain = 10;
       cloutGain = 5;
       newsMsg = "👟 VIRAL SELLOUT! Cleared all inventory.";
@@ -1323,6 +1378,9 @@ export const GameProvider = ({ children }) => {
     setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
 
     if (triggerChaos('dropship')) {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 2) triggerNotification('HET_RISE_01');
+
       if (karmaFlags.ignoredRefunds) {
         const bagPen = ass.legalTeam ? 300 : 600;
         setPl(p => ({ ...p, bag: p.bag - bagPen }));
@@ -1354,6 +1412,9 @@ export const GameProvider = ({ children }) => {
     let profit = 0; let cloutGain = 0; let auraGain = 0;
 
     if (type === 'sol') {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 2) triggerNotification('CLT_HIGH_01');
+
       profit = Math.floor(Math.random() * 2500 * legacyMultiplier);
       cloutGain = 5;
       setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
@@ -1361,6 +1422,9 @@ export const GameProvider = ({ children }) => {
       profit = -25000; cloutGain = 35; auraGain = -15;
       setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain), aura: Math.max(0, p.aura + auraGain) }));
     } else {
+      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
+      if (financialPhase === 2) triggerNotification('CLT_WIN_01');
+
       profit = Math.floor(Math.random() * 75000 * legacyMultiplier); cloutGain = 20;
       setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
     }
@@ -1576,6 +1640,7 @@ export const GameProvider = ({ children }) => {
     setSwFatigue(0);
     setHustleFatigue({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
     setKarmaFlags({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
+    setSeenNotifications([]);
     setFatalTragedyMessage(null);
     setLastHustle(null);
     setDropshipLock(0);
@@ -1683,6 +1748,7 @@ export const GameProvider = ({ children }) => {
     setSwFatigue(0);
     setHustleFatigue({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
     setKarmaFlags({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
+    setSeenNotifications([]);
     setFatalTragedyMessage(null);
     setLastHustle(null);
     setDropshipLock(0);
@@ -1784,6 +1850,7 @@ export const GameProvider = ({ children }) => {
       lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
+    activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>
       {children}

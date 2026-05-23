@@ -57,6 +57,7 @@ import {
 
 import { Hud } from './components/layout/Hud.jsx';
 import { NewsTicker } from './components/layout/NewsTicker.jsx';
+import { NotificationOverlay } from './components/ui/NotificationOverlay.jsx';
 
 import {
   SwTab,
@@ -741,11 +742,12 @@ const GameIntro = () => {
 };
 
 const BagChaserInner = () => {
-  const { ph, death, cancelIntro, fatalTragedyMessage, setFatalTragedyMessage, setDeath } = useGame();
+  const { ph, death, cancelIntro, fatalTragedyMessage, setFatalTragedyMessage, setDeath, activeNotification } = useGame();
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
+      {activeNotification && <NotificationOverlay />}
       {fatalTragedyMessage && (
         <div className="fixed inset-0 bg-black z-[300] flex items-center justify-center p-4 animate-fadeIn">
           <div className="max-w-md w-full bg-slate-900 border-4 border-red-600 rounded-3xl p-8 text-center shadow-[0_0_100px_rgba(220,38,38,0.5)]">
