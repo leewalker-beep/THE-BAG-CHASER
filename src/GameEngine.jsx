@@ -1093,13 +1093,13 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
     if (Math.random() < 0.6) {
       setAudioTracks(t => t + 1);
-      setNews(prev => ["🎵 AUDIO: New single released and trending.", ...prev.slice(0, 15)]);
+      setNews(prev => ["<span class='news-bag'>🎵 AUDIO: New single released and trending.</span>", ...prev.slice(0, 15)]);
     } else {
       setNews(prev => ["🎵 AUDIO: Single flopped. Market didn't vibe.", ...prev.slice(0, 15)]);
     }
     if (Math.random() < 0.02) {
       setSampleStrike(true);
-      setNews(prev => ["🚨 AUDIO ALERT: Sample strike detected! Royalty yields frozen.", ...prev.slice(0, 15)]);
+      setNews(prev => ["<span class='news-scandal'>🚨 AUDIO ALERT: Sample strike detected! Royalty yields frozen.</span>", ...prev.slice(0, 15)]);
     }
     adv();
   };
