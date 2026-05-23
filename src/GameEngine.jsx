@@ -70,6 +70,23 @@ export const GameProvider = ({ children }) => {
   const [pmcSquads, setPmcSquads] = useState(0);
   const [intelLeak, setIntelLeak] = useState(false);
 
+  // Tech Flipping Extensions
+  const [techInterns, setTechInterns] = useState(0);
+  const [bulkPalletsUnlocked, setBulkPalletsUnlocked] = useState(false);
+  const [enterpriseContracts, setEnterpriseContracts] = useState(0);
+
+  // Indie Audio Syndicate Extensions
+  const [audioUpgrades, setAudioUpgrades] = useState({ mixingSuite: false, analogConsole: false });
+  const [talentScouters, setTalentScouters] = useState(0);
+  const [holwoodSyncActive, setHollywoodSyncActive] = useState(false);
+
+  // Vintage to Collectible Empire Evolution Line
+  const [collectiblePhase, setCollectiblePhase] = useState('VINTAGE');
+  const [vintageRevenueTracker, setVintageRevenueTracker] = useState(0);
+  const [sneakerBackdoorPlug, setSneakerBackdoorPlug] = useState(false);
+  const [consignmentFeeActive, setConsignmentFeeActive] = useState(false);
+  const [vaultHoldings, setVaultHoldings] = useState([]);
+
   // PMC Loop Phase 4
   const [pmcUnlocked, setPmcUnlocked] = useState(false);
   const [pmcMercenaries, setPmcMercenaries] = useState(0);
@@ -147,6 +164,9 @@ export const GameProvider = ({ children }) => {
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
     artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    techInterns, bulkPalletsUnlocked, enterpriseContracts,
+    audioUpgrades, talentScouters, holwoodSyncActive,
+    collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
@@ -202,6 +222,19 @@ export const GameProvider = ({ children }) => {
         if (d.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
         if (d.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
         if (d.intelLeak !== undefined) setIntelLeak(d.intelLeak);
+
+        if (d.techInterns !== undefined) setTechInterns(d.techInterns);
+        if (d.bulkPalletsUnlocked !== undefined) setBulkPalletsUnlocked(d.bulkPalletsUnlocked);
+        if (d.enterpriseContracts !== undefined) setEnterpriseContracts(d.enterpriseContracts);
+        if (d.audioUpgrades) setAudioUpgrades(d.audioUpgrades);
+        if (d.talentScouters !== undefined) setTalentScouters(d.talentScouters);
+        if (d.holwoodSyncActive !== undefined) setHollywoodSyncActive(d.holwoodSyncActive);
+        if (d.collectiblePhase) setCollectiblePhase(d.collectiblePhase);
+        if (d.vintageRevenueTracker !== undefined) setVintageRevenueTracker(d.vintageRevenueTracker);
+        if (d.sneakerBackdoorPlug !== undefined) setSneakerBackdoorPlug(d.sneakerBackdoorPlug);
+        if (d.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
+        if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
+
         if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
         if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
         if (d.pmcActiveContracts !== undefined) setPmcActiveContracts(d.pmcActiveContracts);
@@ -513,6 +546,11 @@ export const GameProvider = ({ children }) => {
     if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
     if (saasPenaltyActive) setSaasPenaltyActive(false);
 
+    // Indie Audio Syndicate: Talent Scouters passive signing
+    if (stateRef.current.talentScouters > 0) {
+      setAudioTracks(prev => prev + (stateRef.current.talentScouters * months));
+    }
+
     // Politics Game Loop
     const currentLobbyists = stateRef.current.lobbyists;
     if (currentLobbyists > 0) {
@@ -570,8 +608,19 @@ export const GameProvider = ({ children }) => {
 
       const smmRev = stateRef.current.smmClients * 300;
       const runnerRev = stateRef.current.runnerCount * 150;
-      const audioYield = sampleStrike ? 0 : (stateRef.current.audioTracks * 400);
+
+      // Audio Syndicate passives
+      const audioMult = stateRef.current.holwoodSyncActive ? 2.0 : 1.0;
+      const audioYield = sampleStrike ? 0 : (stateRef.current.audioTracks * 400 * audioMult);
+
       const pmcYield = (stateRef.current.pmcSquads * 75000) + (stateRef.current.pmcActiveContracts * 100000);
+
+      // Tech Flipping passives
+      const techInternRev = stateRef.current.techInterns * 500;
+      const enterpriseRev = stateRef.current.enterpriseContracts * 5000;
+
+      // Vintage / Collectible passives
+      const consignmentRev = stateRef.current.consignmentFeeActive ? 2500 : 0;
 
       const saasRev = (stateRef.current.saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
       const saasOverhead = saasUsers * 2;
@@ -599,7 +648,7 @@ export const GameProvider = ({ children }) => {
       }
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
+      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev) * legacyMultiplier);
       if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
@@ -782,7 +831,8 @@ export const GameProvider = ({ children }) => {
   };
 
   const rVintage = async () => {
-    if (pl.bag < 50 || pl.mentalHealth < 10) return;
+    const cost = stateRef.current.sneakerBackdoorPlug ? 500 : 50;
+    if (pl.bag < cost || pl.mentalHealth < 10) return;
     if (vintageLock > 0) {
       if (pl.bag >= 150) {
         setMod({
@@ -802,7 +852,7 @@ export const GameProvider = ({ children }) => {
       return;
     }
     updateFatigue('vintage');
-    setPl(p => ({ ...p, bag: p.bag - 50, mentalHealth: p.mentalHealth - 10 }));
+    setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - 10 }));
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
 
     if (triggerChaos('vintage')) {
@@ -823,7 +873,7 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
 
     const roll = Math.random();
-    let profit = -50;
+    let profit = -cost;
     if (roll < 0.01) { // GRAIL!
       setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(p.maxClout, p.clout + 15), aura: Math.min(p.maxAura, p.aura + 1) }));
       setNews(n => ["👕 GRAIL FOUND! A rare archive piece secured for the vault.", ...n.slice(0, 15)]);
@@ -848,6 +898,18 @@ export const GameProvider = ({ children }) => {
       setVinCh('bootleg');
       return undefined;
     }
+    const net = profit - cost;
+    if (net > 0) {
+      setVintageRevenueTracker(prev => {
+        const next = prev + net;
+        // Phase Transitions
+        if (next >= 200000 && collectiblePhase !== 'VAULT') setCollectiblePhase('VAULT');
+        else if (next >= 50000 && collectiblePhase !== 'CONSIGNMENT' && collectiblePhase !== 'VAULT') setCollectiblePhase('CONSIGNMENT');
+        else if (next >= 10000 && collectiblePhase !== 'SNEAKER' && collectiblePhase !== 'CONSIGNMENT' && collectiblePhase !== 'VAULT') setCollectiblePhase('SNEAKER');
+        return next;
+      });
+    }
+
     adv();
     return profit;
   };
@@ -919,9 +981,10 @@ export const GameProvider = ({ children }) => {
   };
 
   const rTechSource = async () => {
-    if (pl.bag < techSourceCost) return;
+    const sourceCost = stateRef.current.bulkPalletsUnlocked ? Math.floor(techSourceCost * 0.6) : techSourceCost;
+    if (pl.bag < sourceCost) return;
     updateFatigue('tech');
-    setPl(p => ({ ...p, bag: p.bag - techSourceCost }));
+    setPl(p => ({ ...p, bag: p.bag - sourceCost }));
     setTechItem({ id: Math.random(), name: "Bricked Hardware" });
     setHustleClicks(prev => ({ ...prev, tech: prev.tech + 1 }));
 
@@ -1212,7 +1275,12 @@ export const GameProvider = ({ children }) => {
     if (pl.bag < 1000 || pl.mentalHealth < 15) return;
     setPl(p => ({ ...p, bag: p.bag - 1000, mentalHealth: p.mentalHealth - 15 }));
     await new Promise(r => setTimeout(r, 800));
-    if (Math.random() < 0.6) {
+
+    let successChance = 0.6;
+    if (stateRef.current.audioUpgrades.mixingSuite) successChance = 0.8;
+    if (stateRef.current.audioUpgrades.analogConsole) successChance = 0.9;
+
+    if (Math.random() < successChance) {
       setAudioTracks(t => t + 1);
       setNews(prev => ["<span class='news-bag'>🎵 AUDIO: New single released and trending.</span>", ...prev.slice(0, 15)]);
     } else {
@@ -1676,6 +1744,19 @@ export const GameProvider = ({ children }) => {
     setSampleStrike(false);
     setPmcSquads(0);
     setIntelLeak(false);
+
+    setTechInterns(0);
+    setBulkPalletsUnlocked(false);
+    setEnterpriseContracts(0);
+    setAudioUpgrades({ mixingSuite: false, analogConsole: false });
+    setTalentScouters(0);
+    setHollywoodSyncActive(false);
+    setCollectiblePhase('VINTAGE');
+    setVintageRevenueTracker(0);
+    setSneakerBackdoorPlug(false);
+    setConsignmentFeeActive(false);
+    setVaultHoldings([]);
+
     setPmcUnlocked(false);
     setPmcMercenaries(0);
     setPmcActiveContracts(0);
@@ -1803,6 +1884,19 @@ export const GameProvider = ({ children }) => {
     setSampleStrike(false);
     setPmcSquads(0);
     setIntelLeak(false);
+
+    setTechInterns(0);
+    setBulkPalletsUnlocked(false);
+    setEnterpriseContracts(0);
+    setAudioUpgrades({ mixingSuite: false, analogConsole: false });
+    setTalentScouters(0);
+    setHollywoodSyncActive(false);
+    setCollectiblePhase('VINTAGE');
+    setVintageRevenueTracker(0);
+    setSneakerBackdoorPlug(false);
+    setConsignmentFeeActive(false);
+    setVaultHoldings([]);
+
     setPmcUnlocked(false);
     setPmcMercenaries(0);
     setPmcActiveContracts(0);
@@ -1844,6 +1938,9 @@ export const GameProvider = ({ children }) => {
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
       audioTracks, setAudioTracks, sampleStrike, setSampleStrike, pmcSquads, setPmcSquads, intelLeak, setIntelLeak,
+      techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts,
+      audioUpgrades, setAudioUpgrades, talentScouters, setTalentScouters, holwoodSyncActive, setHollywoodSyncActive,
+      collectiblePhase, setCollectiblePhase, vintageRevenueTracker, setVintageRevenueTracker, sneakerBackdoorPlug, setSneakerBackdoorPlug, consignmentFeeActive, setConsignmentFeeActive, vaultHoldings, setVaultHoldings,
       pmcUnlocked, setPmcUnlocked, pmcMercenaries, setPmcMercenaries, pmcActiveContracts, setPmcActiveContracts,
       pmcHeatLevel, setPmcHeatLevel, pmcMercCost, setPmcMercCost, pmcBribeCost, setPmcBribeCost,
       superPacFunds, setSuperPacFunds, approvalRating, setApprovalRating, lobbyists, setLobbyists,

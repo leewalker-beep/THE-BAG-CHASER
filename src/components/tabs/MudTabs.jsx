@@ -87,7 +87,21 @@ export const DropTab = () => {
 };
 
 export const VintageTab = () => {
-  const { pl, rVintage, rVinCh, vinCh, setTab, karmaFlags, setKarmaFlags } = useGame();
+  const { pl, setPl, rVintage, rVinCh, vinCh, setTab, karmaFlags, setKarmaFlags, collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, setSneakerBackdoorPlug, consignmentFeeActive, setConsignmentFeeActive } = useGame();
+
+  const toggleBackdoor = () => {
+    if (collectiblePhase === 'SNEAKER' || collectiblePhase === 'CONSIGNMENT' || collectiblePhase === 'VAULT') {
+      setSneakerBackdoorPlug(!sneakerBackdoorPlug);
+    }
+  };
+
+  const toggleConsignment = () => {
+    if ((collectiblePhase === 'CONSIGNMENT' || collectiblePhase === 'VAULT') && pl.bag >= 25000 && !consignmentFeeActive) {
+      setPl(p => ({ ...p, bag: p.bag - 25000 }));
+      setConsignmentFeeActive(true);
+    }
+  };
+
   return (
     <LabShell hustleKey="vintage" t="VINTAGE RESELLING" c="amber" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -116,14 +130,33 @@ export const VintageTab = () => {
         ) : (
           <>
             <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center">
-              <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Inventory Status</div>
-              <div className="text-xl font-black text-amber-400">SOURCING PHASE</div>
+              <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Phase: {collectiblePhase}</div>
+              <div className="text-xl font-black text-amber-400">${fMny(vintageRevenueTracker)} REV</div>
             </div>
+
+            {collectiblePhase !== 'VINTAGE' && (
+              <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800">
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest">SNEAKER BACKDOOR ($500/hit)</div>
+                <button
+                  onClick={toggleBackdoor}
+                  className={`w-10 h-5 rounded-full transition-all relative ${sneakerBackdoorPlug ? 'bg-amber-600' : 'bg-slate-700'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${sneakerBackdoorPlug ? 'right-1' : 'left-1'}`}></div>
+                </button>
+              </div>
+            )}
+
+            {(collectiblePhase === 'CONSIGNMENT' || collectiblePhase === 'VAULT') && !consignmentFeeActive && (
+              <button onClick={toggleConsignment} disabled={pl.bag < 25000} className="w-full py-2 bg-amber-900/40 border border-amber-500 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-amber-800 disabled:opacity-50 transition-all">
+                Activate Consignment Fees ($25k)
+              </button>
+            )}
+
             <FlashBtn
               onClick={rVintage}
               costStm={10}
-              dis={pl.bag < 50}
-              label="HIT THE CLOTHING BINS ($50)"
+              dis={pl.bag < (sneakerBackdoorPlug ? 500 : 50)}
+              label={sneakerBackdoorPlug ? "BACKDOOR DROPS ($500)" : "HIT THE BINS ($50)"}
               color="amber-600"
               txt="white"
             />
@@ -187,7 +220,29 @@ export const SmmTab = () => {
 };
 
 export const TechFlipTab = () => {
-  const { pl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab, karmaFlags, setKarmaFlags } = useGame();
+  const { pl, setPl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab, karmaFlags, setKarmaFlags, techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts } = useGame();
+
+  const buyIntern = () => {
+    if (pl.bag >= 2000) {
+      setPl(p => ({ ...p, bag: p.bag - 2000 }));
+      setTechInterns(prev => prev + 1);
+    }
+  };
+
+  const buyPallets = () => {
+    if (pl.bag >= 10000) {
+      setPl(p => ({ ...p, bag: p.bag - 10000 }));
+      setBulkPalletsUnlocked(true);
+    }
+  };
+
+  const signEnterprise = () => {
+    if (pl.bag >= 50000 && techFlipsComplete >= 20) {
+      setPl(p => ({ ...p, bag: p.bag - 50000 }));
+      setEnterpriseContracts(prev => prev + 1);
+    }
+  };
+
   return (
     <LabShell hustleKey="tech" t="TECH FLIPPING" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')} tier={0}>
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -203,9 +258,31 @@ export const TechFlipTab = () => {
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Repair Cost</div>
         <div className="text-xs font-black text-purple-400">10-15 MENTAL HEALTH</div>
       </div>
-      <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-center mb-4">
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hardware Mastery</div>
-        <div className="text-2xl font-black text-cyan-400">{techFlipsComplete} FLIPS</div>
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Mastery</div>
+          <div className="text-lg font-black text-cyan-400">{techFlipsComplete} FLIPS</div>
+        </div>
+        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Interns</div>
+          <div className="text-lg font-black text-cyan-400">{techInterns}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 mb-4">
+        {!bulkPalletsUnlocked && (
+          <button onClick={buyPallets} disabled={pl.bag < 10000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+            Unlock Bulk Pallets ($10k)
+          </button>
+        )}
+        <button onClick={buyIntern} disabled={pl.bag < 2000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+          Hire Tech Intern ($2k)
+        </button>
+        {techFlipsComplete >= 20 && (
+          <button onClick={signEnterprise} disabled={pl.bag < 50000} className="w-full py-2 bg-cyan-900/40 border border-cyan-400 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-cyan-800 disabled:opacity-50 transition-all">
+            Sign Enterprise Contract ($50k)
+          </button>
+        )}
       </div>
 
       {!techItem ? (

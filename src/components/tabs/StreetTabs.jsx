@@ -68,8 +68,29 @@ export const BoxTab = () => {
 };
 
 export const AudioTab = () => {
-  const { pl, audioTracks, sampleStrike, rAudioRelease, rAudioSettle, setTab } = useGame();
+  const { pl, setPl, audioTracks, setAudioTracks, sampleStrike, rAudioRelease, rAudioSettle, setTab, audioUpgrades, setAudioUpgrades, talentScouters, setTalentScouters, holwoodSyncActive, setHollywoodSyncActive } = useGame();
   const locked = pl.bag < 100000 || pl.clout < 30;
+
+  const buyUpgrade = (key, cost) => {
+    if (pl.bag >= cost && !audioUpgrades[key]) {
+      setPl(p => ({ ...p, bag: p.bag - cost }));
+      setAudioUpgrades(prev => ({ ...prev, [key]: true }));
+    }
+  };
+
+  const hireScouter = () => {
+    if (pl.bag >= 50000) {
+      setPl(p => ({ ...p, bag: p.bag - 50000 }));
+      setTalentScouters(prev => prev + 1);
+    }
+  };
+
+  const toggleHollywood = () => {
+    if (pl.bag >= 250000 && !holwoodSyncActive) {
+      setPl(p => ({ ...p, bag: p.bag - 250000 }));
+      setHollywoodSyncActive(true);
+    }
+  };
 
   if (locked) return <LockedTierScreen section={1} />;
 
@@ -79,8 +100,40 @@ export const AudioTab = () => {
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Streaming Catalog</div>
         <div className={`text-2xl font-black ${sampleStrike ? 'text-red-500' : 'text-orange-400'}`}>{audioTracks} TRACKS</div>
         <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
-          {sampleStrike ? "SAMPLE STRIKE: ROYALTIES FROZEN" : `Passive: +$${fMny(audioTracks * 400)}/mo | +${audioTracks * 2} Clout/mo`}
+          {sampleStrike ? "SAMPLE STRIKE: ROYALTIES FROZEN" : `Passive: +$${fMny(audioTracks * 400 * (holwoodSyncActive ? 2 : 1))}/mo | +${audioTracks * 2} Clout/mo`}
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Scouters</div>
+          <div className="text-lg font-black text-orange-400">{talentScouters}</div>
+        </div>
+        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
+          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Hollywood</div>
+          <div className={`text-lg font-black ${holwoodSyncActive ? 'text-green-400' : 'text-slate-500'}`}>{holwoodSyncActive ? 'ACTIVE' : 'OFF'}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 mb-4">
+        {!audioUpgrades.mixingSuite && (
+          <button onClick={() => buyUpgrade('mixingSuite', 15000)} disabled={pl.bag < 15000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+            Buy AI Mixing Suite ($15k)
+          </button>
+        )}
+        {!audioUpgrades.analogConsole && audioUpgrades.mixingSuite && (
+          <button onClick={() => buyUpgrade('analogConsole', 25000)} disabled={pl.bag < 25000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+            Analog Tube Console ($25k)
+          </button>
+        )}
+        <button onClick={hireScouter} disabled={pl.bag < 50000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+          Hire Talent Scouter ($50k)
+        </button>
+        {!holwoodSyncActive && audioTracks >= 50 && (
+          <button onClick={toggleHollywood} disabled={pl.bag < 250000} className="w-full py-2 bg-orange-900/40 border border-orange-400 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-orange-800 disabled:opacity-50 transition-all">
+            Secure Hollywood Sync Deal ($250k)
+          </button>
+        )}
       </div>
 
       {sampleStrike && (
