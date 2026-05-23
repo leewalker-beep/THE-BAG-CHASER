@@ -284,7 +284,7 @@ const FlexesView = () => {
 // ─── Autopsy Report screen ────────────────────────────────────────────────────
 
 const AutopsyReport = () => {
-  const { death, alias, peaks, hl, tally, hustleClicks } = useGame();
+  const { death, alias, peaks, hl, tally, hustleClicks, performHardReset } = useGame();
   if (!death) return null;
 
   const catNames = { sw: '👟 Streetwear Drop', drop: '📦 Dropship', cc: '📺 Creator Lab', pod: '🎙️ Podcast', box: '🥊 Fight Promo', tch: '💻 SaaS Exit', cryp: '🪙 Crypto Rug', tour: '🎪 Live Event', mov: '🎬 Hollywood', hf: '📈 Hedge Trade' };
@@ -334,11 +334,7 @@ const AutopsyReport = () => {
           <div className="text-2xl font-black text-slate-300 drop-shadow-sm tracking-tighter">{alias || 'ANON'} — {death.rank}</div>
         </div>
 
-        <button onClick={() => {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
-        }} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all active:scale-95 duration-100 shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
+        <button onClick={performHardReset} className="w-full p-6 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 transition-all active:scale-95 duration-100 shadow-[0_0_20px_#dc2626]">PLUG BACK IN</button>
       </div>
     </div>
   );
@@ -610,7 +606,7 @@ const GameInterface = () => {
   const busy = gBusy || imp?.some(i => !i.w);
 
   const karmaScore = karmaFlags ? 100 - (Object.values(karmaFlags).filter(Boolean).length * 15) : 100;
-  const cancelIntroStyles = { userSelect: 'none', pointerEvents: 'none' };
+  const cancelIntroStyles = { userSelect: 'none' };
 
   if (cancelIntro) {
     return (
@@ -618,7 +614,13 @@ const GameInterface = () => {
         <div className="text-8xl mb-6 animate-pulse">🚫</div>
         <h1 className="text-6xl font-black text-red-500 mb-4 tracking-widest drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] font-hype">CANCELLED</h1>
         <p className="text-slate-300 drop-shadow-sm text-xl max-w-sm leading-relaxed mb-6">{cancelIntro?.r}</p>
-        <p className="text-pink-400 font-bold text-lg italic">"{cancelIntro?.i}"</p>
+        <p className="text-pink-400 font-bold text-lg italic mb-8">"{cancelIntro?.i}"</p>
+        <button
+          onClick={performHardReset}
+          className="px-8 py-4 bg-red-600 text-white font-black tracking-widest text-xl rounded-xl hover:bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all active:scale-95"
+        >
+          TRY AGAIN
+        </button>
       </div>
     );
   }
@@ -742,7 +744,7 @@ const GameIntro = () => {
 };
 
 const BagChaserInner = () => {
-  const { ph, death, cancelIntro, fatalTragedyMessage, setFatalTragedyMessage, setDeath, activeNotification } = useGame();
+  const { ph, death, cancelIntro, fatalTragedyMessage, setFatalTragedyMessage, setDeath, activeNotification, performHardReset } = useGame();
 
   return (
     <>
@@ -758,6 +760,7 @@ const BagChaserInner = () => {
               {fatalTragedyMessage}
             </p>
             <button
+              onClick={performHardReset}
               className="w-full py-5 bg-red-600 text-white font-black tracking-widest text-xl rounded-2xl hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all"
             >
               REVIEW YOUR LEGACY
