@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
-import { LabShell, FlashBtn, LockedTierScreen } from '../../App.jsx';
+import { LabShell, FlashBtn, LockedTierScreen } from '../ui/Shared.jsx';
 
 export const TechTab = () => {
   const { pl, saasUsers, saasPrice, saasChurn, saasPenaltyActive, techFlipsComplete, rSaasClick, setTab } = useGame();
