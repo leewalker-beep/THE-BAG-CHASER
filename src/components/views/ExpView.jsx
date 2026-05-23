@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
+import { styles } from '../../styles.js';
 
 const stats = [
   { label: 'Current Aura', key: 'aura', color: 'text-yellow-400', bar: 'bg-yellow-400' },
@@ -13,13 +14,17 @@ const stats = [
 export const ExpView = () => {
   const { cap, pl, peaks, hl } = useGame();
 
-  const totalLifetimeIncome = Object.values(hl || {}).reduce((a, b) => a + b, 0);
-  const globalLevel = Math.floor(Math.sqrt(totalLifetimeIncome / 10000)) || 1;
-  const nextMilestone = Math.pow(globalLevel + 1, 2) * 10000;
-  const progress = (totalLifetimeIncome / nextMilestone) * 100;
+  const { totalLifetimeIncome, globalLevel, nextMilestone, progress } = useMemo(() => {
+    const total = Object.values(hl || {}).reduce((a, b) => a + b, 0);
+    const level = Math.floor(Math.sqrt(total / 10000)) || 1;
+    const next = Math.pow(level + 1, 2) * 10000;
+    const prog = (total / next) * 100;
+    return { totalLifetimeIncome: total, globalLevel: level, nextMilestone: next, progress: prog };
+  }, [hl]);
 
   return (
     <div className="flex flex-col gap-4">
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="bg-slate-900/80 border border-blue-600/50 p-4 rounded-2xl shadow-2xl text-center">
         <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest font-tech">EXP & METRICS</h3>
         <p className="text-[10px] text-slate-300 drop-shadow-sm italic mt-1">"Tracking your ascent to godhood."</p>

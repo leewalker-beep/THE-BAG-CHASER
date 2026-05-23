@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
+import { styles } from '../../styles.js';
 
 const flexItems = [
   { key: 'watch', label: 'Patek Philippe Watch', cost: 150000, icon: '⌚', clout: 25, yield: 750, yieldType: 'appr' },
@@ -15,6 +16,7 @@ export const FlexesView = () => {
 
   return (
     <div className="flex flex-col gap-4">
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="bg-slate-900/80 border border-yellow-600/50 p-4 rounded-2xl shadow-2xl text-center">
         <h3 className="text-xl font-black text-yellow-400 uppercase tracking-widest font-hype">LIFESTYLE FLEXES</h3>
         <p className="text-[10px] text-slate-300 drop-shadow-sm italic mt-1">"Burn cash to buy the world."</p>
