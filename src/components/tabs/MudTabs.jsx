@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
-import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper } from '../../App.jsx';
+import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper } from '../ui/Shared.jsx';
 
 export const SwTab = () => {
   const { pl, setPl, up, sw, setSw, dUp, rSw, adv, karmaFlags, setKarmaFlags } = useGame();

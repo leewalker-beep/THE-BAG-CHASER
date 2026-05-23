@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useGame } from "../../GameEngine.jsx";
 import { fMny } from "../../config.js";
-import { LabShell, FlashBtn, Stepper, LockedTierScreen } from "../../App.jsx";
+import { LabShell, FlashBtn, Stepper, LockedTierScreen } from "../ui/Shared.jsx";
 
 export const SuperPacTab = () => {
   const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
