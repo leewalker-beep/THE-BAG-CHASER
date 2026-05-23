@@ -1,154 +1,137 @@
-import React, { useState } from "react";
+import React from "react";
 import { useGame } from "../../GameEngine.jsx";
 import { fMny } from "../../config.js";
-import { LabShell, FlashBtn, Stepper, LockedTierScreen } from "../ui/Shared.jsx";
+import { LabShell, FlashBtn, LockedTierScreen } from "../ui/Shared.jsx";
 
-export const SuperPacTab = () => {
-  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
-  const [deposit, setDeposit] = useState(10000000);
+export const SuperPacTab = () => <PresidentialCampaign />;
+export const BlitzTab = () => <PresidentialCampaign />;
+export const SmearTab = () => <PresidentialCampaign />;
+export const ElectionTab = () => <PresidentialCampaign />;
 
-  return (
-    <LabShell t="SUPER PAC FUNDRAISING" c="red" fontCls="font-gov" onHub={() => setTab('HUB')} tier={5}>
-      <div className="bg-slate-900/80 p-6 rounded-2xl border border-red-800 text-center flex flex-col gap-4">
-        <div className="text-4xl font-black text-white font-gov">${fMny(prs?.chest || 0)}</div>
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">Campaign War Chest</div>
+export const PresidentialCampaign = () => {
+  const {
+    pl, setPl,
+    superPacFunds, setSuperPacFunds,
+    approvalRating, setApprovalRating,
+    lobbyists, setLobbyists,
+    lobbyistCost, setLobbyistCost,
+    mediaBlitzCost,
+    isPresident, setIsPresident,
+    setTab, adv
+  } = useGame();
 
-        <Stepper val={deposit} setVal={setDeposit} min={1000000} max={pl?.bag || 0} step={1000000} label="Deposit Amt" />
-
-        <FlashBtn
-          onClick={async () => {
-            if ((pl?.bag || 0) < deposit) return;
-            setPl(p => ({ ...p, bag: p.bag - deposit }));
-            setPrs(p => ({ ...p, chest: (p.chest || 0) + deposit }));
-            return -deposit;
-          }}
-          dis={(pl?.bag || 0) < deposit}
-          label={`DEPOSIT INTO PAC - ${fMny(deposit)}`}
-          color="red-600"
-          txt="white"
-        />
-      </div>
-    </LabShell>
-  );
-};
-
-export const BlitzTab = () => {
-  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
-
-  const runBlitz = async () => {
-    const cost = 50000000;
-    const cloutCost = 100;
-    if ((pl?.bag || 0) < cost || (pl?.clout || 0) < cloutCost) return;
-
-    setPl(p => ({ ...p, bag: p.bag - cost, clout: p.clout - cloutCost }));
-    const gain = 2 + Math.random() * 3;
-    setPrs(p => ({ ...p, polls: Math.min(100, (p.polls || 0) + gain) }));
-    adv();
+  const rFundSuperPac = async () => {
+    const cost = 10000000;
+    if (pl.bag < cost) return;
+    setPl(prev => ({ ...prev, bag: prev.bag - cost }));
+    setSuperPacFunds(prev => prev + cost);
     return -cost;
   };
 
-  return (
-    <LabShell t="MEDIA BLITZ & PROPAGANDA" c="blue" fontCls="font-gov" onHub={() => setTab('HUB')} tier={5}>
-      <div className="bg-slate-900/80 p-6 rounded-2xl border border-blue-800 text-center flex flex-col gap-4">
-        <div className="text-5xl font-black text-blue-400 font-gov">{(prs?.polls || 0).toFixed(1)}%</div>
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">Current Polls</div>
+  const rHireLobbyist = async () => {
+    if (superPacFunds < lobbyistCost) return;
+    setSuperPacFunds(prev => prev - lobbyistCost);
+    setLobbyists(prev => prev + 1);
+    setLobbyistCost(prev => prev + 2500000);
+    return 0; // It's from Super PAC funds, not player cash impact
+  };
 
-        <div className="bg-black/50 h-4 rounded-full border border-slate-800 overflow-hidden">
-          <div className="bg-blue-500 h-full transition-all duration-1000 shadow-[0_0_15px_#3b82f6]" style={{ width: `${prs?.polls || 0}%` }}></div>
-        </div>
+  const rLaunchMediaBlitz = async () => {
+    if (superPacFunds < mediaBlitzCost) return;
+    setSuperPacFunds(prev => prev - mediaBlitzCost);
+    const gain = 5.0 + Math.random() * 7.0;
+    setApprovalRating(prev => Math.min(100, prev + gain));
+    return 0; // From Super PAC funds
+  };
 
-        <FlashBtn
-          onClick={runBlitz}
-          dis={(pl?.bag || 0) < 50000000 || (pl?.clout || 0) < 100}
-          label="RUN NATIONAL BLITZ ($50M + 100 CLOUT)"
-          color="blue-600"
-          txt="white"
-        />
-        <p className="text-[9px] text-slate-300 drop-shadow-sm italic">"Flood the airwaves with tailored narratives."</p>
-      </div>
-    </LabShell>
-  );
-};
-
-export const SmearTab = () => {
-  const { pl, prs, setPl, setPrs, adv, setTab } = useGame();
-
-  const runSmear = async () => {
-    const cost = 25000000;
-    const auraCost = 50;
-    if ((pl?.bag || 0) < cost || (pl?.aura || 0) < auraCost) return;
-
-    setPl(p => ({ ...p, bag: p.bag - cost, aura: p.aura - auraCost }));
-    // In this simplified version, smear increases your lead
-    const gain = 1 + Math.random() * 2;
-    setPrs(p => ({ ...p, polls: Math.min(100, (p.polls || 0) + gain) }));
-    adv();
-    return -cost;
+  const rBuyElection = async () => {
+    if (approvalRating < 51.0) return;
+    setIsPresident(true);
+    return 0;
   };
 
   return (
-    <LabShell t="SMEAR CAMPAIGNS" c="orange" fontCls="font-gov" onHub={() => setTab('HUB')} tier={5}>
-      <div className="bg-slate-900/80 p-6 rounded-2xl border border-orange-800 text-center flex flex-col gap-4">
-        <div className="text-3xl font-black text-orange-500 uppercase tracking-tighter">Mudslinging Active</div>
-        <FlashBtn
-          onClick={runSmear}
-          dis={(pl?.bag || 0) < 25000000 || (pl?.aura || 0) < 50}
-          label="SMEAR RIVAL ($25M + 50 AURA)"
-          color="orange-600"
-          txt="white"
-        />
-        <p className="text-[9px] text-slate-300 drop-shadow-sm">Target rival's character to swing undecided voters.</p>
-      </div>
-    </LabShell>
-  );
-};
+    <LabShell t="POLITICAL WAR ROOM" c="red" fontCls="font-gov" onHub={() => setTab('HUB')} tier={5}>
+      <div className="flex flex-col gap-4">
+        {/* Victory Screen */}
+        {isPresident && (
+          <div className="bg-blue-900/40 border-2 border-yellow-500 p-6 rounded-2xl text-center animate-pulse shadow-[0_0_30px_rgba(234,179,8,0.5)]">
+            <div className="text-5xl mb-2">🇺🇸</div>
+            <h2 className="text-2xl font-black text-white uppercase tracking-widest font-gov">Mister President</h2>
+            <p className="text-xs text-yellow-400 font-bold mt-1">LEGISLATIVE IMMUNITY ACTIVE: HEAT GENERATION -50%</p>
+          </div>
+        )}
 
-export const ElectionTab = () => {
-  const { prs, pl, setTab, setMod } = useGame();
-  const ready = (prs?.polls || 0) >= 51;
-  const tier6Achieved = (pl?.tier || 0) >= 5;
-
-  return (
-    <LabShell t="ELECTION DAY" c="green" fontCls="font-gov" onHub={() => setTab('HUB')} tier={5}>
-      <div className="bg-slate-900/80 p-8 rounded-2xl border border-green-800 text-center flex flex-col gap-6">
-        <div className="text-6xl mb-2">{ready ? '🗳️' : '🔒'}</div>
-        <h3 className="text-2xl font-black text-white uppercase tracking-widest">The Ballot</h3>
-
-        <div className="bg-black/40 p-4 rounded-xl border border-slate-800">
-          <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase mb-2">Threshold Required</div>
-          <div className="text-xl font-black text-green-400">51.0% POLLS</div>
-          <div className="text-sm text-slate-300 drop-shadow-sm mt-1">Current: {(prs?.polls || 0).toFixed(1)}%</div>
-        </div>
-
-        <button
-          onClick={() => {
-            if (!ready) return;
-            setMod({
-              s: true,
-              t: "PRESIDENTIAL VICTORY",
-              m: "The people have spoken. You are the Commander in Chief.",
-              o: [{ label: "ASCEND TO OVAL OFFICE", action: () => window.location.reload() }],
-              ui: "ui-modal"
-            });
-          }}
-          disabled={!ready}
-          className={`w-full py-6 rounded-2xl font-black text-xl tracking-widest transition-all active:scale-95 duration-100 ${ready ? 'bg-green-600 text-white shadow-[0_0_30px_#16a34a] hover:bg-green-500' : 'bg-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'}`}
-        >
-          {ready ? 'SUBMIT BALLOT' : 'BALLOT LOCKED'}
-        </button>
-
-        <div className="mt-4 pt-6 border-t border-slate-800 text-left">
-          <h4 className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase mb-3 tracking-widest">Special Sub-Section</h4>
-          <div className={`p-4 rounded-xl border transition-all flex items-center gap-4 ${tier6Achieved ? 'bg-indigo-900/20 border-indigo-700' : 'bg-slate-800/40 border-slate-700 opacity-50 grayscale'}`}>
-            <span className="text-3xl">🤖</span>
-            <div>
-              <div className="font-black text-xs text-white uppercase tracking-wide">Mud Tier AI Overseer Bot</div>
-              <div className="text-[9px] text-slate-300 drop-shadow-sm font-bold">
-                {tier6Achieved ? 'SYSTEM ONLINE - AUTOMATING LOW-TIER OPERATIONS' : 'LOCKED - REQUIRES TIER 6 ASCENSION'}
-              </div>
-            </div>
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-900/80 p-4 rounded-xl border border-red-800 text-center flex flex-col gap-1">
+            <div className="text-2xl font-black text-white font-gov">${fMny(superPacFunds)}</div>
+            <div className="text-[9px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">Super PAC Funds</div>
+          </div>
+          <div className="bg-slate-900/80 p-4 rounded-xl border border-blue-800 text-center flex flex-col gap-1">
+            <div className="text-2xl font-black text-blue-400 font-gov">{lobbyists}</div>
+            <div className="text-[9px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">Active Lobbyists</div>
           </div>
         </div>
+
+        {/* Approval Rating */}
+        <div className="bg-slate-900/80 p-5 rounded-xl border border-slate-700 flex flex-col gap-3">
+          <div className="flex justify-between items-end">
+            <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase tracking-widest">National Approval Rating</div>
+            <div className="text-2xl font-black text-green-400 font-gov">{approvalRating.toFixed(1)}%</div>
+          </div>
+          <div className="bg-black/50 h-4 rounded-full border border-slate-800 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-red-600 via-white to-blue-600 h-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+              style={{ width: `${approvalRating}%` }}
+            ></div>
+          </div>
+          <div className="flex justify-between text-[8px] text-slate-400 font-bold uppercase">
+            <span>UNPOPULAR</span>
+            <span>ELECTION THRESHOLD (51%)</span>
+            <span>LANDSLIDE</span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="grid grid-cols-1 gap-2">
+          <FlashBtn
+            onClick={rFundSuperPac}
+            dis={pl.bag < 10000000 || isPresident}
+            label="Fund Super PAC (+$10M Cash)"
+            color="red-600"
+            txt="white"
+          />
+          <FlashBtn
+            onClick={rHireLobbyist}
+            dis={superPacFunds < lobbyistCost || isPresident}
+            label={`Hire K-Street Lobbyist (-$${fMny(lobbyistCost)} PAC)`}
+            color="slate-700"
+            txt="white"
+          />
+          <FlashBtn
+            onClick={rLaunchMediaBlitz}
+            dis={superPacFunds < mediaBlitzCost || isPresident}
+            label={`Launch Media Blitz (-$${fMny(mediaBlitzCost)} PAC)`}
+            color="blue-600"
+            txt="white"
+          />
+          <button
+            onClick={rBuyElection}
+            disabled={approvalRating < 51.0 || isPresident}
+            className={`w-full py-4 rounded-xl font-black text-lg tracking-widest transition-all active:scale-95 duration-100 ${
+              approvalRating >= 51.0 && !isPresident
+                ? 'bg-green-600 text-white shadow-[0_0_25px_#16a34a] hover:bg-green-500'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+            }`}
+          >
+            {isPresident ? 'TERM IN PROGRESS' : approvalRating >= 51.0 ? 'BUY OUT ELECTION' : 'BALLOT LOCKED (<51%)'}
+          </button>
+        </div>
+
+        <p className="text-[9px] text-slate-400 text-center italic mt-2">
+          "Politics is just the art of managing the machine you built."
+        </p>
       </div>
     </LabShell>
   );
