@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
-import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from '../../App.jsx';
+import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from '../ui/Shared.jsx';
 
 export const TourTab = () => {
   const { pl, up, tur, setTur, dUp, rTur, setTab } = useGame();

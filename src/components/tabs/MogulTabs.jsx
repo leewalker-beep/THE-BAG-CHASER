@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useGame } from "../../GameEngine.jsx";
 import { fMny, HF_RUMORS } from "../../config.js";
-import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from "../../App.jsx";
+import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from "../ui/Shared.jsx";
 
 export const MovTab = () => {
   const { pl, up, mov, setMov, dUp, rMov, setTab } = useGame();
