@@ -4,7 +4,7 @@ import { fMny, MARKETS } from '../../config.js';
 
 export const Hud = () => {
   const {
-    pl, prs, ass, mkt, imp, rain, displayBag, alias, age, cap, selTier, setSelTier, setTab, performHardReset
+    pl, prs, ass, mkt, imp, rain, displayBag, alias, age, cap, selTier, setSelTier, setTab, tab, performHardReset
   } = useGame();
 
   const handleHardReset = () => {
@@ -70,22 +70,22 @@ export const Hud = () => {
             const unlocked = (pl?.tier || 0) >= idx;
             return (
               <button key={t.id} onClick={() => { setSelTier(idx.toString()); setTab('HUB'); }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${selTier === idx.toString() ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${!unlocked ? 'opacity-60' : ''}`}>
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${ (tab === 'HUB' && selTier === idx.toString()) ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${!unlocked ? 'opacity-60' : ''}`}>
                 {unlocked ? t.label.toUpperCase() : `🔒 ${t.label.toUpperCase()}`}
               </button>
             );
           })}
           <span className="text-slate-700 mx-1">|</span>
-          <button onClick={() => { setSelTier('flexes'); setTab('HUB'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${selTier === 'flexes' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
+          <button onClick={() => { setTab('FLEXES'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'FLEXES' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
             FLEXES
           </button>
-          <button onClick={() => { setSelTier('flexShop'); setTab('HUB'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${selTier === 'flexShop' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
+          <button onClick={() => { setTab('FLEX_SHOP'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'FLEX_SHOP' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
             FLEX SHOP
           </button>
-          <button onClick={() => { setSelTier('exp'); setTab('HUB'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${selTier === 'exp' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
+          <button onClick={() => { setTab('EXP'); }}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'EXP' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
             EXP POINTS
           </button>
         </div>

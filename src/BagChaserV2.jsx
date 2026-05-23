@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { GameProvider, useGame, TIERS } from './GameEngine.jsx';
-import { fMny, MARKETS } from './config.js';
+import { GameProvider, useGame } from './GameEngine.jsx';
+import { MARKETS } from './config.js';
 import { styles } from './styles.js';
 
 import {
@@ -57,6 +56,9 @@ import { TierHub } from './components/views/TierHub.jsx';
 import { AutopsyReport } from './components/views/AutopsyReport.jsx';
 import { Prologue } from './components/views/Prologue.jsx';
 import { GameIntro } from './components/views/GameIntro.jsx';
+import { ExpView } from './components/views/ExpView.jsx';
+import { FlexShopView } from './components/views/FlexShopView.jsx';
+import { FlexesView } from './components/views/FlexesView.jsx';
 
 
 const TAB_MAP = {
@@ -90,18 +92,19 @@ const TAB_MAP = {
   'BLITZ':        { component: BlitzTab,        tier: 5 },
   'SMEAR':        { component: SmearTab,        tier: 5 },
   'ELECTION':     { component: ElectionTab,     tier: 5 },
+  'EXP':          { component: ExpView },
+  'FLEX_SHOP':    { component: FlexShopView },
+  'FLEXES':       { component: FlexesView },
 };
 
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl, prs, ass, mkt, tab, setTab, imp, mod, cancelIntro, gBusy, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset
+    pl, prs, ass, mkt, tab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset
   } = game || {};
 
 
   if (!game) return <div className="min-h-screen bg-black flex items-center justify-center">Loading...</div>;
-
-  const busy = gBusy || imp?.some(i => !i.w);
 
   const cancelIntroStyles = { userSelect: 'none' };
 
