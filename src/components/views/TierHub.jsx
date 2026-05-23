@@ -1,9 +1,6 @@
 import React from 'react';
 import { useGame, TIERS } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
-import { ExpView } from './ExpView.jsx';
-import { FlexShopView } from './FlexShopView.jsx';
-import { FlexesView } from './FlexesView.jsx';
 
 const hustleMap = {
   'SW': { label: 'Streetwear', icon: '👕' },
@@ -45,10 +42,6 @@ const tierStyles = [
 
 export const TierHub = () => {
   const { pl, setTab, selTier, rRest, rRetire, setMod } = useGame();
-
-  if (selTier === 'flexes') return <FlexesView />;
-  if (selTier === 'flexShop') return <FlexShopView />;
-  if (selTier === 'exp') return <ExpView />;
 
   const tierIdx = parseInt(selTier);
   const tier = TIERS[tierIdx];
