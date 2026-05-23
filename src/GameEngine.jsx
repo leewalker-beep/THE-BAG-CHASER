@@ -83,6 +83,14 @@ export const GameProvider = ({ children }) => {
   const [geoStability, setGeoStability] = useState(1.0);
   const [swfFrozen, setSwfFrozen] = useState(false);
 
+  // Politics Tier 5
+  const [superPacFunds, setSuperPacFunds] = useState(0);
+  const [approvalRating, setApprovalRating] = useState(15.0);
+  const [lobbyists, setLobbyists] = useState(0);
+  const [lobbyistCost, setLobbyistCost] = useState(5000000);
+  const [mediaBlitzCost, setMediaBlitzCost] = useState(10000000);
+  const [isPresident, setIsPresident] = useState(false);
+
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
   const [shakeActive, setShakeActive] = useState(false);
   const [passiveFrozen, setPassiveFrozen] = useState(false);
@@ -136,6 +144,7 @@ export const GameProvider = ({ children }) => {
     artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, antitrustRisk, swfInvestment,
+    superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -199,6 +208,12 @@ export const GameProvider = ({ children }) => {
         if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
         if (d.geoStability !== undefined) setGeoStability(d.geoStability);
         if (d.swfFrozen !== undefined) setSwfFrozen(d.swfFrozen);
+        if (d.superPacFunds !== undefined) setSuperPacFunds(d.superPacFunds);
+        if (d.approvalRating !== undefined) setApprovalRating(d.approvalRating);
+        if (d.lobbyists !== undefined) setLobbyists(d.lobbyists);
+        if (d.lobbyistCost !== undefined) setLobbyistCost(d.lobbyistCost);
+        if (d.mediaBlitzCost !== undefined) setMediaBlitzCost(d.mediaBlitzCost);
+        if (d.isPresident !== undefined) setIsPresident(d.isPresident);
         if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d.pl) setPl(d.pl);
         if (d.mkt !== undefined) setMkt(d.mkt);
@@ -482,6 +497,18 @@ export const GameProvider = ({ children }) => {
 
     if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
     if (saasPenaltyActive) setSaasPenaltyActive(false);
+
+    // Politics Game Loop
+    const currentLobbyists = stateRef.current.lobbyists;
+    if (currentLobbyists > 0) {
+      setPl(p => ({ ...p, clout: Math.min(p.maxClout, p.clout + (currentLobbyists * 25)) }));
+      setApprovalRating(prev => Math.min(100, prev + (0.5 * currentLobbyists)));
+    }
+
+    if (!stateRef.current.isPresident) {
+      setApprovalRating(prev => Math.max(0, prev - 2.5));
+    }
+
     setSaasUsers(prev => {
       const churned = Math.floor(prev * saasChurn);
       let growth = 0;
@@ -550,7 +577,11 @@ export const GameProvider = ({ children }) => {
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
       const artClout = artHoldings * 20;
       const audioClout = audioTracks * 2;
-      const pmcHeatContribution = (pmcSquads * 2);
+      let pmcHeatContribution = (pmcSquads * 2);
+
+      if (stateRef.current.isPresident) {
+        pmcHeatContribution *= 0.5;
+      }
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
       let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
@@ -575,6 +606,10 @@ export const GameProvider = ({ children }) => {
 
     if (currentActiveContracts > 0) {
       heatAdded = (10.0 * currentActiveContracts);
+    }
+
+    if (stateRef.current.isPresident) {
+      heatAdded *= 0.5;
     }
 
     const finalHeatBeforeRaid = currentPmcHeat + heatAdded;
@@ -1374,11 +1409,14 @@ export const GameProvider = ({ children }) => {
 
     let profit = revenue - totalOut;
 
+    let finalHeatGain = ass.legalTeam ? Math.floor(heatGain * 0.5) : heatGain;
+    if (stateRef.current.isPresident) finalHeatGain *= 0.5;
+
     setPl(p => ({
       ...p,
       bag: p.bag + revenue,
       clout: Math.min(p.maxClout, p.clout + cloutGain),
-      heat: p.heat + (ass.legalTeam ? Math.floor(heatGain * 0.5) : heatGain)
+      heat: p.heat + finalHeatGain
     }));
     setTally(t => ({ ...t, box: t.box + 1 }));
     setHl(h => ({ ...h, box: h.box + Math.max(0, profit) }));
@@ -1584,6 +1622,12 @@ export const GameProvider = ({ children }) => {
     setSwfInvestment(0);
     setGeoStability(1.0);
     setSwfFrozen(false);
+    setSuperPacFunds(0);
+    setApprovalRating(15.0);
+    setLobbyists(0);
+    setLobbyistCost(5000000);
+    setMediaBlitzCost(10000000);
+    setIsPresident(false);
     setIsBreakdownActive(false);
     setPassiveFrozen(false);
     setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
@@ -1593,6 +1637,12 @@ export const GameProvider = ({ children }) => {
     setHl({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
     setTally({ cryp: 0, box: 0, hf: 0, pres: 0 });
     setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
+    setSuperPacFunds(0);
+    setApprovalRating(15.0);
+    setLobbyists(0);
+    setLobbyistCost(5000000);
+    setMediaBlitzCost(10000000);
+    setIsPresident(false);
 
     setPh('PROLOGUE');
     setProSt(0);
@@ -1730,6 +1780,8 @@ export const GameProvider = ({ children }) => {
       audioTracks, setAudioTracks, sampleStrike, setSampleStrike, pmcSquads, setPmcSquads, intelLeak, setIntelLeak,
       pmcUnlocked, setPmcUnlocked, pmcMercenaries, setPmcMercenaries, pmcActiveContracts, setPmcActiveContracts,
       pmcHeatLevel, setPmcHeatLevel, pmcMercCost, setPmcMercCost, pmcBribeCost, setPmcBribeCost,
+      superPacFunds, setSuperPacFunds, approvalRating, setApprovalRating, lobbyists, setLobbyists,
+      lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
       generationCount, legacyMultiplier, rRetire, performHardReset
