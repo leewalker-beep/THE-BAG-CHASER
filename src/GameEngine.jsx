@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { NOTIFICATION_DATABASE } from './data/notifications.js';
+import { fMny } from './config.js';
 
 export const TIERS = [
   { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG'] },
@@ -818,7 +819,8 @@ export const GameProvider = ({ children }) => {
         clout: Math.min(p.maxClout, p.clout + cloutBump),
         aura: Math.min(p.maxAura, p.aura + auraBump)
       }));
-      setAss(a => ({ ...a, [key]: true }));
+      if (key === 'sneakerBackdoorPlug') setSneakerBackdoorPlug(true);
+      else setAss(a => ({ ...a, [key]: true }));
       if (key === 'pent' || key === 'hePent') setPassiveFrozen(false);
       setNews(n => [`💎 FLEET UPGRADE: Acquired ownership rights to ${label}. Balance sheet updated.`, ...n.slice(0, 15)]);
     }
@@ -876,6 +878,9 @@ export const GameProvider = ({ children }) => {
     let profit = -cost;
     if (roll < 0.01) { // GRAIL!
       setPl(p => ({ ...p, bag: p.bag + 600, clout: Math.min(p.maxClout, p.clout + 15), aura: Math.min(p.maxAura, p.aura + 1) }));
+      if (collectiblePhase === 'VAULT') {
+        setVaultHoldings(prev => [...prev, { name: "Thrifted Grail", cost: 600 }]);
+      }
       setNews(n => ["👕 GRAIL FOUND! A rare archive piece secured for the vault.", ...n.slice(0, 15)]);
       setMod({
         s: true,
@@ -902,16 +907,63 @@ export const GameProvider = ({ children }) => {
     if (net > 0) {
       setVintageRevenueTracker(prev => {
         const next = prev + net;
-        // Phase Transitions
-        if (next >= 200000 && collectiblePhase !== 'VAULT') setCollectiblePhase('VAULT');
-        else if (next >= 50000 && collectiblePhase !== 'CONSIGNMENT' && collectiblePhase !== 'VAULT') setCollectiblePhase('CONSIGNMENT');
-        else if (next >= 10000 && collectiblePhase !== 'SNEAKER' && collectiblePhase !== 'CONSIGNMENT' && collectiblePhase !== 'VAULT') setCollectiblePhase('SNEAKER');
+        // Phase Transitions: Only VINTAGE -> SNEAKER is automatic
+        if (next >= 10000 && collectiblePhase === 'VINTAGE') setCollectiblePhase('SNEAKER');
         return next;
       });
     }
 
     adv();
     return profit;
+  };
+
+  const rSneakerDrop = async () => {
+    if (pl.bag < 300 || pl.mentalHealth < 10) return;
+    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 10 }));
+
+    await new Promise(r => setTimeout(r, 800));
+
+    const success = sneakerBackdoorPlug || Math.random() < 0.5;
+    let profit = -300;
+    if (success) {
+      profit = 900;
+      setPl(p => ({ ...p, bag: p.bag + 900, clout: Math.min(p.maxClout, p.clout + 5) }));
+      setNews(n => ["👟 SNEAKER DROP: Secured the pair! Flipped for $900.", ...n.slice(0, 15)]);
+      triggerImpact('bag', 600);
+    } else {
+      setNews(n => ["👟 SNEAKER DROP: Took an L. Sold out in seconds.", ...n.slice(0, 15)]);
+    }
+    adv();
+    return profit;
+  };
+
+  const rBuyConsignment = async () => {
+    if (pl.bag < 1500000) return;
+    setPl(p => ({ ...p, bag: p.bag - 1500000 }));
+    setCollectiblePhase('CONSIGNMENT');
+    setConsignmentFeeActive(true);
+    setNews(n => ["📱 PLATFORM: Hype Consignment Network launched. Passive fees activated.", ...n.slice(0, 15)]);
+  };
+
+  const rBuyVault = async () => {
+    if (pl.bag < 5000000) return;
+    setPl(p => ({ ...p, bag: p.bag - 5000000 }));
+    setCollectiblePhase('VAULT');
+    setNews(n => ["🔒 VAULT: Blue-Chip Collectible Vault constructed. Now sourcing legends.", ...n.slice(0, 15)]);
+  };
+
+  const rVaultAuction = async () => {
+    if (pl.bag < 500000) return;
+    setPl(p => ({ ...p, bag: p.bag - 500000 }));
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    const itemNames = ["1985 Game-Worn Jordans", "Original Comic Art #1", "Pre-War Luxury Timepiece", "Historical Document Fragment"];
+    const name = itemNames[Math.floor(Math.random() * itemNames.length)];
+    const newItem = { name, cost: 500000 };
+    setVaultHoldings(prev => [...prev, newItem]);
+    setNews(n => [`🏆 AUCTION: Secured ${name} for the vault.`, ...n.slice(0, 15)]);
+    adv();
   };
 
   const rSmmPitch = async () => {
@@ -1947,6 +1999,7 @@ export const GameProvider = ({ children }) => {
       lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
+      rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction,
     activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>
