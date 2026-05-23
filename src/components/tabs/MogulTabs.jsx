@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useGame } from "../../GameEngine.jsx";
 import { fMny, HF_RUMORS } from "../../config.js";
 import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from "../ui/Shared.jsx";
+import PMCContractor from "./PMCContractor.jsx";
 
 export const MovTab = () => {
   const { pl, up, mov, setMov, dUp, rMov, setTab } = useGame();
@@ -273,46 +274,4 @@ export const SovereignTab = () => {
   );
 };
 
-export const PmcTab = () => {
-  const { pl, pmcSquads, intelLeak, rPmcDeploy, rPmcSettle, setTab } = useGame();
-  const locked = pl.bag < 250000000 || pl.clout < 1500 || pl.aura < 500;
-
-  if (locked) return <LockedTierScreen section={4} />;
-
-  return (
-    <LabShell t="PRIVATE MILITARY COMPANY" c="purple" fontCls="font-tech" onHub={() => setTab('HUB')} tier={4}>
-      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${intelLeak ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Deployed Forces</div>
-        <div className={`text-2xl font-black ${intelLeak ? 'text-red-500' : 'text-purple-400'}`}>{pmcSquads} SQUADS</div>
-        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
-          Passive: +${fMny(pmcSquads * 75000)}/mo | +{pmcSquads * 2} Heat/mo
-          {intelLeak && <div className="text-red-400 font-bold mt-1">⚠️ INTEL LEAK: -20 AURA/MO</div>}
-        </div>
-      </div>
-
-      {intelLeak && (
-        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
-          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 CLASSIFIED LEAK!</h4>
-          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Operations exposed. Aura is bleeding rapidly.</p>
-          <FlashBtn
-            onClick={rPmcSettle}
-            dis={pl.bag < 2500000}
-            label="SCRUB INTEL ($2.5M)"
-            color="red-600"
-            txt="white"
-          />
-        </div>
-      )}
-
-      <FlashBtn
-        onClick={rPmcDeploy}
-        costStm={40}
-        dis={pl.bag < 5000000}
-        label="DEPLOY TACTICAL SQUAD ($5M)"
-        color="purple-600"
-        txt="white"
-      />
-      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"50% mission success rate. Risk of massive aura bleed from leaks."</p>
-    </LabShell>
-  );
-};
+export const PmcTab = PMCContractor;

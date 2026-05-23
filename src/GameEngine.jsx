@@ -69,6 +69,14 @@ export const GameProvider = ({ children }) => {
   const [pmcSquads, setPmcSquads] = useState(0);
   const [intelLeak, setIntelLeak] = useState(false);
 
+  // PMC Loop Phase 4
+  const [pmcUnlocked, setPmcUnlocked] = useState(false);
+  const [pmcMercenaries, setPmcMercenaries] = useState(0);
+  const [pmcActiveContracts, setPmcActiveContracts] = useState(0);
+  const [pmcHeatLevel, setPmcHeatLevel] = useState(0.0);
+  const [pmcMercCost, setPmcMercCost] = useState(50000);
+  const [pmcBribeCost, setPmcBribeCost] = useState(25000);
+
   const [conglomActive, setConglomActive] = useState(false);
   const [antitrustRisk, setAntitrustRisk] = useState(0);
   const [swfInvestment, setSwfInvestment] = useState(0);
@@ -126,6 +134,7 @@ export const GameProvider = ({ children }) => {
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
     artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, antitrustRisk, swfInvestment,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
@@ -179,6 +188,12 @@ export const GameProvider = ({ children }) => {
         if (d.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
         if (d.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
         if (d.intelLeak !== undefined) setIntelLeak(d.intelLeak);
+        if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
+        if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
+        if (d.pmcActiveContracts !== undefined) setPmcActiveContracts(d.pmcActiveContracts);
+        if (d.pmcHeatLevel !== undefined) setPmcHeatLevel(d.pmcHeatLevel);
+        if (d.pmcMercCost !== undefined) setPmcMercCost(d.pmcMercCost);
+        if (d.pmcBribeCost !== undefined) setPmcBribeCost(d.pmcBribeCost);
         if (d.conglomActive !== undefined) setConglomActive(d.conglomActive);
         if (d.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
         if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
@@ -335,6 +350,7 @@ export const GameProvider = ({ children }) => {
     }
     if (nextTier !== (pl.tier || 0)) {
       setPl(prev => ({ ...prev, tier: nextTier }));
+      if (nextTier >= 4) setPmcUnlocked(true);
       setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier]?.label || 'Next'} Tier.`, ...prev.slice(0, 15)]);
     }
   }, [peaks, ph, pl.tier]);
@@ -510,12 +526,12 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
-      const smmRev = smmClients * 300;
-      const runnerRev = runnerCount * 150;
-      const audioYield = sampleStrike ? 0 : (audioTracks * 400);
-      const pmcYield = pmcSquads * 75000;
+      const smmRev = stateRef.current.smmClients * 300;
+      const runnerRev = stateRef.current.runnerCount * 150;
+      const audioYield = sampleStrike ? 0 : (stateRef.current.audioTracks * 400);
+      const pmcYield = (stateRef.current.pmcSquads * 75000) + (stateRef.current.pmcActiveContracts * 100000);
 
-      const saasRev = (saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
+      const saasRev = (stateRef.current.saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
       const saasOverhead = saasUsers * 2;
       const aiRev = apiLockoutMonths > 0 ? 0 : (corpClients * 8000);
 
@@ -534,7 +550,7 @@ export const GameProvider = ({ children }) => {
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
       const artClout = artHoldings * 20;
       const audioClout = audioTracks * 2;
-      const pmcHeat = pmcSquads * 2;
+      const pmcHeatContribution = (pmcSquads * 2);
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
       let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev) * legacyMultiplier);
@@ -547,10 +563,32 @@ export const GameProvider = ({ children }) => {
         bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
         clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
-        heat: prev.heat + pmcHeat,
+        heat: prev.heat + pmcHeatContribution,
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
       };
     });
+
+    // PMC Loop Phase 4: Heat & Raids
+    const currentActiveContracts = stateRef.current.pmcActiveContracts;
+    let currentPmcHeat = stateRef.current.pmcHeatLevel;
+    let heatAdded = 0;
+
+    if (currentActiveContracts > 0) {
+      heatAdded = (10.0 * currentActiveContracts);
+    }
+
+    const finalHeatBeforeRaid = currentPmcHeat + heatAdded;
+
+    if (finalHeatBeforeRaid > 80 && Math.random() < 0.05) {
+      // Interpol Raid!
+      setPl(prev => ({ ...prev, bag: prev.bag - 500000 }));
+      setPmcMercenaries(prev => Math.floor(prev * 0.5));
+      setPmcActiveContracts(0);
+      setPmcHeatLevel(Math.max(0, finalHeatBeforeRaid - 30));
+      setNews(prev => ["<span class='news-scandal'>🚨 INTERPOL RAID: Your PMC operations were compromised! -$500k fine, contracts zeroed, assets seized.</span>", ...prev.slice(0, 15)]);
+    } else if (heatAdded > 0) {
+      setPmcHeatLevel(finalHeatBeforeRaid);
+    }
 
     // SWF Freeze / Unfreeze
     if (geoStability < 0.7 && !swfFrozen && Math.random() < 0.15) {
@@ -1135,6 +1173,29 @@ export const GameProvider = ({ children }) => {
     setNews(prev => ["✅ PMC: Damage control complete. Intel leak scrubbed.", ...prev.slice(0, 15)]);
   };
 
+  const rPmcHire = async () => {
+    if (pl.bag < pmcMercCost) return;
+    setPl(p => ({ ...p, bag: p.bag - pmcMercCost }));
+    setPmcMercenaries(prev => prev + 1);
+    setPmcMercCost(prev => prev + 15000);
+    setNews(prev => ["🎖️ PMC: New mercenary asset hired and ready for deployment.", ...prev.slice(0, 15)]);
+  };
+
+  const rPmcDeployContract = async () => {
+    if (pmcMercenaries < 1) return;
+    setPmcMercenaries(prev => prev - 1);
+    setPmcActiveContracts(prev => prev + 1);
+    setNews(prev => ["🎖️ PMC: Contract deployed. Mercenary active in the field.", ...prev.slice(0, 15)]);
+  };
+
+  const rPmcBribe = async () => {
+    if (pl.bag < pmcBribeCost) return;
+    setPl(p => ({ ...p, bag: p.bag - pmcBribeCost }));
+    setPmcHeatLevel(prev => Math.max(0, prev * 0.6));
+    setPmcBribeCost(prev => prev + 5000);
+    setNews(prev => ["⚖️ PMC: Authorities bribed. Heat level significantly reduced.", ...prev.slice(0, 15)]);
+  };
+
   const rVinCh = async (choice) => {
     if (choice === 'burn') {
       setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + 1) }));
@@ -1512,6 +1573,12 @@ export const GameProvider = ({ children }) => {
     setSampleStrike(false);
     setPmcSquads(0);
     setIntelLeak(false);
+    setPmcUnlocked(false);
+    setPmcMercenaries(0);
+    setPmcActiveContracts(0);
+    setPmcHeatLevel(0.0);
+    setPmcMercCost(50000);
+    setPmcBribeCost(25000);
     setConglomActive(false);
     setAntitrustRisk(0);
     setSwfInvestment(0);
@@ -1620,6 +1687,12 @@ export const GameProvider = ({ children }) => {
     setSampleStrike(false);
     setPmcSquads(0);
     setIntelLeak(false);
+    setPmcUnlocked(false);
+    setPmcMercenaries(0);
+    setPmcActiveContracts(0);
+    setPmcHeatLevel(0.0);
+    setPmcMercCost(50000);
+    setPmcBribeCost(25000);
     setSwfInvestment(0);
     setGeoStability(1.0);
     setAntitrustRisk(0);
@@ -1655,7 +1728,10 @@ export const GameProvider = ({ children }) => {
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
       audioTracks, setAudioTracks, sampleStrike, setSampleStrike, pmcSquads, setPmcSquads, intelLeak, setIntelLeak,
+      pmcUnlocked, setPmcUnlocked, pmcMercenaries, setPmcMercenaries, pmcActiveContracts, setPmcActiveContracts,
+      pmcHeatLevel, setPmcHeatLevel, pmcMercCost, setPmcMercCost, pmcBribeCost, setPmcBribeCost,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
+      rPmcHire, rPmcDeployContract, rPmcBribe,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>
       {children}
