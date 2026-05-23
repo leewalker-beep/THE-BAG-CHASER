@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '../../GameEngine.jsx';
+import { styles } from '../../styles.js';
 
 export const GameIntro = () => {
   const { setPh } = useGame();
@@ -7,6 +8,7 @@ export const GameIntro = () => {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center font-hack">
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="max-w-md w-full bg-slate-900 border-2 border-blue-500 rounded-3xl p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)]">
         {page === 1 ? (
           <>

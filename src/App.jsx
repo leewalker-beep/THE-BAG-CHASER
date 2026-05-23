@@ -4,7 +4,6 @@ import { fMny, MARKETS } from './config.js';
 import { styles } from './styles.js';
 
 import {
-  Toggles,
   LockedTierScreen
 } from './components/ui/Shared.jsx';
 
