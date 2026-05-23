@@ -29,11 +29,27 @@ export const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', 
   const [st, setSt] = useState('idle');
   const [amt, setAmt] = useState(0);
 
+  // Safety hooks for state recovery
+  const [isFlashVisible, setIsFlashVisible] = useState(true);
+  const [isFlashProcessing, setIsFlashProcessing] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+
   const exhausted = pl.mentalHealth < costStm;
 
   const hit = async () => {
-    if (dis || exhausted || st !== 'idle' || (busy && st === 'idle')) return;
+    if (dis || isDisabled || isFlashProcessing || exhausted || st !== 'idle' || (busy && st === 'idle')) return;
     const hr = cost !== undefined && pl.bag > 0 && cost >= pl.bag * 0.25;
+
+    // UNIVERSAL RESET TIMER: Enforce state-clearing safety delay
+    setTimeout(() => {
+      setSt('idle');
+      setIsFlashVisible(true);
+      setIsFlashProcessing(false);
+      setIsDisabled(false);
+    }, 2000);
+
+    setIsFlashProcessing(true);
+
     try {
       if (hr) {
         const actionPromise = onClick();
@@ -42,21 +58,42 @@ export const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', 
         await new Promise(r => setTimeout(r, 500));
         const res = await actionPromise;
         await new Promise(r => setTimeout(r, 200));
-        if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1000); }
-        else setSt('idle');
+        if (res !== undefined) {
+          setAmt(res);
+          setSt(res >= 0 ? 'win' : 'lose');
+          setTimeout(() => {
+            setSt('idle');
+            setIsFlashProcessing(false);
+          }, 1000);
+        }
+        else {
+          setSt('idle');
+          setIsFlashProcessing(false);
+        }
       } else {
         setSt('calc');
         const res = await onClick();
-        if (res !== undefined) { setAmt(res); setSt(res >= 0 ? 'win' : 'lose'); setTimeout(() => setSt('idle'), 1500); }
-        else setSt('idle');
+        if (res !== undefined) {
+          setAmt(res);
+          setSt(res >= 0 ? 'win' : 'lose');
+          setTimeout(() => {
+            setSt('idle');
+            setIsFlashProcessing(false);
+          }, 1500);
+        }
+        else {
+          setSt('idle');
+          setIsFlashProcessing(false);
+        }
       }
     } catch (error) {
       console.error(error);
       setSt('idle');
+      setIsFlashProcessing(false);
     }
   };
 
-  let bg = (dis || exhausted || (busy && st === 'idle'))
+  let bg = (dis || isDisabled || exhausted || (busy && st === 'idle') || !isFlashVisible)
     ? 'bg-slate-800/50 text-slate-300 drop-shadow-sm opacity-40 cursor-not-allowed border-slate-700'
     : `bg-${color} text-${txt} hover:bg-gray-200`;
   let l = exhausted ? 'BURNED OUT' : label;
