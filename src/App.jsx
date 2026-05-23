@@ -97,6 +97,7 @@ const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, c
         else setSt('idle');
       }
     } catch (error) {
+      console.error(error);
       setSt('idle');
     }
   };
@@ -644,13 +645,6 @@ const SkillBuyBtn = ({ skill, lvl, cost, penalty, ok, btnCls, statLabel, diff, c
     </button>
   );
 };
-
-// ─── Individual tab panels ────────────────────────────────────────────────────
-
-};
-
-// ─── Main game interface ──────────────────────────────────────────────────────
-
 const TAB_MAP = {
   'HUB':          { component: TierHub },
   'SW':           { component: SwTab,           tier: 0 },
@@ -774,6 +768,7 @@ const GameInterface = () => {
       </div>
 
       <NewsTicker />
+    </div>
   );
 };
 
