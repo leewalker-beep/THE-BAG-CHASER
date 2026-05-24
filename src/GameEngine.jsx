@@ -163,6 +163,9 @@ export const GameProvider = ({ children }) => {
   const [consignmentFeeActive, setConsignmentFeeActive] = useState(false);
   const [vaultHoldings, setVaultHoldings] = useState([]);
 
+  // SMM Retainer Phase 2
+  const [smmRetainerActive, setSmmRetainerActive] = useState(false);
+
   // PMC Loop Phase 4
   const [pmcUnlocked, setPmcUnlocked] = useState(false);
   const [pmcMercenaries, setPmcMercenaries] = useState(0);
@@ -246,6 +249,7 @@ export const GameProvider = ({ children }) => {
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
+    smmRetainerActive,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
@@ -313,6 +317,7 @@ export const GameProvider = ({ children }) => {
         if (d.sneakerBackdoorPlug !== undefined) setSneakerBackdoorPlug(d.sneakerBackdoorPlug);
         if (d.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
         if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
+        if (d.smmRetainerActive !== undefined) setSmmRetainerActive(d.smmRetainerActive);
 
         if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
         if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
@@ -721,7 +726,7 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
-      const smmRev = stateRef.current.smmClients * 300;
+      const smmRev = (stateRef.current.smmClients * 300) + (stateRef.current.smmRetainerActive ? 500 : 0);
       const runnerRev = stateRef.current.runnerCount * 150;
 
       // Audio Syndicate passives
@@ -838,6 +843,32 @@ export const GameProvider = ({ children }) => {
     if (smmClients > 0 && Math.random() < 0.20) {
       setClientCrisis(true);
       setNews(prev => ["🚨 SMM ALERT: Client Crisis! Algorithm Shift detected.", ...prev.slice(0, 15)]);
+    }
+
+    // 3 AM CLIENT MELTDOWN (Phase 2)
+    if (stateRef.current.smmRetainerActive && Math.random() < 0.05) {
+      setMod({
+        s: true,
+        t: "3 AM CLIENT MELTDOWN",
+        m: "Your biggest retainer client is blowing up your phone because their latest post didn't go viral. How do you respond?",
+        o: [
+          {
+            label: "STAY UP ANSWERING TEXTS (-30 MH)",
+            action: () => {
+              setPl(prev => ({ ...prev, mentalHealth: Math.max(0, prev.mentalHealth - 30) }));
+              setMod({ s: false });
+            }
+          },
+          {
+            label: "ISSUE IMMEDIATE REFUND (-$1,000 BAG)",
+            action: () => {
+              setPl(prev => ({ ...prev, bag: prev.bag - 1000 }));
+              setMod({ s: false });
+            }
+          }
+        ],
+        ui: "ui-crisis"
+      });
     }
 
     // Runner Burnout Trigger
@@ -1032,20 +1063,30 @@ export const GameProvider = ({ children }) => {
   };
 
   const rSneakerDrop = async () => {
-    if (pl.bag < 300 || pl.mentalHealth < 10) return;
-    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 10 }));
+    if (pl.bag < 300 || pl.mentalHealth < 15) return;
+    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 15 }));
 
     await new Promise(r => setTimeout(r, 800));
 
     const success = sneakerBackdoorPlug || Math.random() < 0.5;
     let profit = -300;
     if (success) {
-      profit = 900;
-      setPl(p => ({ ...p, bag: p.bag + 900, clout: Math.min(p.maxClout, p.clout + 5) }));
-      setNews(n => ["👟 SNEAKER DROP: Secured the pair! Flipped for $900.", ...n.slice(0, 15)]);
+      profit = 600; // Net profit reported for UI FlashBtn
+      setPl(p => ({
+        ...p,
+        bag: p.bag + 900,
+        clout: Math.min(p.maxClout, p.clout + 15),
+        aura: Math.min(p.maxAura, p.aura + 10)
+      }));
+      setNews(n => ["🔥 HYPEBEAST WIN! You copped retail and flipped them instantly to a reseller.", ...n.slice(0, 15)]);
       triggerImpact('bag', 600);
     } else {
-      setNews(n => ["👟 SNEAKER DROP: Took an L. Sold out in seconds.", ...n.slice(0, 15)]);
+      setPl(p => ({
+        ...p,
+        aura: Math.max(0, p.aura - 20),
+        mentalHealth: Math.max(0, p.mentalHealth - 10)
+      }));
+      setNews(n => ["💀 CAUGHT BUSTED! The middleman on Discord scammed you with high-tier replicas. Authentication failed.", ...n.slice(0, 15)]);
     }
     adv();
     return profit;
@@ -1080,8 +1121,15 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
+  const rLaunchSmmRetainer = async () => {
+    if (pl.bag < 4000) return;
+    setPl(p => ({ ...p, bag: p.bag - 4000 }));
+    setSmmRetainerActive(true);
+    setNews(prev => ["📱 SMM: Retainer packages launched. Passive income active.", ...prev.slice(0, 15)]);
+  };
+
   const rSmmPitch = async () => {
-    if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty) return;
+    if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty || smmRetainerActive) return;
     updateFatigue('smm');
     setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 20 }));
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
@@ -1962,6 +2010,7 @@ export const GameProvider = ({ children }) => {
     setHollywoodSyncActive(false);
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
+    setSmmRetainerActive(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2102,6 +2151,7 @@ export const GameProvider = ({ children }) => {
     setHollywoodSyncActive(false);
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
+    setSmmRetainerActive(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2157,6 +2207,7 @@ export const GameProvider = ({ children }) => {
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
       rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction,
+      smmRetainerActive, rLaunchSmmRetainer,
     activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>

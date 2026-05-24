@@ -13,8 +13,6 @@ import { NotificationOverlay } from './components/ui/NotificationOverlay.jsx';
 import {
   SwTab,
   DropTab,
-  VintageTab,
-  SmmTab,
   TechFlipTab,
   GigTab,
   DeliveryTab,
@@ -22,6 +20,8 @@ import {
   SurveyTab,
   LaborTab
 } from './components/tabs/MudTabs.jsx';
+import { VintageTab } from './components/tabs/VintageTab.jsx';
+import { SmmTab } from './components/tabs/SmmTab.jsx';
 import {
   CcTab,
   PodTab,
