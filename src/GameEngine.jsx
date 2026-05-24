@@ -165,6 +165,7 @@ export const GameProvider = ({ children }) => {
 
   // SMM Retainer Phase 2
   const [smmRetainerActive, setSmmRetainerActive] = useState(false);
+  const [aiSmmFactory, setAiSmmFactory] = useState(false);
 
   // PMC Loop Phase 4
   const [pmcUnlocked, setPmcUnlocked] = useState(false);
@@ -249,7 +250,7 @@ export const GameProvider = ({ children }) => {
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
-    smmRetainerActive,
+    smmRetainerActive, aiSmmFactory,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
@@ -318,6 +319,7 @@ export const GameProvider = ({ children }) => {
         if (d.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
         if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
         if (d.smmRetainerActive !== undefined) setSmmRetainerActive(d.smmRetainerActive);
+        if (d.aiSmmFactory !== undefined) setAiSmmFactory(d.aiSmmFactory);
 
         if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
         if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
@@ -377,7 +379,7 @@ export const GameProvider = ({ children }) => {
   // Dynamic Stat Caps
   useEffect(() => {
     if (ph !== 'PLAYING') return;
-    const caps = [100, 250, 500, 2000, 10000, 999999999];
+    const caps = [100, 250, 300, 2000, 10000, 999999999];
     let currentCap = caps[pl.tier] || caps[0];
     let cloutCap = currentCap;
     if (ass.cmYct && pl.tier < 5) {
@@ -726,7 +728,7 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
-      const smmRev = (stateRef.current.smmClients * 300) + (stateRef.current.smmRetainerActive ? 500 : 0);
+      const smmRev = (stateRef.current.smmClients * 300) + (stateRef.current.aiSmmFactory ? 1000 : (stateRef.current.smmRetainerActive ? 500 : 0));
       const runnerRev = stateRef.current.runnerCount * 150;
 
       // Audio Syndicate passives
@@ -740,7 +742,7 @@ export const GameProvider = ({ children }) => {
       const enterpriseRev = stateRef.current.enterpriseContracts * 5000;
 
       // Vintage / Collectible passives
-      let consignmentRev = 0; if (stateRef.current.collectiblePhase === "CONSIGNMENT") { const marketVolume = 100000 + (prev.clout * 1000); consignmentRev = marketVolume * 0.10; }
+      let consignmentRev = 0; if (stateRef.current.collectiblePhase === "CONSIGNMENT") { consignmentRev = Math.floor(5000 * (stateRef.current.pl.clout / 100)); }
 
       const saasRev = (stateRef.current.saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
       const saasOverhead = saasUsers * 2;
@@ -846,7 +848,7 @@ export const GameProvider = ({ children }) => {
     }
 
     // 3 AM CLIENT MELTDOWN (Phase 2)
-    if (stateRef.current.smmRetainerActive && Math.random() < 0.05) {
+    if (stateRef.current.smmRetainerActive && !stateRef.current.aiSmmFactory && Math.random() < 0.05) {
       setMod({
         s: true,
         t: "3 AM CLIENT MELTDOWN",
@@ -1126,6 +1128,13 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({ ...p, bag: p.bag - 4000 }));
     setSmmRetainerActive(true);
     setNews(prev => ["📱 SMM: Retainer packages launched. Passive income active.", ...prev.slice(0, 15)]);
+  };
+
+  const rBuySmmFactory = async () => {
+    if (pl.bag < 20000) return;
+    setPl(p => ({ ...p, bag: p.bag - 20000 }));
+    setAiSmmFactory(true);
+    setNews(prev => ["🤖 SMM: AI Content Factory deployed. Human risk eliminated.", ...prev.slice(0, 15)]);
   };
 
   const rSmmPitch = async () => {
@@ -2011,6 +2020,7 @@ export const GameProvider = ({ children }) => {
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
     setSmmRetainerActive(false);
+    setAiSmmFactory(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2152,6 +2162,7 @@ export const GameProvider = ({ children }) => {
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
     setSmmRetainerActive(false);
+    setAiSmmFactory(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2207,7 +2218,7 @@ export const GameProvider = ({ children }) => {
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
       rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction,
-      smmRetainerActive, rLaunchSmmRetainer,
+      smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory,
     activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>
