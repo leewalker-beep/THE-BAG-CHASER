@@ -110,7 +110,7 @@ export const VintageTab = () => {
                 disabled={pl.bag < 1500000}
                 className="w-full py-3 bg-orange-600/20 border border-orange-600/50 text-orange-500 font-black rounded-xl hover:bg-orange-600 hover:text-white disabled:bg-slate-800 disabled:opacity-40 disabled:text-slate-500 transition-all text-xs tracking-widest uppercase shadow-lg"
               >
-                Scale to Consignment Platform (-$1.5M)
+                Scale to Global Consignment Platform (-$1.5M)
               </button>
             </div>
           </div>
@@ -121,22 +121,52 @@ export const VintageTab = () => {
 
   // ─── PHASE C: CONSIGNMENT PLATFORM (CORP/ELITE) ────────────────────────────
   if (collectiblePhase === 'CONSIGNMENT') {
+    const transactionVolume = 100000 + (pl.clout * 1000);
+    const feeMultiplier = (pl.clout / 100).toFixed(2);
+    const passivePayout = 5000 * (pl.clout / 100);
+
     return (
-      <LabShell hustleKey="vintage" t="CONSIGNMENT EMPIRE" c="cyan" fontCls="font-hype" onHub={() => setTab('HUB')} tier={2}>
-        <div className="flex flex-col gap-4 animate-fadeIn">
-          <div className="bg-slate-900 border border-cyan-500/30 p-4 rounded-2xl text-center">
-            <h3 className="text-xl font-black text-cyan-400 font-hype tracking-widest">HYPE CONSIGNMENT NETWORK</h3>
-            <p className="text-[10px] text-slate-400 mt-1">Your platform collects a passive fee on all local street-culture trading volume.</p>
-            <div className="mt-2 text-xs font-bold text-green-400 uppercase tracking-tighter animate-pulse">Generating passive income via clout multipliers</div>
+      <LabShell hustleKey="vintage" t="GLOBAL CONSIGNMENT DASHBOARD" c="emerald" fontCls="font-tech" onHub={() => setTab('HUB')} tier={2}>
+        <div className="flex flex-col gap-4 animate-fadeIn font-tech">
+          <div className="bg-black/80 border border-emerald-500/40 p-5 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.2)]">
+            <h3 className="text-2xl font-black text-emerald-400 tracking-widest uppercase mb-1">Global Consignment Marketplace</h3>
+            <div className="h-1 w-20 bg-emerald-500 mb-4"></div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex justify-between items-end border-b border-emerald-900/50 pb-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Platform Transaction Volume</span>
+                <span className="text-lg font-mono text-emerald-300 font-bold">${fMny(transactionVolume)}</span>
+              </div>
+
+              <div className="flex justify-between items-end border-b border-emerald-900/50 pb-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Global Clout Fee Multiplier</span>
+                <span className="text-lg font-mono text-emerald-300 font-bold">x{feeMultiplier}</span>
+              </div>
+
+              <div className="flex justify-between items-end border-b border-emerald-500/30 pb-2 bg-emerald-950/20 px-2 rounded-t-lg">
+                <span className="text-[10px] text-emerald-400 uppercase font-black">Current Passive Revenue</span>
+                <span className="text-xl font-mono text-emerald-400 font-black">${fMny(passivePayout)} <span className="text-[10px]">/mo</span></span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex-1 h-[2px] bg-emerald-900/50"></div>
+              <div className="text-[9px] text-emerald-500/60 uppercase font-black tracking-widest">System Status: Automated</div>
+              <div className="flex-1 h-[2px] bg-emerald-900/50"></div>
+            </div>
           </div>
 
           <button
             onClick={rBuyVault}
             disabled={pl.bag < 5000000}
-            className="w-full py-4 bg-cyan-600 disabled:bg-slate-800 disabled:opacity-40 text-white font-black rounded-xl hover:bg-cyan-500 transition-all text-xs tracking-widest uppercase"
+            className="w-full py-4 bg-emerald-600/10 border border-emerald-600/50 disabled:bg-slate-900 disabled:opacity-30 text-emerald-400 font-black rounded-xl hover:bg-emerald-600 hover:text-white transition-all text-xs tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.1)]"
           >
-            BUILD PRIVATE BLUE-CHIP VAULT (-$5M)
+            ESTABLISH BLUE-CHIP ASSET VAULT (-$5M)
           </button>
+
+          <div className="text-[9px] text-slate-500 italic text-center px-4">
+            "The marketplace is now a self-sustaining corporate entity. Manual inventory sourcing has been deprecated in favor of automated platform fees."
+          </div>
         </div>
       </LabShell>
     );
