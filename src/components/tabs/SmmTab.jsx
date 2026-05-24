@@ -6,12 +6,59 @@ import { LabShell, FlashBtn } from '../ui/Shared.jsx';
 export const SmmTab = () => {
   const {
     pl, smmClients, clientCrisis, rSmmPitch, rSmmFix, setTab, karmaFlags, setKarmaFlags,
-    smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory
+    smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire
   } = useGame();
 
   // Street Tier visual spike styling
   const streetTierGlow = "shadow-[0_0_20px_rgba(59,130,246,0.4)] border-blue-500/60";
   const corporateEmeraldGlow = "shadow-[0_0_25px_rgba(16,185,129,0.3)] border-emerald-500/60";
+  const mogulGoldGlow = "shadow-[0_0_35px_rgba(234,179,8,0.4)] border-yellow-500/60";
+
+  if (smmEmpireActive) {
+    const passivePayout = Math.floor(25000 * (pl.clout / 300));
+
+    return (
+      <div className={`transition-all duration-500 rounded-2xl ${mogulGoldGlow}`}>
+        <LabShell hustleKey="smm" t="GLOBAL MEDIA EMPIRE" c="purple" fontCls="font-hype" onHub={() => setTab('HUB')} tier={4}>
+           <div className="flex flex-col gap-4 animate-fadeIn">
+            <div className="bg-black/90 border-2 border-yellow-500 p-5 rounded-2xl text-center shadow-[inset_0_0_30px_rgba(234,179,8,0.1)]">
+              <h3 className="text-2xl font-black text-yellow-500 font-hype tracking-widest uppercase mb-1">Global PR Network</h3>
+              <div className="h-1 w-full bg-gradient-to-r from-transparent via-yellow-500 to-transparent mb-4"></div>
+
+              <div className="space-y-4">
+                <div className="bg-black/60 border border-yellow-500/30 p-4 rounded-xl">
+                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block mb-1">Current Clout Influence</span>
+                  <span className="text-3xl font-mono text-yellow-400 font-black">{pl.clout}</span>
+                </div>
+
+                <div className="bg-black/60 border border-yellow-500/30 p-4 rounded-xl">
+                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block mb-1">Scaled Monthly Payout</span>
+                  <span className="text-3xl font-mono text-yellow-500 font-black">${fMny(passivePayout)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-black/80 border border-purple-500/40 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-purple-500/50"></div>
+              <div className="text-[10px] text-purple-400 font-black uppercase tracking-widest mb-2">Institutional Status</div>
+              <div className="flex justify-between items-center border-b border-purple-900/30 pb-2 mb-2">
+                <span className="text-[10px] text-slate-400">Public Relations Control</span>
+                <span className="text-[10px] text-purple-400 font-black uppercase">ABSOLUTE</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400">Media Buy Leverage</span>
+                <span className="text-[10px] text-purple-400 font-black uppercase">MAXIMIZED</span>
+              </div>
+            </div>
+
+            <p className="text-[9px] text-slate-500 text-center italic px-4">
+              "Your name is now a global commodity. The media machine operates solely to monetize your reputation."
+            </p>
+          </div>
+        </LabShell>
+      </div>
+    );
+  }
 
   return (
     <div className={`transition-all duration-500 rounded-2xl ${aiSmmFactory ? corporateEmeraldGlow : (smmRetainerActive ? streetTierGlow : '')}`}>
@@ -156,10 +203,20 @@ export const SmmTab = () => {
               </div>
 
               <p className="text-[9px] text-slate-500 text-center italic">"The human element has been optimized out of the loop. Margins are maximized."</p>
+
+              <div className="mt-4 pt-4 border-t border-emerald-900/30">
+                <button
+                  onClick={rBuySmmEmpire}
+                  disabled={pl.bag < 250000}
+                  className="w-full py-3 bg-yellow-600/20 border border-yellow-500/50 text-yellow-500 font-black rounded-xl hover:bg-yellow-500 hover:text-black disabled:bg-slate-800 disabled:opacity-40 disabled:text-slate-500 transition-all text-xs tracking-widest uppercase shadow-lg"
+                >
+                  Establish Global Media Empire Network (-$250,000)
+                </button>
+              </div>
             </div>
           )}
 
-          {!smmRetainerActive && !aiSmmFactory && <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">"Flat 50% success rate. Street leverage is everything."</p>}
+          {!smmRetainerActive && !aiSmmFactory && !smmEmpireActive && <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">"Flat 50% success rate. Street leverage is everything."</p>}
         </div>
       </LabShell>
     </div>

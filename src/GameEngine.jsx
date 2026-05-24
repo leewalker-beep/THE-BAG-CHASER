@@ -82,7 +82,7 @@ export const TIERS = [
   { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
   { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
-  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN'] },
+  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV'] },
   { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
 ];
 
@@ -166,6 +166,7 @@ export const GameProvider = ({ children }) => {
   // SMM Retainer Phase 2
   const [smmRetainerActive, setSmmRetainerActive] = useState(false);
   const [aiSmmFactory, setAiSmmFactory] = useState(false);
+  const [smmEmpireActive, setSmmEmpireActive] = useState(false);
 
   // PMC Loop Phase 4
   const [pmcUnlocked, setPmcUnlocked] = useState(false);
@@ -176,6 +177,7 @@ export const GameProvider = ({ children }) => {
   const [pmcBribeCost, setPmcBribeCost] = useState(25000);
 
   const [conglomActive, setConglomActive] = useState(false);
+  const [movieProject, setMovieProject] = useState({ status: 'IDLE', budgetTier: 1, hypeLevel: 0 });
   const [antitrustRisk, setAntitrustRisk] = useState(0);
   const [swfInvestment, setSwfInvestment] = useState(0);
   const [geoStability, setGeoStability] = useState(1.0);
@@ -250,9 +252,9 @@ export const GameProvider = ({ children }) => {
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
-    smmRetainerActive, aiSmmFactory,
+    smmRetainerActive, aiSmmFactory, smmEmpireActive,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
-    conglomActive, antitrustRisk, swfInvestment,
+    conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
@@ -320,6 +322,7 @@ export const GameProvider = ({ children }) => {
         if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
         if (d.smmRetainerActive !== undefined) setSmmRetainerActive(d.smmRetainerActive);
         if (d.aiSmmFactory !== undefined) setAiSmmFactory(d.aiSmmFactory);
+        if (d.smmEmpireActive !== undefined) setSmmEmpireActive(d.smmEmpireActive);
 
         if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
         if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
@@ -328,6 +331,7 @@ export const GameProvider = ({ children }) => {
         if (d.pmcMercCost !== undefined) setPmcMercCost(d.pmcMercCost);
         if (d.pmcBribeCost !== undefined) setPmcBribeCost(d.pmcBribeCost);
         if (d.conglomActive !== undefined) setConglomActive(d.conglomActive);
+        if (d.movieProject) setMovieProject(d.movieProject);
         if (d.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
         if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
         if (d.geoStability !== undefined) setGeoStability(d.geoStability);
@@ -379,20 +383,24 @@ export const GameProvider = ({ children }) => {
   // Dynamic Stat Caps
   useEffect(() => {
     if (ph !== 'PLAYING') return;
-    const caps = [100, 250, 300, 2000, 10000, 999999999];
+    const caps = [100, 250, 300, 5000, 5000, 999999999];
+    const mhCaps = [100, 150, 300, 500, 500, 1000];
     let currentCap = caps[pl.tier] || caps[0];
+    let currentMhCap = mhCaps[pl.tier] || mhCaps[0];
     let cloutCap = currentCap;
     if (ass.cmYct && pl.tier < 5) {
       cloutCap = currentCap * 10;
     }
     setPl(prev => {
-      if (prev.maxClout === cloutCap && prev.maxAura === currentCap) return prev;
+      if (prev.maxClout === cloutCap && prev.maxAura === currentCap && prev.maxMentalHealth === currentMhCap) return prev;
       return {
         ...prev,
         maxClout: cloutCap,
         maxAura: currentCap,
+        maxMentalHealth: currentMhCap,
         clout: Math.min(cloutCap, prev.clout),
-        aura: Math.min(currentCap, prev.aura)
+        aura: Math.min(currentCap, prev.aura),
+        mentalHealth: Math.min(currentMhCap, prev.mentalHealth)
       };
     });
   }, [pl.tier, ph, ass.cmYct]);
@@ -728,7 +736,9 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
-      const smmRev = (stateRef.current.smmClients * 300) + (stateRef.current.aiSmmFactory ? 1000 : (stateRef.current.smmRetainerActive ? 500 : 0));
+      const smmRev = stateRef.current.smmEmpireActive
+        ? Math.floor(25000 * (stateRef.current.pl.clout / 300))
+        : (stateRef.current.smmClients * 300) + (stateRef.current.aiSmmFactory ? 1000 : (stateRef.current.smmRetainerActive ? 500 : 0));
       const runnerRev = stateRef.current.runnerCount * 150;
 
       // Audio Syndicate passives
@@ -761,7 +771,19 @@ export const GameProvider = ({ children }) => {
       let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
-      const artClout = artHoldings * 20; if (stateRef.current.collectiblePhase === "VAULT" && stateRef.current.vaultHoldings.length > 0) { if (prev.mo % 12 === 0 && months > 0) { setVaultHoldings(prevHoldings => prevHoldings.map(h => ({ ...h, cost: Math.floor(h.cost * 1.12) }))); } } const vaultAura = stateRef.current.collectiblePhase === "VAULT" ? stateRef.current.vaultHoldings.length * 50 : 0;
+      const artClout = artHoldings * 20;
+
+      // Annual 12% Asset Appreciation for Vault Holdings
+      if (stateRef.current.collectiblePhase === "VAULT" && stateRef.current.vaultHoldings.length > 0) {
+        if (prev.mo % 12 === 0 && months > 0) {
+          setVaultHoldings(prevHoldings => prevHoldings.map(h => ({
+            ...h,
+            cost: Math.floor(h.cost * 1.12)
+          })));
+        }
+      }
+
+      const vaultAura = stateRef.current.collectiblePhase === "VAULT" ? stateRef.current.vaultHoldings.length * 50 : 0;
       const audioClout = audioTracks * 2;
       let pmcHeatContribution = (pmcSquads * 2);
 
@@ -1109,6 +1131,17 @@ export const GameProvider = ({ children }) => {
     setNews(n => ["🔒 VAULT: Blue-Chip Collectible Vault constructed. Now sourcing legends.", ...n.slice(0, 15)]);
   };
 
+  const rBuyVaultAsset = async (asset) => {
+    if (pl.bag < asset.cost) return;
+    setPl(p => ({
+      ...p,
+      bag: p.bag - asset.cost,
+      aura: Math.min(p.maxAura, p.aura + asset.aura)
+    }));
+    setVaultHoldings(prev => [...prev, { name: asset.name, cost: asset.cost }]);
+    setNews(n => [`🏆 VAULT: Acquired ${asset.name} for the collection.`, ...n.slice(0, 15)]);
+  };
+
   const rVaultAuction = async () => {
     if (pl.bag < 500000) return;
     setPl(p => ({ ...p, bag: p.bag - 500000 }));
@@ -1135,6 +1168,13 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({ ...p, bag: p.bag - 20000 }));
     setAiSmmFactory(true);
     setNews(prev => ["🤖 SMM: AI Content Factory deployed. Human risk eliminated.", ...prev.slice(0, 15)]);
+  };
+
+  const rBuySmmEmpire = async () => {
+    if (pl.bag < 250000) return;
+    setPl(p => ({ ...p, bag: p.bag - 250000 }));
+    setSmmEmpireActive(true);
+    setNews(prev => ["🌍 SMM: Global Media Empire established. Revenue now scales with Clout.", ...prev.slice(0, 15)]);
   };
 
   const rSmmPitch = async () => {
@@ -1785,6 +1825,7 @@ export const GameProvider = ({ children }) => {
 
     let revenue = 0;
     let cloutGain = 0;
+    let auraGain = 0;
     let heatGain = 0;
 
     if (isPPV) {
@@ -1792,7 +1833,8 @@ export const GameProvider = ({ children }) => {
        const ppvBuys = Math.pow(pl.clout, 1.8) * 10;
        const sponsorships = Math.pow(pl.aura, 1.5) * 50;
        revenue = Math.floor((ppvBuys + sponsorships + totalOut * 1.5) * legacyMultiplier);
-       cloutGain = 50;
+       cloutGain = 300;
+       auraGain = 200;
        heatGain = 20;
     } else if (up.boxBrd) {
       revenue = Math.floor((12000 + (pl.clout * 250)) * legacyMultiplier);
@@ -1814,6 +1856,7 @@ export const GameProvider = ({ children }) => {
       ...p,
       bag: p.bag + revenue,
       clout: Math.min(p.maxClout, p.clout + (cloutGain || 0)),
+      aura: Math.min(p.maxAura, p.aura + (auraGain || 0)),
       heat: p.heat + finalHeatGain
     }));
     setTally(t => ({ ...t, box: t.box + 1 }));
@@ -1892,6 +1935,100 @@ export const GameProvider = ({ children }) => {
       setNews(n => [`💀 LIQUIDITY RUGGED: Contract liquidity drained. Net reward: $${reward.toLocaleString()}. Aura crashed.`, ...n.slice(0, 15)]);
       return reward;
     }
+  };
+
+  const rMovieGreenlight = (tier) => {
+    const costs = [0, 5000000, 50000000, 200000000];
+    const cost = costs[tier];
+    if (pl.bag < cost) return;
+    setPl(p => ({ ...p, bag: p.bag - cost }));
+    setMovieProject({ status: 'PRODUCTION', budgetTier: tier, hypeLevel: 0 });
+    setNews(n => ["🎬 MOVIE: Project greenlit. Production initialized.", ...n.slice(0, 15)]);
+  };
+
+  const rMovieHypeBag = async () => {
+    const cost = 500000;
+    if (pl.bag < cost || movieProject.status !== 'PRODUCTION') return;
+    setPl(p => ({ ...p, bag: p.bag - cost }));
+    setMovieProject(prev => ({ ...prev, hypeLevel: Math.min(100, prev.hypeLevel + 10) }));
+    setNews(n => ["🎬 MOVIE: PR firm hired. Hype increased.", ...n.slice(0, 15)]);
+    return undefined;
+  };
+
+  const rMovieHypeClout = async () => {
+    if (pl.clout < 50 || movieProject.status !== 'PRODUCTION') return;
+    setPl(p => ({ ...p, clout: p.clout - 50 }));
+    setMovieProject(prev => ({ ...prev, hypeLevel: Math.min(100, prev.hypeLevel + 15) }));
+    setNews(n => ["🎬 MOVIE: Viral clout activation successful.", ...n.slice(0, 15)]);
+    return undefined;
+  };
+
+  const rMovieHypeAura = async () => {
+    if (pl.aura < 25 || movieProject.status !== 'PRODUCTION') return;
+    setPl(p => ({ ...p, aura: p.aura - 25 }));
+    setMovieProject(prev => ({ ...prev, hypeLevel: Math.min(100, prev.hypeLevel + 25) }));
+    setNews(n => ["🎬 MOVIE: Personal celebrity endorsement boosted project hype.", ...n.slice(0, 15)]);
+    return undefined;
+  };
+
+  const rMovieRelease = async () => {
+    if (movieProject.status !== 'PRODUCTION') return;
+    setGBusy(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setGBusy(false);
+
+    const costs = [0, 5000000, 50000000, 200000000];
+    const budget = costs[movieProject.budgetTier];
+    const roll = Math.random() * 100 + (movieProject.hypeLevel / 2);
+
+    let outcomeTitle = "";
+    let outcomeText = "";
+    let bagReward = 0;
+    let auraGain = 0;
+    let cloutGain = 0;
+    let mhPen = 0;
+    let uiType = "ui-modal";
+
+    if (roll < 40) { // FLOP
+      outcomeTitle = "BOX OFFICE FLOP 💀";
+      outcomeText = "Critics panned it and audiences stayed home. A total commercial disaster.";
+      bagReward = Math.floor(budget * 0.1);
+      auraGain = -100;
+      mhPen = 30;
+      uiType = "ui-crisis";
+    } else if (roll < 85) { // HIT
+      outcomeTitle = "BOX OFFICE HIT! 📈";
+      outcomeText = "The film dominated the weekend charts and became a cultural moment.";
+      bagReward = budget * 2;
+      cloutGain = 300;
+      auraGain = 100;
+    } else { // OSCAR SWEEP
+      outcomeTitle = "ACADEMY AWARD SWEEP 🏆";
+      outcomeText = "Absolute cinematic perfection. You've swept the Oscars and redefined the industry.";
+      bagReward = Math.floor(budget * 1.2);
+      cloutGain = 500;
+      auraGain = 2500;
+    }
+
+    setPl(p => ({
+      ...p,
+      bag: p.bag + bagReward,
+      aura: Math.min(p.maxAura, Math.max(0, p.aura + auraGain)),
+      clout: Math.min(p.maxClout, p.clout + cloutGain),
+      mentalHealth: Math.max(0, p.mentalHealth - mhPen)
+    }));
+
+    setMod({
+      s: true,
+      t: outcomeTitle,
+      m: outcomeText + ` Returns: $${fMny(bagReward)}.`,
+      o: [{ label: "ACCEPT LEGACY", action: () => setMod({ s: false }) }],
+      ui: uiType
+    });
+
+    setMovieProject({ status: 'IDLE', budgetTier: 1, hypeLevel: 0 });
+    setHl(h => ({ ...h, mov: h.mov + (bagReward - budget) }));
+    adv();
   };
 
   const rMov = async () => {
@@ -2019,8 +2156,10 @@ export const GameProvider = ({ children }) => {
     setHollywoodSyncActive(false);
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
+    setMovieProject({ status: 'IDLE', budgetTier: 1, hypeLevel: 0 });
     setSmmRetainerActive(false);
     setAiSmmFactory(false);
+    setSmmEmpireActive(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2071,7 +2210,7 @@ export const GameProvider = ({ children }) => {
   }, [pl.tier]);
 
   const cap = useMemo(() => {
-    const caps = [100, 250, 500, 2000, 10000, 999999999];
+    const caps = [100, 250, 300, 5000, 5000, 999999999];
     return caps[pl.tier] || caps[0];
   }, [pl.tier]);
 
@@ -2161,8 +2300,10 @@ export const GameProvider = ({ children }) => {
     setHollywoodSyncActive(false);
     setCollectiblePhase('VINTAGE');
     setVintageRevenueTracker(0);
+    setMovieProject({ status: 'IDLE', budgetTier: 1, hypeLevel: 0 });
     setSmmRetainerActive(false);
     setAiSmmFactory(false);
+    setSmmEmpireActive(false);
     setSneakerBackdoorPlug(false);
     setConsignmentFeeActive(false);
     setVaultHoldings([]);
@@ -2217,8 +2358,9 @@ export const GameProvider = ({ children }) => {
       lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
-      rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction,
-      smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory,
+      rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, rBuyVaultAsset,
+      movieProject, rMovieGreenlight, rMovieHypeBag, rMovieHypeClout, rMovieHypeAura, rMovieRelease,
+      smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire,
     activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>

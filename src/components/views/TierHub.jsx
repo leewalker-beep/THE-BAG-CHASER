@@ -29,6 +29,7 @@ const hustleMap = {
   'CONGLOMERATE': { label: 'Global Conglomerate', icon: '🏢' },
   'PMC': { label: 'Private Military', icon: '🎖️' },
   'SOVEREIGN': { label: 'Sovereign Wealth Fund', icon: '🌍' },
+  'MOV': { label: 'Hollywood Studio', icon: '🎬' },
   'PAC': { label: 'Super PAC', icon: '🇺🇸' },
   'BLITZ': { label: 'Media Blitz', icon: '📣' },
   'SMEAR': { label: 'Smear Campaigns', icon: '🔥' },
