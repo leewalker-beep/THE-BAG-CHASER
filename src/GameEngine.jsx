@@ -380,7 +380,7 @@ export const GameProvider = ({ children }) => {
     const financialPhase = pl.bag < 10000 ? 1 : pl.bag < 100000 ? 2 : pl.bag < 500000 ? 3 : 0;
     if (financialPhase > 0) {
       if (pl.bag <= 0 && financialPhase === 1) triggerNotification('BAG_FAIL_01');
-      if (pl.aura < 0 && financialPhase === 1) triggerNotification('AUR_LOW_01');
+      if (pl.aura < (pl.maxAura * 0.1) && financialPhase === 1) triggerNotification('AUR_LOW_01');
       if (pl.mentalHealth < (pl.maxMentalHealth * 0.1) && financialPhase === 1) triggerNotification('HEA_LOW_01');
       if (pl.mentalHealth <= 0 && financialPhase === 3) triggerNotification('HEA_FAIL_01');
     }
@@ -391,7 +391,7 @@ export const GameProvider = ({ children }) => {
       ...prev,
       bag: prev.bag - 300,
       mo: prev.mo + 1,
-      mentalHealth: Math.floor(prev.maxMentalHealth * 0.5)
+      mentalHealth: Math.min(prev.maxMentalHealth, Math.floor(prev.maxMentalHealth * 0.5))
     }));
     setIsBreakdownActive(false);
     setGBusy(false);
@@ -621,7 +621,7 @@ export const GameProvider = ({ children }) => {
       const enterpriseRev = stateRef.current.enterpriseContracts * 5000;
 
       // Vintage / Collectible passives
-      const consignmentRev = stateRef.current.consignmentFeeActive ? 2500 : 0;
+      let consignmentRev = 0; if (stateRef.current.collectiblePhase === "CONSIGNMENT") { const marketVolume = 100000 + (prev.clout * 1000); consignmentRev = marketVolume * 0.10; }
 
       const saasRev = (stateRef.current.saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
       const saasOverhead = saasUsers * 2;
@@ -640,7 +640,7 @@ export const GameProvider = ({ children }) => {
       let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
-      const artClout = artHoldings * 20;
+      const artClout = artHoldings * 20; if (stateRef.current.collectiblePhase === "VAULT" && stateRef.current.vaultHoldings.length > 0) { if (prev.mo % 12 === 0 && months > 0) { setVaultHoldings(prevHoldings => prevHoldings.map(h => ({ ...h, cost: Math.floor(h.cost * 1.12) }))); } } const vaultAura = stateRef.current.collectiblePhase === "VAULT" ? stateRef.current.vaultHoldings.length * 50 : 0;
       const audioClout = audioTracks * 2;
       let pmcHeatContribution = (pmcSquads * 2);
 
@@ -657,7 +657,7 @@ export const GameProvider = ({ children }) => {
         ...prev,
         mo: prev.mo + months,
         bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
-        aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed)),
+        aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed + vaultAura)),
         clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
         heat: prev.heat + pmcHeatContribution,
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
@@ -791,7 +791,7 @@ export const GameProvider = ({ children }) => {
     if (alias.length < 3) return;
 
     if (diff === 1) { // TRUST FUND (Easy)
-      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 300, mentalHealth: 300, heat: 0, maxClout: 100, maxAura: 100 }));
+      setPl(p => ({ ...p, bag: 25000, clout: 30, aura: 30, maxMentalHealth: 100, mentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 }));
     } else if (diff === 2) { // HUSTLER (Normal)
       setPl(p => ({ ...p, bag: 5000, clout: 15, aura: 15, maxMentalHealth: 150, mentalHealth: 150, heat: 0, maxClout: 100, maxAura: 100 }));
     } else { // GRINDER (Difficult)
@@ -817,7 +817,7 @@ export const GameProvider = ({ children }) => {
         ...p,
         bag: p.bag - cost,
         clout: Math.min(p.maxClout, Number(p.clout || 0) + Number(cloutBump || 0)),
-        aura: Math.min(p.maxAura, Number(p.aura || 0) + Number(auraBump || 0))
+        aura: Math.min(p.maxAura, Number(p.aura || 0) + Number(key === "spt" ? 5000 : auraBump || 0))
       }));
       if (key === 'sneakerBackdoorPlug') setSneakerBackdoorPlug(true);
       else setAss(a => ({ ...a, [key]: true }));
@@ -859,7 +859,7 @@ export const GameProvider = ({ children }) => {
 
     if (triggerChaos('vintage')) {
       const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
-      if (financialPhase === 3) triggerNotification('AUR_FAIL_01');
+      if (pl.bag < 500000 && financialPhase === 3) triggerNotification('AUR_FAIL_01');
 
       if (karmaFlags.soldBootleg) {
         setPl(p => ({ ...p, aura: Math.max(0, p.aura - 20) }));
@@ -974,7 +974,7 @@ export const GameProvider = ({ children }) => {
 
     if (triggerChaos('smm')) {
       const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
-      if (financialPhase === 3) triggerNotification('HET_CRASH_01');
+      if (pl.bag < 500000 && financialPhase === 3) triggerNotification('HET_CRASH_01');
 
       if (karmaFlags.ignoredSmmCrisis) {
         setSmmClients(c => Math.max(0, c - 2));
@@ -1233,7 +1233,7 @@ export const GameProvider = ({ children }) => {
   };
 
   const rPeClick = async () => {
-    if (pl.bag < 25000000 || pl.mentalHealth < 40 || pl.clout < 450 || pl.aura < 400) return;
+    if (pl.bag < 25000000 || pl.mentalHealth < 40) return;
     setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - 40 }));
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
@@ -1262,7 +1262,7 @@ export const GameProvider = ({ children }) => {
 
   const rArtBuy = async () => {
     const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
-    if (pl.bag < acquisitionCost || pl.mentalHealth < 35 || pl.clout < 500) return;
+    if (pl.bag < acquisitionCost || pl.mentalHealth < 35) return;
     setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - 35 }));
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
 
@@ -1464,7 +1464,7 @@ export const GameProvider = ({ children }) => {
 
     if (unitsSold >= sw.u * 0.8) {
       const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
-      if (financialPhase === 3) triggerNotification('BAG_WIN_01');
+      if (pl.bag < 500000 && financialPhase === 3) triggerNotification('BAG_WIN_01');
 
       auraGain = 10;
       cloutGain = 5;
@@ -1480,7 +1480,7 @@ export const GameProvider = ({ children }) => {
       ...p,
       bag: p.bag + revenue,
       aura: Math.min(p.maxAura, Math.max(0, p.aura + auraGain)),
-      clout: Math.min(p.maxClout, p.clout + cloutGain)
+      clout: Math.min(p.maxClout, p.clout + (cloutGain || 0))
     }));
 
     setNews(prev => [newsMsg, ...prev.slice(0, 15)]);
@@ -1537,16 +1537,16 @@ export const GameProvider = ({ children }) => {
 
       profit = Math.floor(Math.random() * 2500 * legacyMultiplier);
       cloutGain = 5;
-      setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
+      setPl(p => ({ ...p, bag: p.bag - 500 + profit, clout: Math.min(p.maxClout, p.clout + (cloutGain || 0)) }));
     } else if (type === 'feu') {
       profit = -25000; cloutGain = 35; auraGain = -15;
-      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain), aura: Math.max(0, p.aura + auraGain) }));
+      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + (cloutGain || 0)), aura: Math.max(0, p.aura + auraGain) }));
     } else {
       const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
       if (financialPhase === 2) triggerNotification('CLT_WIN_01');
 
       profit = Math.floor(Math.random() * 75000 * legacyMultiplier); cloutGain = 20;
-      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + cloutGain) }));
+      setPl(p => ({ ...p, bag: p.bag + profit, clout: Math.min(p.maxClout, p.clout + (cloutGain || 0)) }));
     }
     setHl(h => ({ ...h, cc: h.cc + Math.max(0, profit) }));
     triggerImpact('bag', profit);
@@ -1573,22 +1573,37 @@ export const GameProvider = ({ children }) => {
   };
 
   const rBox = async () => {
+    // Upfront investment for Advanced Level (PPV Main Event)
+    const isPPV = box.v === 3 || box.t === 4;
     let venueCost = up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000);
     let totalOut = (up.boxBrd ? 0 : box.b) + venueCost;
+
+    // Explicit $150k requirement for high-tier scaling events if not already higher
+    if (isPPV && totalOut < 150000) totalOut = 150000;
 
     setPl(p => ({ ...p, bag: p.bag - totalOut }));
     await new Promise(r => setTimeout(r, 1200));
 
     let revenue = 0;
-    let cloutGain = 40;
+    let cloutGain = 0;
     let heatGain = 0;
 
-    if (up.boxBrd) {
+    if (isPPV) {
+       // Exponential scaling based on Global Clout (PPV buys) and Aura (Sponsorships)
+       const ppvBuys = Math.pow(pl.clout, 1.8) * 10;
+       const sponsorships = Math.pow(pl.aura, 1.5) * 50;
+       revenue = Math.floor((ppvBuys + sponsorships + totalOut * 1.5) * legacyMultiplier);
+       cloutGain = 50;
+       heatGain = 20;
+    } else if (up.boxBrd) {
       revenue = Math.floor((12000 + (pl.clout * 250)) * legacyMultiplier);
       cloutGain = 5;
       heatGain = 10;
     } else {
-      revenue = Math.floor(totalOut * (1.1 + Math.random() * 2.2) * legacyMultiplier);
+      // Basic Level: Low-tier local warehouse matches yielding capped, low-risk manual cash.
+      revenue = Math.floor(Math.min(totalOut * 2.0, totalOut * (1.1 + Math.random() * 0.5)) * legacyMultiplier);
+      cloutGain = 10;
+      heatGain = 5;
     }
 
     let profit = revenue - totalOut;
@@ -1599,7 +1614,7 @@ export const GameProvider = ({ children }) => {
     setPl(p => ({
       ...p,
       bag: p.bag + revenue,
-      clout: Math.min(p.maxClout, p.clout + cloutGain),
+      clout: Math.min(p.maxClout, p.clout + (cloutGain || 0)),
       heat: p.heat + finalHeatGain
     }));
     setTally(t => ({ ...t, box: t.box + 1 }));

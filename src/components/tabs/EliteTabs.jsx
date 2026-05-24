@@ -19,7 +19,7 @@ export const TourTab = () => {
 
 export const PeTab = () => {
   const { pl, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield, rPeClick, rResolveSupplyChain, setTab } = useGame();
-  const locked = pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400;
+  const locked = pl.bag < 25000000;
 
   if (locked) return <LockedTierScreen section={3} />;
 
@@ -78,7 +78,7 @@ export const PeTab = () => {
 
 export const ArtTab = () => {
   const { pl, artHoldings, artMarketSentiment, rArtBuy, rArtAuction, setTab } = useGame();
-  const locked = pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450;
+  const locked = pl.bag < 10000000;
 
   if (locked) return <LockedTierScreen section={3} />;
 
