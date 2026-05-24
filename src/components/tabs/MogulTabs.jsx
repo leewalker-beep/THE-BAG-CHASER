@@ -183,7 +183,10 @@ export const ConglomerateTab = () => {
               <span>{Math.floor(antitrustRisk)}%</span>
             </div>
             <div className="bg-black/50 h-3 rounded-full border border-slate-800 overflow-hidden">
-              <div className="bg-red-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" style={{ width: `${Math.min(100, antitrustRisk)}%` }}></div>
+              <div
+                className="bg-red-500 h-full transition-all duration-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                style={{ width: `${Math.max(0, Math.min(100, antitrustRisk))}%` }}
+              ></div>
             </div>
           </div>
 
