@@ -16,7 +16,11 @@ import {
   VintageTab,
   SmmTab,
   TechFlipTab,
-  GigTab
+  GigTab,
+  DeliveryTab,
+  PlasmaTab,
+  SurveyTab,
+  LaborTab
 } from './components/tabs/MudTabs.jsx';
 import {
   CcTab,
@@ -69,6 +73,10 @@ const TAB_MAP = {
   'SMM':          { component: SmmTab,          tier: 0 },
   'TECH_FLIP':    { component: TechFlipTab,     tier: 0 },
   'GIG':          { component: GigTab,          tier: 0 },
+  'DELIVERY':     { component: DeliveryTab,     tier: 0 },
+  'PLASMA':       { component: PlasmaTab,       tier: 0 },
+  'SURVEY':       { component: SurveyTab,       tier: 0 },
+  'LABOR':        { component: LaborTab,        tier: 0 },
   'CC':           { component: CcTab,           tier: 1 },
   'POD':          { component: PodTab,          tier: 1 },
   'BOX':          { component: BoxTab,          tier: 1 },
@@ -100,7 +108,8 @@ const TAB_MAP = {
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl, prs, ass, mkt, tab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset
+    pl, prs, ass, mkt, tab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
+    activeEvent, isEventModalOpen, setIsEventModalOpen
   } = game || {};
 
 
@@ -158,6 +167,29 @@ const GameInterface = () => {
             <h2 className="text-3xl font-black mb-4 text-white tracking-widest">{mod?.t}</h2>
             <p className="mb-8 text-slate-300 drop-shadow-sm text-lg">{mod?.m}</p>
             <div className="flex flex-col gap-3">{mod?.o?.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700 active:scale-95 transition-all duration-100">{o.label}</button>)}</div>
+          </div>
+        </div>
+      )}
+
+      {isEventModalOpen && activeEvent && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[250] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border-2 border-amber-500/50 p-6 rounded-2xl max-w-sm w-full shadow-[0_0_40px_rgba(245,158,11,0.2)]">
+            <h3 className="text-amber-500 font-black tracking-widest text-lg mb-2 uppercase font-hype italic">⚠️ {activeEvent.title}</h3>
+            <p className="text-slate-200 text-sm leading-relaxed mb-6 font-medium italic">"{activeEvent.text}"</p>
+
+            <div className="bg-black/40 rounded-xl p-3 border border-slate-800 mb-6 flex flex-wrap gap-3 justify-center">
+              {activeEvent.bag !== 0 && <div className={`text-[10px] font-bold ${activeEvent.bag > 0 ? 'text-green-400' : 'text-red-400'}`}>BAG: {activeEvent.bag > 0 ? '+' : ''}${activeEvent.bag}</div>}
+              {activeEvent.mh !== 0 && <div className={`text-[10px] font-bold ${activeEvent.mh > 0 ? 'text-green-400' : 'text-red-400'}`}>MH: {activeEvent.mh > 0 ? '+' : ''}{activeEvent.mh}</div>}
+              {activeEvent.aura !== 0 && <div className={`text-[10px] font-bold ${activeEvent.aura > 0 ? 'text-green-400' : 'text-red-400'}`}>AURA: {activeEvent.aura > 0 ? '+' : ''}{activeEvent.aura}</div>}
+              {activeEvent.clout !== 0 && <div className={`text-[10px] font-bold ${activeEvent.clout > 0 ? 'text-green-400' : 'text-red-400'}`}>CLOUT: {activeEvent.clout > 0 ? '+' : ''}{activeEvent.clout}</div>}
+            </div>
+
+            <button
+              onClick={() => setIsEventModalOpen(false)}
+              className="w-full py-3 bg-amber-600 text-white font-black rounded-xl hover:bg-amber-500 transition-all active:scale-95 uppercase text-xs tracking-widest"
+            >
+              CONTINUE THE MOTION
+            </button>
           </div>
         </div>
       )}
