@@ -2,8 +2,83 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { NOTIFICATION_DATABASE } from './data/notifications.js';
 import { fMny } from './config.js';
 
+const mudChaosPools = {
+  VINTAGE: [
+    { title: "THE BIOHAZARD", text: "You dig deep into a raw clearance bin and your hand squishes into a melted piece of vintage bubblegum.", bag: 0, mh: -10, aura: 0, clout: 0 },
+    { title: "THE STEAL", text: "You spot an authentic 90s band tee mispriced for $2. You instantly flip it on a reselling app while standing in line.", bag: 150, mh: 5, aura: 0, clout: 10 },
+    { title: "HYPE-LEACH ENCOUNTER", text: "An aggressive TikTok 'thrift-flipper' points a camera in your face and demands to know what you pay for rent. You freeze up and stutter.", bag: 0, mh: -10, aura: -15, clout: 0 },
+    { title: "NOSTALGIA TRAP", text: "You find the exact action figure you lost when you were 8. Instead of selling it, you keep it for your desk.", bag: -15, mh: 25, aura: 5, clout: 0 },
+    { title: "MOTH INFESTATION", text: "The vintage sweaters you brought home are riddled with larvae. Your closet is ruined.", bag: -80, mh: -20, aura: 0, clout: 0 },
+    { title: "GATEKEEPER BLOCKED", text: "A hipster glares at you for touching the denim rack and loudly sighs 'gentrified' under their breath.", bag: 0, mh: -5, aura: -5, clout: 0 },
+    { title: "THE REPLAY EVENT", text: "You wear a vintage varsity jacket you found to a diner. An old timer buys your breakfast out of absolute respect.", bag: 15, mh: 15, aura: 15, clout: 0 },
+    { title: "REP EXPOSED", text: "You try to list a fake designer hoodie as real. Local hypebeasts catch it and roast you in the comments.", bag: 0, mh: -15, aura: -30, clout: -20 },
+    { title: "THE ODOR MATRIX", text: "A rare jacket smells so heavily of basement mold that you spend 4 hours hand scrubbing it in a bathtub.", bag: 0, mh: -15, aura: 10, clout: 0 },
+    { title: "WALLET REMNANT", text: "You check the hidden pocket of a discarded leather coat and find a crisp, forgotten $50 bill.", bag: 50, mh: 10, aura: 0, clout: 0 }
+  ],
+  TECH: [
+    { title: "THE LOWBALL SPECIAL", text: "You list a working phone for $300. Someone offers you a broken Xbox, a half-eaten bag of chips, and $12 cash. The utter disrespect ruins your day.", bag: 0, mh: -15, aura: 0, clout: 0 },
+    { title: "GHOSTED IN PUBLIC", text: "You drive 20 minutes to a sketchy gas station to buy a laptop, but the seller blocks your number the millisecond you pull in.", bag: -15, mh: -15, aura: -5, clout: 0 },
+    { title: "LOOSE CHANGE NIGHTMARE", text: "A buyer pays the final $40 of a deal entirely in loose nickels and dimes. You sit in your car counting coins like a loser.", bag: 40, mh: -5, aura: -10, clout: 0 },
+    { title: "ICLOUD BRICK", text: "You bought a tablet cheap, only to realize it's hard-locked to an elementary school district's server in Ohio. It's a paperweight.", bag: -100, mh: -20, aura: 0, clout: 0 },
+    { title: "RICE TRICK WIZARD", text: "You buy a water-damaged phone for $10, leave it in dry rice overnight, and it boots up flawlessly. Complete fleece.", bag: 180, mh: 15, aura: 0, clout: 15 },
+    { title: "SPICY BATTERY EXPULSION", text: "While prying open a cheap screen, you puncture the lithium battery. It hisses green smoke and melts your desk setup.", bag: -200, mh: -30, aura: -10, clout: 0 },
+    { title: "SWEET OLD LADY", text: "You clean a nasty malware virus off an elderly woman's desktop. She hands you warm chocolate chip cookies on top of your fee.", bag: 70, mh: 35, aura: 15, clout: 0 },
+    { title: "FRANKENSTEIN CONSOLE", text: "You merge two completely broken, identical consoles into one perfectly working super-machine.", bag: 150, mh: 10, aura: 0, clout: 20 },
+    { title: "THE REVIEW BOMB", text: "A buyer drops their phone down an elevator shaft 3 weeks later, but leaves a 1-star review claiming you scammed them.", bag: 0, mh: -10, aura: -20, clout: -25 },
+    { title: "ALT-COIN REMNANT", text: "You boot up a dusty, abandoned office PC and discover a fractional crypto-wallet left on the hard drive.", bag: 350, mh: 10, aura: 0, clout: 5 }
+  ],
+  DELIVERY: [
+    { title: "THE TIP-BAIT", text: "A customer offers a $20 tip on a massive catering order, but deletes it and modifies it to $0 the second you walk away.", bag: 0, mh: -25, aura: 0, clout: 0 },
+    { title: "THE HIGH-RISE MAZE", text: "The apartment complex geometry makes zero sense. You spend 25 minutes tracking down 'Building 4, Floor 3, Room 302B' behind a dumpster.", bag: 0, mh: -15, aura: -5, clout: 0 },
+    { title: "RANCH DRESSING RAGE", text: "You forgot to grab extra dipping sauces. The customer follows you to your car, filming you on their phone while screaming.", bag: 0, mh: -15, aura: -20, clout: 0 },
+    { title: "THE FRY TAX", text: "The smell of fresh, hot fries in the passenger seat is overwhelming. You eat exactly three from the bottom of the bag. Clean crime.", bag: 0, mh: 15, aura: 0, clout: 0 },
+    { title: "GATE CODE GHOST", text: "The customer goes completely AWOL at a locked gate. You cancel the order per app policy and eat a luxury $40 sushi platter for free.", bag: 0, mh: 35, aura: 0, clout: 0 },
+    { title: "MIDNIGHT STONER WINDMALL", text: "You deliver fast food to a hazy apartment at 2 AM. The guy thinks you are a divine entity and hands you a crisp $50 bill.", bag: 50, mh: 10, aura: 5, clout: 0 },
+    { title: "GUTTER WATER SPLASH", text: "A luxury SUV speeds through a puddle next to your bike, completely drenching your body right before your drop-off.", bag: 0, mh: -20, aura: -25, clout: 0 },
+    { title: "SERVER MELTDOWN", text: "The delivery app crash loops while you are holding someone's hot dinner. You sit on the curb staring into space.", bag: -5, mh: -15, aura: 0, clout: 0 },
+    { title: "INFLUENCER CONTENT HOOK", text: "You drop off food and get trapped in a TikTok 'Giving delivery drivers life-changing tips' video. Smile for the camera.", bag: 40, mh: -5, aura: 0, clout: 30 },
+    { title: "BEAST MODE DRIFT", text: "You weave through standstill traffic like a professional stunt cyclist, executing 3 deliveries in record speed.", bag: 45, mh: 10, aura: 20, clout: 0 }
+  ],
+  PLASMA: [
+    { title: "THE NEW INTERN", text: "The phlebotomist training on their first day misses your arm vein entirely on the first three painful attempts.", bag: 0, mh: -25, aura: -5, clout: 0 },
+    { title: "DEHYDRATION HALT", text: "You didn't drink enough water. The machine starts aggressively buzzing because your blood flow is moving like molasses.", bag: -10, mh: -15, aura: 0, clout: 0 },
+    { title: "STALE COOKIE JACKPOT", text: "The receptionist feels bad about a two-hour wait line and slips you two extra juice boxes and a bag of mini cookies.", bag: 0, mh: 25, aura: 0, clout: 0 },
+    { title: "THE HOLLOW MOON CHAT", text: "The regular on the donor machine next to you spends 45 minutes explaining why the moon is an artificial alien surveillance hub.", bag: 0, mh: -15, aura: 0, clout: 0 },
+    { title: "IRON LEVEL FLEX", text: "Your pre-donation finger prick shows perfect biological stats because you randomly ate a cheap can of spinach yesterday.", bag: 20, mh: 10, aura: 10, clout: 0 },
+    { title: "THE FREQUENCY BONUS", text: "You hit your 6th donation milestone of the month, triggering a premium promotional load onto your prepaid card.", bag: 120, mh: 5, aura: 0, clout: 0 },
+    { title: "POST-PUMP WOBBLE", text: "You stand up too fast after unplugging, your eyes roll back, and you pass out clean into a plastic recycling bin. The whole clinic saw it.", bag: 0, mh: -15, aura: -45, clout: 0 },
+    { title: "SCAR TISSUE STATUS", text: "Your arm needle mark is setting in permanently. A guy at the corner store asks if you are an underground prize-fighter.", bag: 0, mh: -5, aura: 15, clout: 0 },
+    { title: "SUB-ZERO FREEZE", text: "The clinic's industrial AC unit is blasting arctic air. You sit there shivering under thin sheets for an hour.", bag: 0, mh: -15, aura: 0, clout: 0 },
+    { title: "EXEMPLARY HYDRATION", text: "The screening doctor reviews your blood vitals and remarks that your hydration curves are 'frighteningly impressive.'", bag: 10, mh: 15, aura: 20, clout: 0 }
+  ],
+  SURVEY: [
+    { title: "THE 99% SCREEN-OUT", text: "You spend 35 minutes filling out highly specific questions about laundry detergent, only to hit a screen saying: 'Sorry, you do not fit this demographic.' You get paid $0.01.", bag: 0, mh: -30, aura: 0, clout: 0 },
+    { title: "INFINITE MOTORCYCLES", text: "The security CAPTCHA asks you to click the motorcycles, but the pixelated squares fade into more motorcycles for 10 straight loops.", bag: 0, mh: -15, aura: -5, clout: 0 },
+    { title: "BRAIN-ROT DIAGNOSTIC", text: "An AI filter question asks: 'If a rectangle was a corporate feeling, would it taste like blue or Thursday?' You stare into the screen as your brain cells evaporate.", bag: 0, mh: -20, aura: 0, clout: 0 },
+    { title: "DATA BREACH RECKONING", text: "The sketchy router site leaks your registration email to the dark web. You instantly receive 500 spam emails about crypto scams.", bag: 0, mh: -10, aura: 0, clout: -15 },
+    { title: "CARPAL TUNNEL STRIKE", text: "Your index finger goes completely numb from clicking 'Next' 400 times. You have to finish the survey using your knuckles.", bag: 5, mh: -15, aura: 0, clout: 0 },
+    { title: "BOT-DETECTION JAIL", text: "You clicked through the checkboxes too fast without reading the text blocks. The automated script flags you and freezes your balance for a week.", bag: -30, mh: -20, aura: -10, clout: 0 },
+    { title: "THE DARK MIRROR QUESTION", text: "The validation engine suddenly asks you to honestly rate your satisfaction with your current real life. The results are highly un-optimized.", bag: 0, mh: -25, aura: -5, clout: 0 },
+    { title: "THE TRANSACTION VAMPIRE", text: "You finally cash out your hard-earned balance, but the processing wallet hits you with massive verification fees, eating your margins.", bag: -5, mh: -10, aura: 0, clout: 0 },
+    { title: "MACRO BREAKTHROUGH", text: "You code a small automated macro script that mimics cursor coordinates perfectly, completing surveys while you eat breakfast.", bag: 50, mh: 20, aura: 0, clout: 15 },
+    { title: "PREMIUM AUDIT FOCUS", text: "You get selected for an elite, high-ticket consumer focus study group because of your unique profile answers.", bag: 90, mh: 10, aura: 5, clout: 5 }
+  ],
+  LABOR: [
+    { title: "THE STAPLE GUN JAM", text: "Your industrial staple gun jams on a telephone pole, firing a heavy metal staple cleanly into your left thumb.", bag: -10, mh: -20, aura: 0, clout: 0 },
+    { title: "HOA BOSS ENCOUNTER", text: "An aggressive neighborhood HOA president tracks you down in a golf cart, ripping down your lawn-care flyers the second you place them.", bag: 0, mh: -20, aura: -25, clout: 0 },
+    { title: "CHIHUAHUA HEAT-SEEKER", text: "You walk up a long driveway to drop a card, and an unleashed chihuahua chases you down the street like a heat-seeking missile.", bag: 0, mh: -15, aura: -15, clout: 0 },
+    { title: "MONSOON WASHOUT", text: "You spend 4 hours stickering a brick wall with concert posters right before a sudden downpour washes the ink entirely off the paper.", bag: -25, mh: -20, aura: 0, clout: 0 },
+    { title: "GARAGE GOLD STRIKE", text: "While cleaning out an old garage for day labor, the homeowner lets you keep a dusty crate of retro items.", bag: 100, mh: 20, aura: 10, clout: 0 },
+    { title: "THE BOOMER LECTURE", text: "The contractor who hired you spends 3 hours explaining why your generation hates work while slowly counting out dirty dollar bills.", bag: 40, mh: -20, aura: 0, clout: 0 },
+    { title: "THE LOBSTER SUNBURN", text: "You forget sunscreen during a brutal 8-hour outdoor shift. You leave looking like a boiled crustacean and your neck is on fire.", bag: 0, mh: -20, aura: -10, clout: 0 },
+    { title: "THE CONTRACT LEAD", text: "You hand a flyer to a pedestrian who happens to run a massive operations agency. He hires your team directly for next week.", bag: 80, mh: 15, aura: 15, clout: 10 },
+    { title: "EQUIPMENT EXPLOSION", text: "Your cheap staple gun snaps into 4 spring-loaded pieces and drops straight down a storm drain.", bag: -20, mh: -10, aura: -5, clout: 0 },
+    { title: "STREET TEAM CRED", text: "You plaster a hype music producer's show bills so perfectly across a trendy district that they shout you out on their main Instagram story.", bag: 0, mh: 10, aura: 25, clout: 45 }
+  ]
+};
+
 export const TIERS = [
-  { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG'] },
+  { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG', 'DELIVERY', 'PLASMA', 'SURVEY', 'LABOR'] },
   { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
   { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
@@ -112,6 +187,9 @@ export const GameProvider = ({ children }) => {
 
   const [seenNotifications, setSeenNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
+
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
 
   const [isBreakdownActive, setIsBreakdownActive] = useState(false);
   const [shakeActive, setShakeActive] = useState(false);
@@ -487,6 +565,42 @@ export const GameProvider = ({ children }) => {
   }, [ph]);
 
   // Click Chaos Helpers
+  const executeChaosRoll = async (hustleKey, baseSuccessAction) => {
+    const roll = Math.floor(Math.random() * 20) + 1; // 1-20
+    if (roll === 1) {
+      const pool = mudChaosPools[hustleKey];
+      if (!pool) return await baseSuccessAction();
+
+      const event = pool[Math.floor(Math.random() * pool.length)];
+      let updatedEventText = event.text;
+
+      const willBeNegative = {
+        bag: (stateRef.current.pl.bag + event.bag) < 0,
+        aura: (stateRef.current.pl.aura + event.aura) < 0,
+        clout: (stateRef.current.pl.clout + event.clout) < 0,
+        mh: (stateRef.current.pl.mentalHealth + event.mh) < 0
+      };
+
+      if (willBeNegative.aura) updatedEventText += " (Hint: Go flip Vintage Tees to get your respect back.)";
+      if (willBeNegative.mh) updatedEventText += " (Hint: Click MENTAL HEALTH TIME before you crash.)";
+      if (willBeNegative.clout) updatedEventText += " (Hint: Run SMM packages or fix laptops.)";
+      if (willBeNegative.bag) updatedEventText += " (Hint: Grind Surveys or deliver food.)";
+
+      setPl(prev => ({
+        ...prev,
+        bag: prev.bag + event.bag,
+        aura: Math.max(0, Math.min(prev.maxAura, prev.aura + event.aura)),
+        clout: Math.min(prev.maxClout, prev.clout + event.clout),
+        mentalHealth: Math.max(0, Math.min(prev.maxMentalHealth, prev.mentalHealth + event.mh))
+      }));
+
+      setActiveEvent({ ...event, text: updatedEventText });
+      setIsEventModalOpen(true);
+      return undefined;
+    }
+    return await baseSuccessAction();
+  };
+
   const triggerChaos = (hustleKey) => {
     const fatigue = hustleFatigue[hustleKey] || 0;
     let risk = 0.02 + (fatigue / 100);
@@ -1020,6 +1134,34 @@ export const GameProvider = ({ children }) => {
   const closeNotification = () => {
     setActiveNotification(null);
     setGBusy(false);
+  };
+
+  const rDelivery = async () => {
+    if (pl.mentalHealth < 15) return;
+    setPl(p => ({ ...p, bag: p.bag + 25, mentalHealth: p.mentalHealth - 15 }));
+    adv();
+    return 25;
+  };
+
+  const rPlasma = async () => {
+    if (pl.mentalHealth < 40) return;
+    setPl(p => ({ ...p, bag: p.bag + 60, mentalHealth: p.mentalHealth - 40 }));
+    adv();
+    return 60;
+  };
+
+  const rSurvey = async () => {
+    if (pl.mentalHealth < 10) return;
+    setPl(p => ({ ...p, bag: p.bag + 10, mentalHealth: p.mentalHealth - 10 }));
+    adv();
+    return 10;
+  };
+
+  const rLabor = async () => {
+    if (pl.mentalHealth < 25) return;
+    setPl(p => ({ ...p, bag: p.bag + 45, mentalHealth: p.mentalHealth - 25 }));
+    adv();
+    return 45;
   };
 
   const rRest = async () => {
@@ -1993,7 +2135,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, isEventModalOpen, setIsEventModalOpen, activeEvent,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,

@@ -89,7 +89,7 @@ export const DropTab = () => {
 export const VintageTab = () => {
   const {
     pl, collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, vaultHoldings,
-    rVintage, rVinCh, rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, bAss, vinCh, setTab, karmaFlags, setKarmaFlags
+    rVintage, rVinCh, rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, bAss, vinCh, setTab, karmaFlags, setKarmaFlags, executeChaosRoll
   } = useGame();
 
   // ─── PHASE A: VINTAGE RESELLING (MUD) ──────────────────────────────────────
@@ -127,7 +127,7 @@ export const VintageTab = () => {
             </div>
           ) : (
             <FlashBtn
-              onClick={rVintage}
+              onClick={() => executeChaosRoll('VINTAGE', rVintage)}
               costStm={10}
               dis={pl.bag < 50}
               label="HIT THE GOODWILL BINS (-$50)"
@@ -304,7 +304,7 @@ export const SmmTab = () => {
 };
 
 export const TechFlipTab = () => {
-  const { pl, setPl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab, karmaFlags, setKarmaFlags, techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts } = useGame();
+  const { pl, setPl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab, karmaFlags, setKarmaFlags, techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts, executeChaosRoll } = useGame();
 
   const buyIntern = () => {
     if (pl.bag >= 2000) {
@@ -371,7 +371,7 @@ export const TechFlipTab = () => {
 
       {!techItem ? (
         <FlashBtn
-          onClick={rTechSource}
+          onClick={() => executeChaosRoll('TECH', rTechSource)}
           dis={pl.bag < 150}
           label="SOURCE BRICKED UNIT ($150)"
           color="cyan-600"
@@ -403,6 +403,86 @@ export const TechFlipTab = () => {
         </div>
       )}
       <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Cheap parts risk bricking the unit and losing Aura."</p>
+    </LabShell>
+  );
+};
+
+export const DeliveryTab = () => {
+  const { pl, rDelivery, setTab, executeChaosRoll } = useGame();
+  return (
+    <LabShell hustleKey="delivery" t="GIG DELIVERY" c="emerald" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-4 text-center">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-purple-400">15 MENTAL HEALTH</div>
+      </div>
+      <FlashBtn
+        onClick={() => executeChaosRoll('DELIVERY', rDelivery)}
+        costStm={15}
+        dis={pl.mentalHealth < 15}
+        label="DELIVER HOT FOOD (+$25)"
+        color="emerald-600"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+export const PlasmaTab = () => {
+  const { pl, rPlasma, setTab, executeChaosRoll } = useGame();
+  return (
+    <LabShell hustleKey="plasma" t="PLASMA DONATION" c="red" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-4 text-center">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-purple-400">40 MENTAL HEALTH</div>
+      </div>
+      <FlashBtn
+        onClick={() => executeChaosRoll('PLASMA', rPlasma)}
+        costStm={40}
+        dis={pl.mentalHealth < 40}
+        label="SELL PLASMA (+$60)"
+        color="red-600"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+export const SurveyTab = () => {
+  const { pl, rSurvey, setTab, executeChaosRoll } = useGame();
+  return (
+    <LabShell hustleKey="survey" t="SURVEY GRIND" c="indigo" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-4 text-center">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-purple-400">10 MENTAL HEALTH</div>
+      </div>
+      <FlashBtn
+        onClick={() => executeChaosRoll('SURVEY', rSurvey)}
+        costStm={10}
+        dis={pl.mentalHealth < 10}
+        label="TAKE MARKET SURVEY (+$10)"
+        color="indigo-600"
+        txt="white"
+      />
+    </LabShell>
+  );
+};
+
+export const LaborTab = () => {
+  const { pl, rLabor, setTab, executeChaosRoll } = useGame();
+  return (
+    <LabShell hustleKey="labor" t="STREET LABOR" c="amber" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
+      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-4 text-center">
+        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hustle Cost</div>
+        <div className="text-xs font-black text-purple-400">25 MENTAL HEALTH</div>
+      </div>
+      <FlashBtn
+        onClick={() => executeChaosRoll('LABOR', rLabor)}
+        costStm={25}
+        dis={pl.mentalHealth < 25}
+        label="FLYER DISTRIBUTION (+$45)"
+        color="amber-600"
+        txt="white"
+      />
     </LabShell>
   );
 };
