@@ -13,13 +13,13 @@ export const SwTab = () => {
   const handleGlobalSupply = async () => {
     await new Promise(r => setTimeout(r, 2000));
     const roll = Math.random(); let rev = 0; let msg = '';
-    if (roll < 0.12) { rev = Math.floor(1000000 * (0.1 + Math.random() * 0.3)); msg = 'PR nightmare. Recalls overseas. Net +$' + fMny(rev - 1000000); }
-    else if (roll < 0.35) { rev = Math.floor(1000000 * (1.2 + Math.random() * 0.8)); msg = 'Slow month. Global retail net +$' + fMny(rev - 1000000); }
-    else if (roll < 0.80) { rev = Math.floor(1000000 * (2.5 + Math.random() * 1.5)); msg = 'Units moved worldwide. Net +$' + fMny(rev - 1000000); }
-    else { rev = Math.floor(1000000 * (5 + Math.random() * 3)); msg = 'VIRAL SELLOUT GLOBALLY! Net +$' + fMny(rev - 1000000); }
+    if (roll < 0.12) { rev = Math.floor(200000 * (0.1 + Math.random() * 0.3)); msg = 'PR nightmare. Recalls overseas. Net +$' + fMny(rev - 200000); }
+    else if (roll < 0.35) { rev = Math.floor(200000 * (1.2 + Math.random() * 0.8)); msg = 'Slow month. Global retail net +$' + fMny(rev - 200000); }
+    else if (roll < 0.80) { rev = Math.floor(200000 * (2.5 + Math.random() * 1.5)); msg = 'Units moved worldwide. Net +$' + fMny(rev - 200000); }
+    else { rev = Math.floor(200000 * (5 + Math.random() * 3)); msg = 'VIRAL SELLOUT GLOBALLY! Net +$' + fMny(rev - 200000); }
     console.log(msg);
-    setPl(p => ({ ...p, bag: p.bag - 1000000 + rev }));
-    adv(); return rev - 1000000;
+    setPl(p => ({ ...p, bag: p.bag - 200000 + rev }));
+    adv(); return rev - 200000;
   };
 
   return (
@@ -49,7 +49,7 @@ export const SwTab = () => {
         <FlashBtn onClick={handleGlobalSupply} label="SUPPLY GLOBAL - COST: M" />
       ) : <>
         <Toggles opts={['Tees', 'Hoodies', 'Puffers']} active={sw.i} setVal={v => setSw(s => ({ ...s, i: v }))} color="purple" />
-        <Stepper val={sw.u} setVal={v => setSw(s => ({ ...s, u: v }))} min={10} max={up.swPar ? 50000 : up.swFlg ? 10000 : 2500} step={50} label="Units" isCurr={false} />
+        <Stepper val={sw.u} setVal={v => setSw(s => ({ ...s, u: v }))} min={10} max={up.swPar ? 50000 : up.swFlg ? 2000 : 2500} step={50} label="Units" isCurr={false} />
         <Stepper val={sw.p} setVal={v => setSw(s => ({ ...s, p: v }))} min={15} max={up.swPar ? 2500 : up.swFlg ? 1000 : 500} step={5} label="Price" />
         {!up.swFlg && <Stepper val={sw.a} setVal={v => setSw(s => ({ ...s, a: v }))} min={0} max={250000} step={5000} label="Ad Spend" />}
         <FlashBtn onClick={rSw} costStm={15} dis={pl.bag < dropCost} label={`DROP - ${fMny(dropCost)}`} />
@@ -78,7 +78,7 @@ export const DropTab = () => {
       </div>
       <UpgBtn onClk={() => dUp('drpFac', 250000, 'Factory Secured. 🏭')} cost={250000} title="PRIVATE LABEL FACTORY" unl={up.drpFac} pB={pl.bag} />
       <Toggles opts={['LEDs', 'Fake Pods', 'Supps']} active={drp.i} setVal={v => setDrp(s => ({ ...s, i: v }))} color="blue-600" />
-      <Stepper val={drp.u} setVal={v => setDrp(s => ({ ...s, u: v }))} min={50} max={10000} step={250} label="Units" isCurr={false} />
+      <Stepper val={drp.u} setVal={v => setDrp(s => ({ ...s, u: v }))} min={50} max={2000} step={250} label="Units" isCurr={false} />
       <Stepper val={drp.p} setVal={v => setDrp(s => ({ ...s, p: v }))} min={15} max={up.drpFac ? 250 : 150} step={5} label="Price" />
       <Stepper val={drp.a} setVal={v => setDrp(s => ({ ...s, a: v }))} min={0} max={500000} step={5000} label="Ad Budget" />
       <FlashBtn onClick={rDrp} costStm={10} dis={pl.bag < adCost} label={`LAUNCH AD - ${fMny(adCost)}`} />
@@ -109,11 +109,11 @@ export const VintageTab = () => {
         <div className="flex flex-col gap-4 animate-fadeIn">
           <div className="bg-slate-900 border border-green-500/30 p-4 rounded-2xl text-center">
             <h3 className="text-xl font-black text-green-400 font-hype tracking-widest">THRIFT BIN DIPPING</h3>
-            <p className="text-[10px] text-slate-400 mt-1 italic">"Accumulate $10,000 gross revenue to unlock the Sneaker Underworld."</p>
+            <p className="text-[10px] text-slate-400 mt-1 italic">"Accumulate $2,000 gross revenue to unlock the Sneaker Underworld."</p>
             <div className="mt-3 bg-black/40 h-2 rounded-full overflow-hidden border border-slate-800">
-              <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${Math.min(100, (vintageRevenueTracker / 10000) * 100)}%` }}></div>
+              <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${Math.min(100, (vintageRevenueTracker / 2000) * 100)}%` }}></div>
             </div>
-            <div className="text-[9px] text-slate-400 mt-1 font-mono">${fMny(vintageRevenueTracker)} / $10,000 SECURED</div>
+            <div className="text-[9px] text-slate-400 mt-1 font-mono">${fMny(vintageRevenueTracker)} / $2,000 SECURED</div>
           </div>
 
           {vinCh === 'bootleg' ? (
@@ -314,8 +314,8 @@ export const TechFlipTab = () => {
   };
 
   const buyPallets = () => {
-    if (pl.bag >= 10000) {
-      setPl(p => ({ ...p, bag: p.bag - 10000 }));
+    if (pl.bag >= 2000) {
+      setPl(p => ({ ...p, bag: p.bag - 2000 }));
       setBulkPalletsUnlocked(true);
     }
   };
@@ -355,7 +355,7 @@ export const TechFlipTab = () => {
 
       <div className="flex flex-col gap-2 mb-4">
         {!bulkPalletsUnlocked && (
-          <button onClick={buyPallets} disabled={pl.bag < 10000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+          <button onClick={buyPallets} disabled={pl.bag < 2000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
             Unlock Bulk Pallets ($10k)
           </button>
         )}
