@@ -816,8 +816,8 @@ export const GameProvider = ({ children }) => {
       setPl(p => ({
         ...p,
         bag: p.bag - cost,
-        clout: Math.min(p.maxClout, p.clout + cloutBump),
-        aura: Math.min(p.maxAura, p.aura + auraBump)
+        clout: Math.min(p.maxClout, Number(p.clout || 0) + Number(cloutBump || 0)),
+        aura: Math.min(p.maxAura, Number(p.aura || 0) + Number(auraBump || 0))
       }));
       if (key === 'sneakerBackdoorPlug') setSneakerBackdoorPlug(true);
       else setAss(a => ({ ...a, [key]: true }));
@@ -1233,7 +1233,7 @@ export const GameProvider = ({ children }) => {
   };
 
   const rPeClick = async () => {
-    if (pl.bag < 25000000 || pl.mentalHealth < 40 || pl.bag < 50000000 || pl.clout < 450 || pl.aura < 400) return;
+    if (pl.bag < 25000000 || pl.mentalHealth < 40 || pl.clout < 450 || pl.aura < 400) return;
     setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - 40 }));
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
@@ -1262,7 +1262,7 @@ export const GameProvider = ({ children }) => {
 
   const rArtBuy = async () => {
     const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
-    if (pl.bag < acquisitionCost || pl.mentalHealth < 35 || pl.bag < 30000000 || pl.clout < 500 || pl.aura < 450) return;
+    if (pl.bag < acquisitionCost || pl.mentalHealth < 35 || pl.clout < 500) return;
     setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - 35 }));
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
 
