@@ -40,8 +40,8 @@ import {
   ArtTab,
   CrpTab
 } from './components/tabs/EliteTabs.jsx';
+import { MovieMogulTab } from './components/tabs/MovieMogulTab.jsx';
 import {
-  MovTab,
   HfTab,
   AiTab,
   ConglomerateTab,
@@ -89,7 +89,7 @@ const TAB_MAP = {
   'TOUR':         { component: TourTab,         tier: 3 },
   'PE_ROLLUP':    { component: PeTab,           tier: 3 },
   'ART_SPEC':     { component: ArtTab,          tier: 3 },
-  'MOV':          { component: MovTab,          tier: 4 },
+  'MOV':          { component: MovieMogulTab,   tier: 4 },
   'HF':           { component: HfTab,           tier: 4 },
   'AI':           { component: AiTab,           tier: 4 },
   'CONGLOMERATE': { component: ConglomerateTab, tier: 4 },

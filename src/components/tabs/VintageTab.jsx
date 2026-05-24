@@ -3,10 +3,16 @@ import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
 import { LabShell, FlashBtn } from '../ui/Shared.jsx';
 
+const vaultAssetsData = [
+  { name: "Player-Sample Prototype Sneakers", cost: 500000, aura: 200 },
+  { name: "Game-Worn World Championship Ring", cost: 1200000, aura: 500 },
+  { name: "1-of-1 Concept Luxury Hyper-Watch", cost: 3000000, aura: 1500 },
+];
+
 export const VintageTab = () => {
   const {
     pl, collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, vaultHoldings,
-    rVintage, rVinCh, rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, bAss, vinCh, setTab, karmaFlags, setKarmaFlags, executeChaosRoll
+    rVintage, rVinCh, rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, rBuyVaultAsset, bAss, vinCh, setTab, karmaFlags, setKarmaFlags, executeChaosRoll
   } = useGame();
 
   // Street Tier visual spike styling
@@ -161,7 +167,7 @@ export const VintageTab = () => {
             disabled={pl.bag < 5000000}
             className="w-full py-4 bg-emerald-600/10 border border-emerald-600/50 disabled:bg-slate-900 disabled:opacity-30 text-emerald-400 font-black rounded-xl hover:bg-emerald-600 hover:text-white transition-all text-xs tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.1)]"
           >
-            ESTABLISH BLUE-CHIP ASSET VAULT (-$5M)
+            Construct Physical Alternative Asset Vault (-$5M)
           </button>
 
           <div className="text-[9px] text-slate-500 italic text-center px-4">
@@ -175,42 +181,67 @@ export const VintageTab = () => {
   // ─── PHASE D: THE COLLECTIBLE VAULT (MOGUL/PRESIDENT) ─────────────────────
   if (collectiblePhase === 'VAULT') {
     return (
-      <LabShell hustleKey="vintage" t="COLLECTIBLE VAULT" c="purple" fontCls="font-hype" onHub={() => setTab('HUB')} tier={4}>
-        <div className="flex flex-col gap-4 animate-fadeIn">
-          <div className="bg-slate-900 border border-purple-500/30 p-4 rounded-2xl text-center">
-            <h3 className="text-xl font-black text-purple-400 font-hype tracking-widest">BLUE-CHIP VAULT</h3>
-            <p className="text-[10px] text-slate-400 mt-1">Holding legendary historical assets. Vault values appreciate by 12% annually.</p>
-          </div>
-
-          <FlashBtn
-            onClick={rVaultAuction}
-            costStm={15}
-            dis={pl.bag < 500000}
-            label="ATTEND SOTHEBY'S AUCTION (-$500K)"
-            color="purple-600"
-            txt="white"
-          />
-
-          <div className="bg-black/40 p-4 rounded-xl border border-slate-800 text-left text-xs">
-            <div className="text-purple-400 font-black mb-2 uppercase tracking-wider flex justify-between">
-              <span>📦 Vault Inventory</span>
-              <span>{vaultHoldings.length} ITEMS</span>
+      <div className="transition-all duration-500 rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)] border-purple-500/60">
+        <LabShell hustleKey="vintage" t="BLUE-CHIP PHYSICAL STORAGE VAULT" c="purple" fontCls="font-hype" onHub={() => setTab('HUB')} tier={4}>
+          <div className="flex flex-col gap-4 animate-fadeIn">
+            <div className="bg-black/80 border-2 border-yellow-500/50 p-5 rounded-2xl text-center shadow-[inset_0_0_20px_rgba(234,179,8,0.2)]">
+              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-yellow-500 to-purple-400 font-hype tracking-widest uppercase">The Sovereign Vault</h3>
+              <p className="text-[10px] text-slate-300 mt-1 font-medium italic">"Physical artifacts of absolute economic dominance. 12% Annual Appreciation."</p>
             </div>
-            {vaultHoldings.length === 0 ? (
-              <span className="text-slate-500 italic">Vault empty. Source high-end relics at top auctions.</span>
-            ) : (
-              <div className="space-y-1 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                {vaultHoldings.map((item, idx) => (
-                  <div key={idx} className="flex justify-between border-b border-slate-800/50 pb-1 last:border-0">
-                    <span className="text-slate-200">{item.name}</span>
-                    <span className="text-purple-300 font-mono">${fMny(item.cost)}</span>
-                  </div>
-                ))}
+
+            <div className="grid grid-cols-1 gap-3">
+              {vaultAssetsData.map((asset, i) => {
+                const owned = vaultHoldings.some(h => h.name === asset.name);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => rBuyVaultAsset(asset)}
+                    disabled={owned || pl.bag < asset.cost}
+                    className={`p-4 bg-black/60 border ${owned ? 'border-green-500/50' : 'border-purple-500/30'} rounded-xl flex justify-between items-center transition-all group hover:border-yellow-500/50 disabled:opacity-50`}
+                  >
+                    <div className="text-left">
+                      <div className={`font-bold text-xs ${owned ? 'text-green-400' : 'text-purple-400'} uppercase tracking-widest`}>{owned ? '✓ ' : ''}{asset.name}</div>
+                      <div className="text-[9px] text-slate-400 mt-1">Grants +{asset.aura} Aura Upon Acquisition</div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-yellow-500 font-black text-sm">${fMny(asset.cost)}</span>
+                      <span className="text-[8px] text-slate-500 uppercase font-bold">Secure Asset</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="bg-slate-900/80 border border-purple-500/40 p-4 rounded-xl">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-[10px] text-purple-400 font-black uppercase tracking-widest">Vault Holdings</span>
+                <span className="text-[10px] text-slate-500 font-mono">{vaultHoldings.length} RELICS</span>
               </div>
-            )}
+              <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                {vaultHoldings.length === 0 ? (
+                  <div className="text-[10px] text-slate-600 italic text-center py-2">No physical assets secured in vault.</div>
+                ) : (
+                  vaultHoldings.map((h, idx) => (
+                    <div key={idx} className="flex justify-between items-center border-b border-purple-900/30 pb-1">
+                      <span className="text-[10px] text-slate-200">{h.name}</span>
+                      <span className="text-[10px] text-yellow-500/80 font-mono">${fMny(h.cost)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <FlashBtn
+              onClick={rVaultAuction}
+              costStm={20}
+              dis={pl.bag < 500000}
+              label="ATTEND ELITE UNDERGROUND AUCTION (-$500K)"
+              color="purple-600"
+              txt="white"
+            />
           </div>
-        </div>
-      </LabShell>
+        </LabShell>
+      </div>
     );
   }
 
