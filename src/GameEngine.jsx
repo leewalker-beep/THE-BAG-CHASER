@@ -194,6 +194,15 @@ export const GameProvider = ({ children }) => {
   const [politicalSyndicate, setPoliticalSyndicate] = useState({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
   const [presidencyEligible, setPresidencyEligible] = useState(false);
 
+  const [campaign, setCampaign] = useState({
+    currentWeek: 1,
+    currentMonth: 1,
+    warchest: 10000000000,
+    phase: 'POLITICS',
+    regionalPolling: { blueWall: 35, rustBelt: 35, sunBelt: 35 },
+    opponentPolling: { blueWall: 42, rustBelt: 42, sunBelt: 42 }
+  });
+
   const [seenNotifications, setSeenNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
 
@@ -259,7 +268,7 @@ export const GameProvider = ({ children }) => {
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
-    politicalSyndicate, presidencyEligible,
+    politicalSyndicate, presidencyEligible, campaign,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -348,6 +357,7 @@ export const GameProvider = ({ children }) => {
         if (d.isPresident !== undefined) setIsPresident(d.isPresident);
         if (d.politicalSyndicate) setPoliticalSyndicate(d.politicalSyndicate);
         if (d.presidencyEligible !== undefined) setPresidencyEligible(d.presidencyEligible);
+        if (d.campaign) setCampaign(d.campaign);
         if (d.seenNotifications) setSeenNotifications(d.seenNotifications);
         if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d.pl) setPl(d.pl);
@@ -2180,6 +2190,188 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
+  const rCampaignAction = async (type) => {
+    if (campaign.phase !== 'POLITICS') return;
+
+    let costMH = 0;
+    let costClout = 0;
+    let costAura = 0;
+    let costBag = 0;
+    let gainAura = 0;
+    let gainClout = 0;
+    let gainWarchest = 0;
+    let gainPolls = { region: '', amount: 0 };
+
+    if (type === 'RUST_BELT_RALLY') {
+      costMH = 15;
+      costClout = 30;
+      gainPolls = { region: 'rustBelt', amount: 4 };
+      gainAura = 15;
+    } else if (type === 'SUN_BELT_ADS') {
+      costBag = 300000000;
+      gainPolls = { region: 'sunBelt', amount: 3 };
+      gainClout = 250;
+    } else if (type === 'SILICON_GALA') {
+      costAura = 100;
+      gainWarchest = 750000000;
+      gainPolls = { region: 'blueWall', amount: 5 };
+    }
+
+    if (pl.mentalHealth < costMH || pl.clout < costClout || pl.aura < costAura || campaign.warchest < costBag) return;
+
+    const nextWeek = campaign.currentWeek + 1;
+    const isMonthEnd = nextWeek > 1 && (nextWeek - 1) % 4 === 0;
+
+    setPl(prev => ({
+      ...prev,
+      mentalHealth: Math.max(0, prev.mentalHealth - costMH),
+      clout: Math.max(0, prev.clout - costClout),
+      aura: Math.max(0, prev.aura - costAura),
+    }));
+
+    setCampaign(prev => ({
+      ...prev,
+      currentWeek: nextWeek,
+      warchest: prev.warchest - costBag - 100000000 + gainWarchest, // Weekly ops fee $100M
+      regionalPolling: {
+        ...prev.regionalPolling,
+        [gainPolls.region]: Math.min(100, prev.regionalPolling[gainPolls.region] + gainPolls.amount)
+      }
+    }));
+
+    if (gainAura) setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + gainAura) }));
+    if (gainClout) setPl(p => ({ ...p, clout: Math.min(p.maxClout, p.clout + gainClout) }));
+
+    if (isMonthEnd) {
+      triggerOctoberSurprise();
+    } else {
+      adv();
+    }
+  };
+
+  const triggerOctoberSurprise = () => {
+    setMod({
+      s: true,
+      t: "OCTOBER SURPRISE",
+      m: "A media source threatens to leak compromising financial records from your early tech-flipping days.",
+      o: [
+        {
+          label: "PAY OFF SOURCE (-$250M Warchest)",
+          action: () => {
+            setCampaign(prev => ({ ...prev, warchest: prev.warchest - 250000000 }));
+            finalizeMonthlyTick();
+          }
+        },
+        {
+          label: "LET IT LEAK (+1,000 Clout, +3% Polling, -150 Aura)",
+          action: () => {
+            setPl(p => ({
+              ...p,
+              clout: Math.min(p.maxClout, p.clout + 1000),
+              aura: Math.max(0, p.aura - 150)
+            }));
+            setCampaign(prev => ({
+              ...prev,
+              regionalPolling: {
+                blueWall: Math.min(100, prev.regionalPolling.blueWall + 3),
+                rustBelt: Math.min(100, prev.regionalPolling.rustBelt + 3),
+                sunBelt: Math.min(100, prev.regionalPolling.sunBelt + 3),
+              }
+            }));
+            finalizeMonthlyTick();
+          }
+        },
+        {
+          label: "FORMAL APOLOGY (-200 Clout, -40 MH, -5% Polling)",
+          action: () => {
+            setPl(p => ({
+              ...p,
+              clout: Math.max(0, p.clout - 200),
+              mentalHealth: Math.max(0, p.mentalHealth - 40)
+            }));
+            setCampaign(prev => ({
+              ...prev,
+              regionalPolling: {
+                blueWall: Math.max(0, prev.regionalPolling.blueWall - 5),
+                rustBelt: Math.max(0, prev.regionalPolling.rustBelt - 5),
+                sunBelt: Math.max(0, prev.regionalPolling.sunBelt - 5),
+              }
+            }));
+            finalizeMonthlyTick();
+          }
+        }
+      ],
+      ui: "ui-crisis"
+    });
+  };
+
+  const finalizeMonthlyTick = () => {
+    setCampaign(prev => ({ ...prev, phase: 'CORPORATE_HQ' }));
+    adv(1); // Execute monthly business payout tick
+    setMod(prev => ({
+      ...prev,
+      s: true,
+      t: "MONTHLY BRIEFING",
+      m: "Passive business yields collected. Return to HQ to reallocate corporate capital and manage your stats.",
+      o: [{ label: "ACKNOWLEDGE", action: () => setMod({ s: false }) }],
+      ui: "ui-modal"
+    }));
+  };
+
+  const rResumeCampaign = () => {
+    setCampaign(prev => ({
+      ...prev,
+      currentMonth: prev.currentMonth + 1,
+      phase: 'POLITICS'
+    }));
+    setTab('WAR_ROOM');
+    setNews(n => [`🦅 CAMPAIGN: Entering Month ${campaign.currentMonth + 1} of the election cycle.`, ...n.slice(0, 15)]);
+  };
+
+  const rElectionNightResolution = async () => {
+    if (campaign.currentWeek < 52) return;
+
+    setGBusy(true);
+    await new Promise(r => setTimeout(r, 3000));
+    setGBusy(false);
+
+    let playerEVs = 0;
+    const results = {
+      blueWall: campaign.regionalPolling.blueWall > campaign.opponentPolling.blueWall,
+      rustBelt: campaign.regionalPolling.rustBelt > campaign.opponentPolling.rustBelt,
+      sunBelt: campaign.regionalPolling.sunBelt > campaign.opponentPolling.sunBelt,
+    };
+
+    if (results.blueWall) playerEVs += 44;
+    if (results.rustBelt) playerEVs += 46;
+    if (results.sunBelt) playerEVs += 55;
+
+    // Base EVs from non-battleground states (simplified)
+    const baseEVs = 130;
+    const totalEVs = playerEVs + baseEVs;
+
+    if (totalEVs >= 270) {
+      setIsPresident(true);
+      setCampaign(prev => ({ ...prev, phase: 'COMPLETED' }));
+      setMod({
+        s: true,
+        t: "VICTORY: PRESIDENT-ELECT",
+        m: `With ${totalEVs} Electoral Votes, you have secured the Presidency. A new era begins. Prepare your address to the nation.`,
+        o: [{ label: "ASCEND TO THE OVAL OFFICE", action: () => { setTab('VICTORY_SPEECH'); setMod({ s: false }); } }],
+        ui: "ui-victory"
+      });
+    } else {
+      setCampaign(prev => ({ ...prev, phase: 'COMPLETED' }));
+      setMod({
+        s: true,
+        t: "CONCESSION NIGHT",
+        m: `You finished with ${totalEVs} EVs. The establishment held the line. You return to your empire to plan the next cycle.`,
+        o: [{ label: "RESUME MOGUL LIFE", action: () => setMod({ s: false }) }],
+        ui: "ui-crisis"
+      });
+    }
+  };
+
   const rRetire = () => {
     window.isResetting = true;
     setDeath(null);
@@ -2292,6 +2484,14 @@ export const GameProvider = ({ children }) => {
     setIsPresident(false);
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
+    setCampaign({
+      currentWeek: 1,
+      currentMonth: 1,
+      warchest: 10000000000,
+      phase: 'POLITICS',
+      regionalPolling: { blueWall: 35, rustBelt: 35, sunBelt: 35 },
+      opponentPolling: { blueWall: 42, rustBelt: 42, sunBelt: 42 }
+    });
 
     setPh('PROLOGUE');
     setProSt(0);
@@ -2415,6 +2615,14 @@ export const GameProvider = ({ children }) => {
     setAntitrustRisk(0);
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
+    setCampaign({
+      currentWeek: 1,
+      currentMonth: 1,
+      warchest: 10000000000,
+      phase: 'POLITICS',
+      regionalPolling: { blueWall: 35, rustBelt: 35, sunBelt: 35 },
+      opponentPolling: { blueWall: 42, rustBelt: 42, sunBelt: 42 }
+    });
 
     // Group 4: Crisis & Flag Clears
     setTechItem(null);
@@ -2455,9 +2663,11 @@ export const GameProvider = ({ children }) => {
       superPacFunds, setSuperPacFunds, approvalRating, setApprovalRating, lobbyists, setLobbyists,
       lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
       politicalSyndicate, setPoliticalSyndicate, presidencyEligible, setPresidencyEligible,
+      campaign, setCampaign,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
       rAcquirePoliticalAsset, rDeployNarrativeOp, rHostPolicySummit,
+      rCampaignAction, rResumeCampaign, rElectionNightResolution,
       rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, rBuyVaultAsset,
       movieProject, rMovieGreenlight, rMovieHypeBag, rMovieHypeClout, rMovieHypeAura, rMovieRelease,
       smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire,

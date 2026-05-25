@@ -17,8 +17,10 @@ export const styles = `
   .impact-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; z-index: 200; pointer-events: none; animation: floatUp 2s ease-out forwards; text-shadow: 0px 10px 30px rgba(0,0,0,0.9); }
   .bg-basement { background: linear-gradient(to bottom right, #0f172a, #000000); } .bg-penthouse { background: linear-gradient(to bottom right, #1e1b4b, #000000, #312e81); }
   .bg-mansion { background: linear-gradient(to bottom right, #064e3b, #0f172a, #022c22); } .bg-oval { background: linear-gradient(to bottom right, #1e3a8a, #0f172a, #7f1d1d); }
+  .bg-washington { background: linear-gradient(to bottom right, #f59e0b, #92400e, #f59e0b); background-size: 400% 400%; animation: billionaireShimmer 15s ease infinite; }
   body { color: white; margin: 0; overflow-x: hidden; background: #000; }
   .ui-modal { background: #0f172a; border: 2px solid #3b82f6; border-radius: 12px; } .ui-crisis { background: #450a0a; border: 2px solid #ef4444; border-radius: 12px; }
+  .ui-victory { background: linear-gradient(135deg, #f59e0b 0%, #78350f 100%); border: 4px solid #fef3c7; border-radius: 24px; box-shadow: 0 0 100px rgba(245,158,11,0.6); }
   .mobile-hud { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
   .ticker-wrap { position: fixed; bottom: 0; width: 100%; overflow: hidden; background-color: rgba(0,0,0,0.95); border-top: 2px solid #3b82f6; height: 3rem; z-index: 100; display: flex; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
   .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 45s linear infinite; font-family: 'Share Tech Mono', monospace; font-size: 1.05rem; font-weight: bold; color: #10b981; text-shadow: 0 0 8px #10b981; }
@@ -38,4 +40,7 @@ export const styles = `
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+
+  @keyframes victoryFlash { 0% { background: white; opacity: 1; } 100% { background: transparent; opacity: 0; } }
+  .victory-flash { position: fixed; inset: 0; z-index: 1000; background: white; pointer-events: none; animation: victoryFlash 3s ease-out forwards; }
 `;
