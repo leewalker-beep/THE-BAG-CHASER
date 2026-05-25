@@ -197,15 +197,15 @@ export const GameProvider = ({ children }) => {
   // Flex Showcase System State
   const [flex, setFlex] = useState({
     // Bridge 1
-    penthouse: { owned: false, blitzExpiry: 0 },
-    logistics: { owned: false, blitzExpiry: 0 },
-    jet: { owned: false, blitzExpiry: 0 },
+    penthouse: { owned: false, expiresAt: 0 },
+    logistics: { owned: false, expiresAt: 0 },
+    jet: { owned: false, expiresAt: 0 },
     hypercar: { owned: false, prActive: false },
     art: { owned: false, prActive: false },
     watchVault: { owned: false, prActive: false },
     // Bridge 2
-    yacht: { owned: false, blitzExpiry: 0 },
-    media: { owned: false, blitzExpiry: 0 },
+    yacht: { owned: false, expiresAt: 0 },
+    media: { owned: false, expiresAt: 0 },
     foundation: { owned: false, prActive: false },
     sportsTeam: { owned: false, prActive: false },
     island: { owned: false, prActive: false },
@@ -415,47 +415,53 @@ export const GameProvider = ({ children }) => {
     return () => clearInterval(window.autoSaveInterval);
   }, []);
 
-  // Dynamic Stat Caps
-  useEffect(() => {
-    if (ph !== 'PLAYING') return;
+  const getUpdatedCaps = (tier, currentAss, currentFlex) => {
     const caps = [100, 250, 300, 5000, 5000, 999999999];
     const mhCaps = [100, 150, 300, 500, 500, 1000];
-    let currentCap = caps[pl.tier] || caps[0];
-    let currentMhCap = mhCaps[pl.tier] || mhCaps[0];
-    let cloutCap = currentCap;
-    if (ass.cmYct && pl.tier < 5) {
-      cloutCap = currentCap * 10;
+    let auraCap = caps[tier] || caps[0];
+    let mhCap = mhCaps[tier] || mhCaps[0];
+    let cloutCap = auraCap;
+
+    if (currentAss.cmYct && tier < 5) {
+      cloutCap = auraCap * 10;
     }
 
     // Showcase Flex Capacity Shattering
-    if (flex.penthouse.owned) {
-      currentCap = Math.max(currentCap, 600);
-      cloutCap = Math.max(cloutCap, 600);
+    if (currentFlex.penthouse.owned) {
+      auraCap = Math.max(auraCap, 600);
+      cloutCap = Math.max(cloutCap, 1500); // Mogul Runway
     }
-    if (flex.logistics.owned) {
-      currentCap = Math.max(currentCap, 1200);
-      cloutCap = Math.max(cloutCap, 1200);
+    if (currentFlex.logistics.owned) {
+      auraCap = Math.max(auraCap, 1200);
+      cloutCap = Math.max(cloutCap, 1500);
     }
-    if (flex.jet.owned) {
-      currentCap = Math.max(currentCap, 2000);
+    if (currentFlex.jet.owned) {
+      auraCap = Math.max(auraCap, 2000);
       cloutCap = Math.max(cloutCap, 2000);
     }
 
-    setPl(prev => {
-      let finalAura = Math.min(currentCap, prev.aura);
-      if (flex.watchVault.owned && flex.watchVault.prActive) {
-        finalAura = Math.max(200, finalAura);
-      }
+    if (currentFlex.watchVault.owned && currentFlex.watchVault.prActive) {
+      auraCap = Math.max(200, auraCap);
+    }
 
-      if (prev.maxClout === cloutCap && prev.maxAura === currentCap && prev.maxMentalHealth === currentMhCap && prev.aura === finalAura) return prev;
+    return { auraCap, cloutCap, mhCap };
+  };
+
+  // Dynamic Stat Caps
+  useEffect(() => {
+    if (ph !== 'PLAYING') return;
+    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, ass, flex);
+
+    setPl(prev => {
+      if (prev.maxClout === cloutCap && prev.maxAura === auraCap && prev.maxMentalHealth === mhCap) return prev;
       return {
         ...prev,
         maxClout: cloutCap,
-        maxAura: currentCap,
-        maxMentalHealth: currentMhCap,
+        maxAura: auraCap,
+        maxMentalHealth: mhCap,
         clout: Math.min(cloutCap, prev.clout),
-        aura: finalAura,
-        mentalHealth: Math.min(currentMhCap, prev.mentalHealth)
+        aura: Math.min(auraCap, prev.aura),
+        mentalHealth: Math.min(mhCap, prev.mentalHealth)
       };
     });
   }, [pl.tier, ph, ass.cmYct, flex.penthouse.owned, flex.logistics.owned, flex.jet.owned, flex.watchVault.owned, flex.watchVault.prActive]);
@@ -680,7 +686,7 @@ export const GameProvider = ({ children }) => {
 
   const updateFatigue = (activeHustle) => {
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
 
     setHustleFatigue(prev => {
@@ -758,7 +764,7 @@ export const GameProvider = ({ children }) => {
       setPoliticalSyndicate(prev => {
         let gain = (assets.governors * 0.5) + (assets.senators * 1.5) + (assets.networkAnchors * 3.0);
         if (stateRef.current.flex.yacht.owned) {
-          const isBlitzed = stateRef.current.flex.yacht.blitzExpiry > Date.now();
+          const isBlitzed = stateRef.current.flex.yacht.expiresAt > Date.now();
           gain *= (isBlitzed ? 2.0 : 1.5);
         }
         let nextCapital = Math.min(100, prev.politicalCapital + (gain * months));
@@ -816,7 +822,7 @@ export const GameProvider = ({ children }) => {
         : (stateRef.current.smmClients * 300) + (stateRef.current.aiSmmFactory ? 1000 : (stateRef.current.smmRetainerActive ? 500 : 0));
 
       if (stateRef.current.flex.penthouse.owned) {
-        const isBlitzed = stateRef.current.flex.penthouse.blitzExpiry > Date.now();
+        const isBlitzed = stateRef.current.flex.penthouse.expiresAt > Date.now();
         smmRev = Math.floor(smmRev * (isBlitzed ? 1.70 : 1.35));
       }
       const runnerRev = stateRef.current.runnerCount * 150;
@@ -1105,7 +1111,7 @@ export const GameProvider = ({ children }) => {
     }
     updateFatigue('vintage');
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
@@ -1173,7 +1179,7 @@ export const GameProvider = ({ children }) => {
   const rSneakerDrop = async () => {
     if (pl.bag < 300 || pl.mentalHealth < 15) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
 
@@ -1268,7 +1274,7 @@ export const GameProvider = ({ children }) => {
     if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty || smmRetainerActive) return;
     updateFatigue('smm');
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, mentalHealth: p.mentalHealth - (20 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
@@ -1302,7 +1308,7 @@ export const GameProvider = ({ children }) => {
   const rSmmFix = async () => {
     if (pl.mentalHealth < 15) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
@@ -1329,7 +1335,7 @@ export const GameProvider = ({ children }) => {
   const rDelivery = async () => {
     if (pl.mentalHealth < 15) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag + 25, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     adv();
@@ -1339,7 +1345,7 @@ export const GameProvider = ({ children }) => {
   const rPlasma = async () => {
     if (pl.mentalHealth < 40) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag + 60, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     adv();
@@ -1349,7 +1355,7 @@ export const GameProvider = ({ children }) => {
   const rSurvey = async () => {
     if (pl.mentalHealth < 10) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag + 10, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     adv();
@@ -1359,7 +1365,7 @@ export const GameProvider = ({ children }) => {
   const rLabor = async () => {
     if (pl.mentalHealth < 25) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag + 45, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     adv();
@@ -1407,7 +1413,7 @@ export const GameProvider = ({ children }) => {
   const rTechFixA = async () => {
     if (pl.bag < 30 || pl.mentalHealth < 10 || !techItem) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 30, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
@@ -1434,7 +1440,7 @@ export const GameProvider = ({ children }) => {
   const rTechFixB = async () => {
     if (pl.bag < 100 || pl.mentalHealth < 15 || !techItem) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)), clout: Math.min(p.maxClout, p.clout + 2), aura: Math.min(p.maxAura, p.aura + 1) }));
     setTechFlipsComplete(prev => prev + 1);
@@ -1452,7 +1458,7 @@ export const GameProvider = ({ children }) => {
     if (pl.bag < 300 || pl.mentalHealth < 25 || pl.clout < 20) return;
     updateFatigue('runners');
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, runners: prev.runners + 1 }));
@@ -1487,7 +1493,7 @@ export const GameProvider = ({ children }) => {
   const rSaasClick = async () => {
     if (pl.bag < 5000 || pl.mentalHealth < 20) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - (20 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, saas: (prev.saas || 0) + 1 }));
@@ -1511,7 +1517,7 @@ export const GameProvider = ({ children }) => {
   const rAiAgencyClick = async () => {
     if (pl.bag < 2500 || pl.mentalHealth < 15 || pl.bag < 1000000 || pl.clout < 150 || pl.aura < 100) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 2500, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, ai_agency: (prev.ai_agency || 0) + 1 }));
@@ -1536,7 +1542,7 @@ export const GameProvider = ({ children }) => {
   const rCreBuyOffice = async () => {
     if (pl.bag < 15000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 15000000, mentalHealth: p.mentalHealth - (30 * (1 - mhReduction)) }));
     setCreOfficeCount(t => t + 1);
@@ -1548,7 +1554,7 @@ export const GameProvider = ({ children }) => {
   const rCreBuyRetail = async () => {
     if (pl.bag < 5000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - (30 * (1 - mhReduction)) }));
     setCreRetailCount(t => t + 1);
@@ -1560,7 +1566,7 @@ export const GameProvider = ({ children }) => {
   const rFranchiseClick = async () => {
     if (pl.bag < 500000 || pl.mentalHealth < 25 || pl.bag < 5000000 || pl.clout < 300 || pl.aura < 200) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 500000, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, franchise: (prev.franchise || 0) + 1 }));
@@ -1605,7 +1611,7 @@ export const GameProvider = ({ children }) => {
   const rPeClick = async () => {
     if (pl.bag < 25000000 || pl.mentalHealth < 40) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
@@ -1637,7 +1643,7 @@ export const GameProvider = ({ children }) => {
     const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
     if (pl.bag < acquisitionCost || pl.mentalHealth < 35) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - (35 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
@@ -1702,7 +1708,7 @@ export const GameProvider = ({ children }) => {
   const rAudioRelease = async () => {
     if (pl.bag < 1000 || pl.mentalHealth < 15) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 1000, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
@@ -1734,7 +1740,7 @@ export const GameProvider = ({ children }) => {
   const rPmcDeploy = async () => {
     if (pl.bag < 5000000 || pl.mentalHealth < 40) return;
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 1200));
@@ -1800,7 +1806,7 @@ export const GameProvider = ({ children }) => {
     if (pl.mentalHealth < 15) return;
     updateFatigue('streetwear');
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
@@ -1880,7 +1886,7 @@ export const GameProvider = ({ children }) => {
     if (pl.mentalHealth < 10 || dropshipLock > 0) return;
     updateFatigue('dropship');
     const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
     setPl(p => ({ ...p, bag: p.bag - costBasis, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
@@ -2478,11 +2484,20 @@ export const GameProvider = ({ children }) => {
 
   const rBuyFlex = (id, cost) => {
     if (pl.bag < cost) return;
-    setPl(prev => ({ ...prev, bag: prev.bag - cost }));
-    setFlex(prev => ({
+    const updatedFlex = {
+      ...flex,
+      [id]: { ...flex[id], owned: true }
+    };
+    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, ass, updatedFlex);
+
+    setPl(prev => ({
       ...prev,
-      [id]: { ...prev[id], owned: true }
+      bag: prev.bag - cost,
+      maxClout: cloutCap,
+      maxAura: auraCap,
+      maxMentalHealth: mhCap
     }));
+    setFlex(updatedFlex);
     setNews(n => [`💎 FLEX ACQUIRED: Ownership confirmed. Points locked until PR release.`, ...n.slice(0, 15)]);
   };
 
@@ -2497,9 +2512,9 @@ export const GameProvider = ({ children }) => {
 
     setFlex(prev => {
       const next = { ...prev };
-      if (prev[id].blitzExpiry !== undefined) {
+      if (prev[id].expiresAt !== undefined) {
         // Functional Flex - 24h Blitz
-        next[id] = { ...prev[id], blitzExpiry: Date.now() + (24 * 60 * 60 * 1000) };
+        next[id] = { ...prev[id], expiresAt: Date.now() + (24 * 60 * 60 * 1000) };
       } else {
         // Badge of Honor - Permanent PR Release
         next[id] = { ...prev[id], prActive: true };
@@ -2603,14 +2618,14 @@ export const GameProvider = ({ children }) => {
 
     // Reset everything else
     setFlex({
-      penthouse: { owned: false, blitzExpiry: 0 },
-      logistics: { owned: false, blitzExpiry: 0 },
-      jet: { owned: false, blitzExpiry: 0 },
+      penthouse: { owned: false, expiresAt: 0 },
+      logistics: { owned: false, expiresAt: 0 },
+      jet: { owned: false, expiresAt: 0 },
       hypercar: { owned: false, prActive: false },
       art: { owned: false, prActive: false },
       watchVault: { owned: false, prActive: false },
-      yacht: { owned: false, blitzExpiry: 0 },
-      media: { owned: false, blitzExpiry: 0 },
+      yacht: { owned: false, expiresAt: 0 },
+      media: { owned: false, expiresAt: 0 },
       foundation: { owned: false, prActive: false },
       sportsTeam: { owned: false, prActive: false },
       island: { owned: false, prActive: false },
@@ -2841,14 +2856,14 @@ export const GameProvider = ({ children }) => {
     setGeoStability(1.0);
     setAntitrustRisk(0);
     setFlex({
-      penthouse: { owned: false, blitzExpiry: 0 },
-      logistics: { owned: false, blitzExpiry: 0 },
-      jet: { owned: false, blitzExpiry: 0 },
+      penthouse: { owned: false, expiresAt: 0 },
+      logistics: { owned: false, expiresAt: 0 },
+      jet: { owned: false, expiresAt: 0 },
       hypercar: { owned: false, prActive: false },
       art: { owned: false, prActive: false },
       watchVault: { owned: false, prActive: false },
-      yacht: { owned: false, blitzExpiry: 0 },
-      media: { owned: false, blitzExpiry: 0 },
+      yacht: { owned: false, expiresAt: 0 },
+      media: { owned: false, expiresAt: 0 },
       foundation: { owned: false, prActive: false },
       sportsTeam: { owned: false, prActive: false },
       island: { owned: false, prActive: false },

@@ -126,7 +126,7 @@ export const FlexShowcaseTab = () => {
   const renderFlexCard = (item) => {
     const status = flex[item.id];
     const isOwned = status.owned;
-    const isBlitzed = status.blitzExpiry > Date.now();
+    const isBlitzed = status.expiresAt > Date.now();
     const isPRActive = status.prActive;
     const canAfford = pl.bag >= item.cost;
 
