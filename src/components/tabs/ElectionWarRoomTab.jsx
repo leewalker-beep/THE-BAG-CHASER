@@ -94,41 +94,41 @@ const ElectionWarRoomTab = () => {
             <>
               <FlashBtn
                 onClick={() => rCampaignAction('RUST_BELT_RALLY')}
-                dis={pl.mentalHealth < 15 || pl.clout < 30 || isHqPhase}
+                dis={pl.mentalHealth < 20 || pl.clout < 50 || isHqPhase}
                 label="Run Rust Belt Working-Class Rallies"
                 color="blue-900/40"
                 txt="blue-400"
                 cost={0}
               />
               <div className="flex justify-between px-2 text-[9px] text-slate-500 font-bold uppercase mb-1">
-                <span>Costs: -15 MH, -30 Clout</span>
-                <span className="text-blue-400">+4% Rust Belt, +15 Aura</span>
+                <span>Costs: -20 MH, -50 Clout, -5A / -10C Decay</span>
+                <span className="text-blue-400">+5% Rust Belt, +20 Aura</span>
               </div>
 
               <FlashBtn
                 onClick={() => rCampaignAction('SUN_BELT_ADS')}
-                dis={warchest < 300000000 || isHqPhase}
+                dis={warchest < 500000000 || isHqPhase}
                 label="Saturate Sun Belt Airwaves with TV Ads"
                 color="red-900/40"
                 txt="red-400"
                 cost={0}
               />
               <div className="flex justify-between px-2 text-[9px] text-slate-500 font-bold uppercase mb-1">
-                <span>Costs: -$300M Warchest</span>
-                <span className="text-red-400">+3% Sun Belt, +250 Clout</span>
+                <span>Costs: -$500M Warchest, -5A / -10C Decay</span>
+                <span className="text-red-400">+4% Sun Belt, +300 Clout</span>
               </div>
 
               <FlashBtn
                 onClick={() => rCampaignAction('SILICON_GALA')}
-                dis={pl.aura < 100 || isHqPhase}
+                dis={pl.aura < 150 || isHqPhase}
                 label="Host Elite Silicon Valley Private Gala"
                 color="slate-800"
                 txt="white"
                 cost={0}
               />
               <div className="flex justify-between px-2 text-[9px] text-slate-500 font-bold uppercase">
-                <span>Costs: -100 Aura</span>
-                <span className="text-emerald-400">+$750M Warchest, +5% Blue Wall</span>
+                <span>Costs: -150 Aura, -5A / -10C Decay</span>
+                <span className="text-emerald-400">+$1.2B Warchest, +6% Blue Wall</span>
               </div>
             </>
           ) : currentWeek === 52 && !isCompleted ? (
