@@ -195,6 +195,12 @@ export const GameProvider = ({ children }) => {
   const [politicalSyndicate, setPoliticalSyndicate] = useState({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
   const [presidencyEligible, setPresidencyEligible] = useState(false);
 
+  // Real World Monitor Ticker Engine
+  const [tickerAdvice, setTickerAdvice] = useState('MARKET WATCH: Global conditions stable. Continue the grind.');
+  const [artBubbleMonths, setArtBubbleMonths] = useState(0);
+  const [supplyChainShockMonths, setSupplyChainShockMonths] = useState(0);
+  const [viralPopMonths, setViralPopMonths] = useState(0);
+
   // Flex Showcase System State
   const [flex, setFlex] = useState({
     // Bridge 1 - Corporate
@@ -279,7 +285,7 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artHoldings, rArtSpeculate, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, vintageBoostActive, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
@@ -287,7 +293,8 @@ export const GameProvider = ({ children }) => {
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
-    politicalSyndicate, presidencyEligible, flex, campaign,
+    politicalSyndicate, presidencyEligible, tickerAdvice, artBubbleMonths, supplyChainShockMonths, viralPopMonths,
+    flex, campaign,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -297,112 +304,116 @@ export const GameProvider = ({ children }) => {
       const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
         const d = JSON.parse(saved);
-        if (d.ph) setPh(d.ph);
-        if (d.proSt !== undefined) setProSt(d.proSt);
-        if (d.alias) setAlias(d.alias);
-        if (d.diff !== undefined) setDiff(d.diff);
-        if (d.tab) setTab(d.tab);
-        if (d.selTier) setSelTier(d.selTier);
-        if (d.swFatigue !== undefined) setSwFatigue(d.swFatigue);
-        if (d.hustleFatigue) setHustleFatigue(d.hustleFatigue);
-        if (d.karmaFlags) setKarmaFlags(d.karmaFlags);
-        if (d.lastHustle) setLastHustle(d.lastHustle);
-        if (d.dropshipLock !== undefined) setDropshipLock(d.dropshipLock);
-        if (d.vintageLock !== undefined) setVintageLock(d.vintageLock);
-        if (d.smmPenalty !== undefined) setSmmPenalty(d.smmPenalty);
-        if (d.techSourceCost !== undefined) setTechSourceCost(d.techSourceCost);
-        if (d.smmClients !== undefined) setSmmClients(d.smmClients);
-        if (d.clientCrisis !== undefined) setClientCrisis(d.clientCrisis);
-        if (d.vinCh) setVinCh(d.vinCh);
-        if (d.hustleClicks) setHustleClicks(d.hustleClicks);
-        if (d.techItem) setTechItem(d.techItem);
-        if (d.techFlipsComplete !== undefined) setTechFlipsComplete(d.techFlipsComplete);
-        if (d.runnerCount !== undefined) setRunnerCount(d.runnerCount);
-        if (d.runnerBurnout !== undefined) setRunnerBurnout(d.runnerBurnout);
-        if (d.saasUsers !== undefined) setSaasUsers(d.saasUsers);
-        if (d.saasPrice !== undefined) setSaasPrice(d.saasPrice);
-        if (d.saasChurn !== undefined) setSaasChurn(d.saasChurn);
-        if (d.saasPenaltyActive !== undefined) setSaasPenaltyActive(d.saasPenaltyActive);
-        if (d.corpClients !== undefined) setCorpClients(d.corpClients);
-        if (d.apiLockoutMonths !== undefined) setApiLockoutMonths(d.apiLockoutMonths);
-        if (d.creOfficeCount !== undefined) setCreOfficeCount(d.creOfficeCount);
-        if (d.creRetailCount !== undefined) setCreRetailCount(d.creRetailCount);
-        if (d.franchiseCount !== undefined) setFranchiseCount(d.franchiseCount);
-        if (d.unionStrikeActive !== undefined) setUnionStrikeActive(d.unionStrikeActive);
-        if (d.unionStrikeIgnored !== undefined) setUnionStrikeIgnored(d.unionStrikeIgnored);
-        if (d.peProgress !== undefined) setPeProgress(d.peProgress);
-        if (d.guttedFirms !== undefined) setGuttedFirms(d.guttedFirms);
-        if (d.supplyChainDisruption !== undefined) setSupplyChainDisruption(d.supplyChainDisruption);
-        if (d.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
-        if (d.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
-        if (d.artHoldings !== undefined) setArtHoldings(d.artHoldings);
-        if (d.audioTracks !== undefined) setAudioTracks(d.audioTracks);
-        if (d.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
-        if (d.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
-        if (d.intelLeak !== undefined) setIntelLeak(d.intelLeak);
+        if (d?.ph) setPh(d.ph);
+        if (d?.proSt !== undefined) setProSt(d.proSt);
+        if (d?.alias) setAlias(d.alias);
+        if (d?.diff !== undefined) setDiff(d.diff);
+        if (d?.tab) setTab(d.tab);
+        if (d?.selTier) setSelTier(d.selTier);
+        if (d?.swFatigue !== undefined) setSwFatigue(d.swFatigue);
+        if (d?.hustleFatigue) setHustleFatigue(prev => ({ ...prev, ...d.hustleFatigue }));
+        if (d?.karmaFlags) setKarmaFlags(prev => ({ ...prev, ...d.karmaFlags }));
+        if (d?.lastHustle) setLastHustle(d.lastHustle);
+        if (d?.dropshipLock !== undefined) setDropshipLock(d.dropshipLock);
+        if (d?.vintageLock !== undefined) setVintageLock(d.vintageLock);
+        if (d?.smmPenalty !== undefined) setSmmPenalty(d.smmPenalty);
+        if (d?.techSourceCost !== undefined) setTechSourceCost(d.techSourceCost);
+        if (d?.smmClients !== undefined) setSmmClients(d.smmClients);
+        if (d?.clientCrisis !== undefined) setClientCrisis(d.clientCrisis);
+        if (d?.vinCh) setVinCh(d.vinCh);
+        if (d?.hustleClicks) setHustleClicks(prev => ({ ...prev, ...d.hustleClicks }));
+        if (d?.techItem) setTechItem(d.techItem);
+        if (d?.techFlipsComplete !== undefined) setTechFlipsComplete(d.techFlipsComplete);
+        if (d?.runnerCount !== undefined) setRunnerCount(d.runnerCount);
+        if (d?.runnerBurnout !== undefined) setRunnerBurnout(d.runnerBurnout);
+        if (d?.saasUsers !== undefined) setSaasUsers(d.saasUsers);
+        if (d?.saasPrice !== undefined) setSaasPrice(d.saasPrice);
+        if (d?.saasChurn !== undefined) setSaasChurn(d.saasChurn);
+        if (d?.saasPenaltyActive !== undefined) setSaasPenaltyActive(d.saasPenaltyActive);
+        if (d?.corpClients !== undefined) setCorpClients(d.corpClients);
+        if (d?.apiLockoutMonths !== undefined) setApiLockoutMonths(d.apiLockoutMonths);
+        if (d?.creOfficeCount !== undefined) setCreOfficeCount(d.creOfficeCount);
+        if (d?.creRetailCount !== undefined) setCreRetailCount(d.creRetailCount);
+        if (d?.franchiseCount !== undefined) setFranchiseCount(d.franchiseCount);
+        if (d?.unionStrikeActive !== undefined) setUnionStrikeActive(d.unionStrikeActive);
+        if (d?.unionStrikeIgnored !== undefined) setUnionStrikeIgnored(d.unionStrikeIgnored);
+        if (d?.peProgress !== undefined) setPeProgress(d.peProgress);
+        if (d?.guttedFirms !== undefined) setGuttedFirms(d.guttedFirms);
+        if (d?.supplyChainDisruption !== undefined) setSupplyChainDisruption(d.supplyChainDisruption);
+        if (d?.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
+        if (d?.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
+        if (d?.artHoldings !== undefined) setArtHoldings(d.artHoldings);
+        if (d?.audioTracks !== undefined) setAudioTracks(d.audioTracks);
+        if (d?.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
+        if (d?.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
+        if (d?.intelLeak !== undefined) setIntelLeak(d.intelLeak);
 
-        if (d.techInterns !== undefined) setTechInterns(d.techInterns);
-        if (d.bulkPalletsUnlocked !== undefined) setBulkPalletsUnlocked(d.bulkPalletsUnlocked);
-        if (d.enterpriseContracts !== undefined) setEnterpriseContracts(d.enterpriseContracts);
-        if (d.audioUpgrades) setAudioUpgrades(d.audioUpgrades);
-        if (d.talentScouters !== undefined) setTalentScouters(d.talentScouters);
-        if (d.holwoodSyncActive !== undefined) setHollywoodSyncActive(d.holwoodSyncActive);
-        if (d.collectiblePhase) setCollectiblePhase(d.collectiblePhase);
-        if (d.vintageRevenueTracker !== undefined) setVintageRevenueTracker(d.vintageRevenueTracker);
-        if (d.vintageBoostActive !== undefined) setVintageBoostActive(d.vintageBoostActive);
-        if (d.sneakerBackdoorPlug !== undefined) setSneakerBackdoorPlug(d.sneakerBackdoorPlug);
-        if (d.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
-        if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
-        if (d.smmRetainerActive !== undefined) setSmmRetainerActive(d.smmRetainerActive);
-        if (d.aiSmmFactory !== undefined) setAiSmmFactory(d.aiSmmFactory);
-        if (d.smmEmpireActive !== undefined) setSmmEmpireActive(d.smmEmpireActive);
+        if (d?.techInterns !== undefined) setTechInterns(d.techInterns);
+        if (d?.bulkPalletsUnlocked !== undefined) setBulkPalletsUnlocked(d.bulkPalletsUnlocked);
+        if (d?.enterpriseContracts !== undefined) setEnterpriseContracts(d.enterpriseContracts);
+        if (d?.audioUpgrades) setAudioUpgrades(prev => ({ ...prev, ...d.audioUpgrades }));
+        if (d?.talentScouters !== undefined) setTalentScouters(d.talentScouters);
+        if (d?.holwoodSyncActive !== undefined) setHollywoodSyncActive(d.holwoodSyncActive);
+        if (d?.collectiblePhase) setCollectiblePhase(d.collectiblePhase);
+        if (d?.vintageRevenueTracker !== undefined) setVintageRevenueTracker(d.vintageRevenueTracker);
+        if (d?.vintageBoostActive !== undefined) setVintageBoostActive(d.vintageBoostActive);
+        if (d?.sneakerBackdoorPlug !== undefined) setSneakerBackdoorPlug(d.sneakerBackdoorPlug);
+        if (d?.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
+        if (d?.vaultHoldings) setVaultHoldings(d.vaultHoldings);
+        if (d?.smmRetainerActive !== undefined) setSmmRetainerActive(d.smmRetainerActive);
+        if (d?.aiSmmFactory !== undefined) setAiSmmFactory(d.aiSmmFactory);
+        if (d?.smmEmpireActive !== undefined) setSmmEmpireActive(d.smmEmpireActive);
 
-        if (d.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
-        if (d.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
-        if (d.pmcActiveContracts !== undefined) setPmcActiveContracts(d.pmcActiveContracts);
-        if (d.pmcHeatLevel !== undefined) setPmcHeatLevel(d.pmcHeatLevel);
-        if (d.pmcMercCost !== undefined) setPmcMercCost(d.pmcMercCost);
-        if (d.pmcBribeCost !== undefined) setPmcBribeCost(d.pmcBribeCost);
-        if (d.conglomActive !== undefined) setConglomActive(d.conglomActive);
-        if (d.movieProject) setMovieProject(d.movieProject);
-        if (d.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
-        if (d.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
-        if (d.geoStability !== undefined) setGeoStability(d.geoStability);
-        if (d.swfFrozen !== undefined) setSwfFrozen(d.swfFrozen);
-        if (d.superPacFunds !== undefined) setSuperPacFunds(d.superPacFunds);
-        if (d.approvalRating !== undefined) setApprovalRating(d.approvalRating);
-        if (d.lobbyists !== undefined) setLobbyists(d.lobbyists);
-        if (d.lobbyistCost !== undefined) setLobbyistCost(d.lobbyistCost);
-        if (d.mediaBlitzCost !== undefined) setMediaBlitzCost(d.mediaBlitzCost);
-        if (d.isPresident !== undefined) setIsPresident(d.isPresident);
-        if (d.politicalSyndicate) setPoliticalSyndicate(d.politicalSyndicate);
-        if (d.presidencyEligible !== undefined) setPresidencyEligible(d.presidencyEligible);
-        if (d.flex) setFlex(d.flex);
-        if (d.campaign) setCampaign(d.campaign);
-        if (d.seenNotifications) setSeenNotifications(d.seenNotifications);
-        if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
-        if (d.pl) setPl(d.pl);
-        if (d.mkt !== undefined) setMkt(d.mkt);
-        if (d.news) setNews(d.news);
-        if (d.up) setUp(d.up);
-        if (d.skl) setSkl(d.skl);
-        if (d.ass) setAss(d.ass);
-        if (d.sw) setSw(d.sw);
-        if (d.drp) setDrp(d.drp);
-        if (d.cc) setCc(d.cc);
-        if (d.pod) setPod(d.pod);
-        if (d.box) setBox(d.box);
-        if (d.tur) setTur(d.tur);
-        if (d.tch) setTch(d.tch);
-        if (d.crp) setCrp(d.crp);
-        if (d.mov) setMov(d.mov);
-        if (d.hf) setHf(d.hf);
-        if (d.ai) setAi(d.ai);
-        if (d.prs) setPrs(d.prs);
-        if (d.peaks) setPeaks(d.peaks);
-        if (d.hl) setHl(d.hl);
-        if (d.tally) setTally(d.tally);
-        if (d.generationCount !== undefined) setGenerationCount(d.generationCount);
+        if (d?.pmcUnlocked !== undefined) setPmcUnlocked(d.pmcUnlocked);
+        if (d?.pmcMercenaries !== undefined) setPmcMercenaries(d.pmcMercenaries);
+        if (d?.pmcActiveContracts !== undefined) setPmcActiveContracts(d.pmcActiveContracts);
+        if (d?.pmcHeatLevel !== undefined) setPmcHeatLevel(d.pmcHeatLevel);
+        if (d?.pmcMercCost !== undefined) setPmcMercCost(d.pmcMercCost);
+        if (d?.pmcBribeCost !== undefined) setPmcBribeCost(d.pmcBribeCost);
+        if (d?.conglomActive !== undefined) setConglomActive(d.conglomActive);
+        if (d?.movieProject) setMovieProject(prev => ({ ...prev, ...d.movieProject }));
+        if (d?.antitrustRisk !== undefined) setAntitrustRisk(d.antitrustRisk);
+        if (d?.swfInvestment !== undefined) setSwfInvestment(d.swfInvestment);
+        if (d?.geoStability !== undefined) setGeoStability(d.geoStability);
+        if (d?.swfFrozen !== undefined) setSwfFrozen(d.swfFrozen);
+        if (d?.superPacFunds !== undefined) setSuperPacFunds(d.superPacFunds);
+        if (d?.approvalRating !== undefined) setApprovalRating(d.approvalRating);
+        if (d?.lobbyists !== undefined) setLobbyists(d.lobbyists);
+        if (d?.lobbyistCost !== undefined) setLobbyistCost(d.lobbyistCost);
+        if (d?.mediaBlitzCost !== undefined) setMediaBlitzCost(d.mediaBlitzCost);
+        if (d?.isPresident !== undefined) setIsPresident(d.isPresident);
+        if (d?.politicalSyndicate) setPoliticalSyndicate(prev => ({ ...prev, ...d.politicalSyndicate }));
+        if (d?.presidencyEligible !== undefined) setPresidencyEligible(d.presidencyEligible);
+        if (d?.tickerAdvice) setTickerAdvice(d.tickerAdvice);
+        if (d?.artBubbleMonths !== undefined) setArtBubbleMonths(d.artBubbleMonths);
+        if (d?.supplyChainShockMonths !== undefined) setSupplyChainShockMonths(d.supplyChainShockMonths);
+        if (d?.viralPopMonths !== undefined) setViralPopMonths(d.viralPopMonths);
+        if (d?.flex) setFlex(prev => ({ ...prev, ...d.flex }));
+        if (d?.campaign) setCampaign(prev => ({ ...prev, ...d.campaign }));
+        if (d?.seenNotifications) setSeenNotifications(d.seenNotifications);
+        if (d?.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
+        if (d?.pl) setPl(prev => ({ ...prev, ...d.pl }));
+        if (d?.mkt !== undefined) setMkt(d.mkt);
+        if (d?.news) setNews(d.news);
+        if (d?.up) setUp(prev => ({ ...prev, ...d.up }));
+        if (d?.skl) setSkl(prev => ({ ...prev, ...d.skl }));
+        if (d?.ass) setAss(prev => ({ ...prev, ...d.ass }));
+        if (d?.sw) setSw(prev => ({ ...prev, ...d.sw }));
+        if (d?.drp) setDrp(prev => ({ ...prev, ...d.drp }));
+        if (d?.cc) setCc(prev => ({ ...prev, ...d.cc }));
+        if (d?.pod) setPod(prev => ({ ...prev, ...d.pod }));
+        if (d?.box) setBox(prev => ({ ...prev, ...d.box }));
+        if (d?.tur) setTur(prev => ({ ...prev, ...d.tur }));
+        if (d?.tch) setTch(prev => ({ ...prev, ...d.tch }));
+        if (d?.crp) setCrp(prev => ({ ...prev, ...d.crp }));
+        if (d?.mov) setMov(prev => ({ ...prev, ...d.mov }));
+        if (d?.hf) setHf(prev => ({ ...prev, ...d.hf }));
+        if (d?.ai) setAi(prev => ({ ...prev, ...d.ai }));
+        if (d?.prs) setPrs(prev => ({ ...prev, ...d.prs }));
+        if (d?.peaks) setPeaks(prev => ({ ...prev, ...d.peaks }));
+        if (d?.hl) setHl(prev => ({ ...prev, ...d.hl }));
+        if (d?.tally) setTally(prev => ({ ...prev, ...d.tally }));
+        if (d?.generationCount !== undefined) setGenerationCount(d.generationCount);
       }
     } catch (e) {
       console.error("Critical Failure in hydration:", e);
@@ -426,25 +437,25 @@ export const GameProvider = ({ children }) => {
 
     if (!currentFlex) return { auraCap, cloutCap, mhCap };
 
-    if (currentFlex.yacht?.owned && tier < 5) {
+    if (currentFlex?.yacht?.owned && tier < 5) {
       cloutCap = auraCap * 10;
     }
 
     // Showcase Flex Capacity Shattering
-    if (currentFlex.penthouse?.owned) {
+    if (currentFlex?.penthouse?.owned) {
       auraCap = Math.max(auraCap, 600);
       cloutCap = Math.max(cloutCap, 1500); // Mogul Runway
     }
-    if (currentFlex.logistics?.owned) {
+    if (currentFlex?.logistics?.owned) {
       auraCap = Math.max(auraCap, 1200);
       cloutCap = Math.max(cloutCap, 1500);
     }
-    if (currentFlex.jet?.owned) {
+    if (currentFlex?.jet?.owned) {
       auraCap = Math.max(auraCap, 2000);
       cloutCap = Math.max(cloutCap, 2000);
     }
 
-    if (currentFlex.watch?.owned && currentFlex.watch?.prActive) {
+    if (currentFlex?.watch?.owned && currentFlex?.watch?.prActive) {
       auraCap = Math.max(200, auraCap);
     }
 
@@ -455,7 +466,7 @@ export const GameProvider = ({ children }) => {
   useEffect(() => {
     try {
       if (ph !== 'PLAYING') return;
-      const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl?.tier || 0, flex);
+      const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl?.tier || 0, flex || {});
 
       setPl(prev => {
         if (!prev) return prev;
@@ -595,62 +606,66 @@ export const GameProvider = ({ children }) => {
     if (ph !== 'PLAYING') return;
 
     const interval = setInterval(() => {
-      // Tiny chance (5%) for a random event every 30 seconds
-      if (Math.random() > 0.05) return;
+      try {
+        // Tiny chance (5%) for a random event every 30 seconds
+        if (Math.random() > 0.05) return;
 
-      const { conglomActive, ass, pl, saasUsers, artHoldings } = stateRef.current;
-      const roll = Math.random();
+        const { conglomActive, ass, pl, saasUsers, artHoldings } = stateRef.current;
+        const roll = Math.random();
 
-      // 1. IRS Audit / Anti-Trust Sweep (Requires Conglomerate)
-      if (roll < 0.33 && conglomActive) {
-        if (ass.legalTeam) {
-          setNews(prev => ["⚖️ LEGAL: Elite defense team blocked a surprise IRS audit.", ...prev.slice(0, 15)]);
-        } else {
-          const penalty = Math.floor(pl.bag * 0.1);
-          setPl(prev => ({ ...prev, bag: prev.bag - penalty }));
+        // 1. IRS Audit / Anti-Trust Sweep (Requires Conglomerate)
+        if (roll < 0.33 && conglomActive) {
+          if (ass?.legalTeam) {
+            setNews(prev => ["⚖️ LEGAL: Elite defense team blocked a surprise IRS audit.", ...prev.slice(0, 15)]);
+          } else {
+            const penalty = Math.floor((pl?.bag || 0) * 0.1);
+            setPl(prev => ({ ...prev, bag: (prev?.bag || 0) - penalty }));
+            setMod({
+              s: true,
+              t: "IRS ANTI-TRUST SWEEP",
+              m: `The feds raided your holding company. Regulators seized $${penalty.toLocaleString()} in 'unaccounted' assets.`,
+              o: [{ label: "COMPLY", action: () => setMod({ s: false }) }],
+              ui: "ui-crisis"
+            });
+          }
+        }
+        // 2. Viral Market Windfall
+        else if (roll < 0.66 && ((saasUsers || 0) > 0 || (artHoldings || 0) > 0)) {
+          const cloutBonus = Math.floor((pl?.clout || 0) / 10);
+          if ((saasUsers || 0) > 0 && Math.random() > 0.5) {
+            const gain = 500 + (cloutBonus * 100);
+            setSaasUsers(prev => (prev || 0) + gain);
+            setMod({
+              s: true,
+              t: "VIRAL PRODUCT REACTION",
+              m: `An A-list celebrity tagged your SaaS. You just gained ${gain.toLocaleString()} new users overnight!`,
+              o: [{ label: "RIDE THE WAVE", action: () => setMod({ s: false }) }],
+              ui: "ui-modal"
+            });
+          } else if ((artHoldings || 0) > 0) {
+            setArtMarketSentiment(prev => Math.min(1, (prev || 0) + 0.5));
+            setMod({
+              s: true,
+              t: "ART MARKET MANIA",
+              m: "A global auction record just shattered. Your fine art collection's valuation is skyrocketing.",
+              o: [{ label: "EXCELLENT", action: () => setMod({ s: false }) }],
+              ui: "ui-modal"
+            });
+          }
+        }
+        // 3. Burnout Crisis
+        else if ((pl?.mentalHealth || 0) < 20) {
+          setPassiveFrozen(true);
           setMod({
             s: true,
-            t: "IRS ANTI-TRUST SWEEP",
-            m: `The feds raided your holding company. Regulators seized $${penalty.toLocaleString()} in 'unaccounted' assets.`,
-            o: [{ label: "COMPLY", action: () => setMod({ s: false }) }],
+            t: "EMPIRE BURNOUT",
+            m: "Your mental state is critical. You've gone AWOL, and passive operations have frozen until you rest or upgrade your lifestyle.",
+            o: [{ label: "I NEED A BREAK", action: () => setMod({ s: false }) }],
             ui: "ui-crisis"
           });
         }
-      }
-      // 2. Viral Market Windfall
-      else if (roll < 0.66 && (saasUsers > 0 || artHoldings > 0)) {
-        const cloutBonus = Math.floor(pl.clout / 10);
-        if (saasUsers > 0 && Math.random() > 0.5) {
-          const gain = 500 + (cloutBonus * 100);
-          setSaasUsers(prev => prev + gain);
-          setMod({
-            s: true,
-            t: "VIRAL PRODUCT REACTION",
-            m: `An A-list celebrity tagged your SaaS. You just gained ${gain.toLocaleString()} new users overnight!`,
-            o: [{ label: "RIDE THE WAVE", action: () => setMod({ s: false }) }],
-            ui: "ui-modal"
-          });
-        } else if (artHoldings > 0) {
-          setArtMarketSentiment(prev => Math.min(1, prev + 0.5));
-          setMod({
-            s: true,
-            t: "ART MARKET MANIA",
-            m: "A global auction record just shattered. Your fine art collection's valuation is skyrocketing.",
-            o: [{ label: "EXCELLENT", action: () => setMod({ s: false }) }],
-            ui: "ui-modal"
-          });
-        }
-      }
-      // 3. Burnout Crisis
-      else if (pl.mentalHealth < 20) {
-        setPassiveFrozen(true);
-        setMod({
-          s: true,
-          t: "EMPIRE BURNOUT",
-          m: "Your mental state is critical. You've gone AWOL, and passive operations have frozen until you rest or upgrade your lifestyle.",
-          o: [{ label: "I NEED A BREAK", action: () => setMod({ s: false }) }],
-          ui: "ui-crisis"
-        });
+      } catch (e) {
+        console.error("Chaos Engine Error:", e);
       }
     }, 30000);
 
@@ -758,6 +773,30 @@ export const GameProvider = ({ children }) => {
 
     if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
     if (saasPenaltyActive) setSaasPenaltyActive(false);
+
+    // Real World Monitor Ticker countdowns
+    if (artBubbleMonths > 0) setArtBubbleMonths(prev => Math.max(0, prev - months));
+    if (supplyChainShockMonths > 0) setSupplyChainShockMonths(prev => Math.max(0, prev - months));
+    if (viralPopMonths > 0) setViralPopMonths(prev => Math.max(0, prev - months));
+
+    if (artBubbleMonths === 1 && months === 1) setTickerAdvice("WALL STREET: Art Market bubble has burst. Margins normalized.");
+    if (supplyChainShockMonths === 1 && months === 1) setTickerAdvice("SUPPLY CHAIN: Component logistics restored. Tech Flipping costs normalized.");
+    if (viralPopMonths === 1 && months === 1) setTickerAdvice("TREND WATCH: Retro-synth viral wave fading. Audio Syndicate rates normalized.");
+
+    // Dynamic Micro-Event Engine (Real World Monitor)
+    if (Math.random() < 0.10) {
+      const eventRoll = Math.random();
+      if (eventRoll < 0.33) {
+        setArtBubbleMonths(3);
+        setTickerAdvice("📈 WALL STREET: Art Market experiencing speculative bubble! Art Hustle resale margins boosted by +40% for the next 3 months.");
+      } else if (eventRoll < 0.66) {
+        setSupplyChainShockMonths(3);
+        setTickerAdvice("⚠️ SUPPLY CHAIN SHOCK: Electronic component shortages hit logistics. Tech Flipping Pallet costs increased by 20%.");
+      } else {
+        setViralPopMonths(3);
+        setTickerAdvice("🎙️ VIRAL POP TREND: Retro-synth sounds going hyper-viral. Indie Audio Syndicate success rates boosted to 90%.");
+      }
+    }
 
     // Indie Audio Syndicate: Talent Scouters passive signing
     if (stateRef.current.talentScouters > 0) {
@@ -1476,17 +1515,21 @@ export const GameProvider = ({ children }) => {
   };
 
   const rProcessBulkPallet = async () => {
-    if (pl.bag < 5000 || pl.mentalHealth < 40) return;
-    setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - 40 }));
+    const baseCost = 5000;
+    const shockMultiplier = stateRef.current.supplyChainShockMonths > 0 ? 1.2 : 1.0;
+    const cost = Math.floor(baseCost * shockMultiplier);
+
+    if (pl.bag < cost || pl.mentalHealth < 40) return;
+    setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - 40 }));
     await new Promise(r => setTimeout(r, 1500));
     // Math: 15 units, baseline profit $650 per unit. Scalar 14x for wholesale efficiency.
     const unitProfit = 650;
     const bulkProfit = unitProfit * 14;
-    const finalPayout = Math.floor((5000 + bulkProfit) * legacyMultiplier);
+    const finalPayout = Math.floor((baseCost + bulkProfit) * legacyMultiplier);
     setPl(p => ({ ...p, bag: p.bag + finalPayout, clout: Math.min(p.maxClout, p.clout + 10) }));
     setTechFlipsComplete(prev => prev + 15);
-    triggerImpact('bag', finalPayout - 5000);
-    setNews(n => [`📦 TECH: Bulk Pallet Processed! 15 units flipped. Net Profit: $${(finalPayout - 5000).toLocaleString()}.`, ...n.slice(0, 15)]);
+    triggerImpact('bag', finalPayout - cost);
+    setNews(n => [`📦 TECH: Bulk Pallet Processed! 15 units flipped. Net Profit: $${(finalPayout - cost).toLocaleString()}.`, ...n.slice(0, 15)]);
     adv();
   };
 
@@ -1713,7 +1756,8 @@ export const GameProvider = ({ children }) => {
     setArtHoldings(a => a - 1);
 
     const roll = Math.random() - 0.5;
-    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll) * legacyMultiplier);
+    const bubbleMult = stateRef.current.artBubbleMonths > 0 ? 1.4 : 1.0;
+    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll) * legacyMultiplier * bubbleMult);
     yieldAmt = Math.max(500000, yieldAmt);
 
     setPl(p => ({ ...p, bag: p.bag + yieldAmt }));
@@ -1762,6 +1806,7 @@ export const GameProvider = ({ children }) => {
     let successChance = 0.6;
     if (stateRef.current.audioUpgrades.mixingSuite) successChance = 0.8;
     if (stateRef.current.audioUpgrades.analogConsole) successChance = 0.9;
+    if (stateRef.current.viralPopMonths > 0) successChance = 0.9;
 
     if (Math.random() < successChance) {
       setAudioTracks(t => t + 1);
@@ -2758,6 +2803,10 @@ export const GameProvider = ({ children }) => {
     setIsPresident(false);
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
+    setTickerAdvice('MARKET WATCH: Global conditions stable. Continue the grind.');
+    setArtBubbleMonths(0);
+    setSupplyChainShockMonths(0);
+    setViralPopMonths(0);
     setIsBreakdownActive(false);
     setPassiveFrozen(false);
     setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
@@ -2775,6 +2824,10 @@ export const GameProvider = ({ children }) => {
     setIsPresident(false);
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
+    setTickerAdvice('MARKET WATCH: Global conditions stable. Continue the grind.');
+    setArtBubbleMonths(0);
+    setSupplyChainShockMonths(0);
+    setViralPopMonths(0);
     setCampaign({
       currentWeek: 1,
       currentMonth: 1,
@@ -2976,8 +3029,10 @@ export const GameProvider = ({ children }) => {
       movieProject, rMovieGreenlight, rMovieHypeBag, rMovieHypeClout, rMovieHypeAura, rMovieRelease,
       smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire,
       flex, rBuyFlex, rTriggerFlexPR, rFoundationSink,
+      tickerAdvice, artBubbleMonths, supplyChainShockMonths, viralPopMonths,
     activeNotification, triggerNotification, closeNotification,
-      generationCount, legacyMultiplier, rRetire, performHardReset
+      generationCount, legacyMultiplier, rRetire, performHardReset,
+      cap
     }}>
       {children}
     </GameContext.Provider>

@@ -87,7 +87,6 @@ export const Hud = () => {
                 <button key="corp_flex_nav" onClick={() => { setTab('CORP_FLEXES'); }}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 relative ${tab === 'CORP_FLEXES' ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${showFlexAlert ? 'animate-pulse border border-yellow-500/50' : ''}`}>
                   CORP FLEXES
-                  {showFlexAlert && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full shadow-[0_0_8px_#facc15] border border-black animate-bounce"></span>}
                 </button>
               );
             }
@@ -110,14 +109,6 @@ export const Hud = () => {
             EXP POINTS
           </button>
         </div>
-        {showFlexAlert && (
-          <div className="mt-2 px-2 py-1 bg-yellow-400/10 border border-yellow-500/30 rounded flex items-center gap-2 animate-fadeIn">
-            <span className="text-xs">💡</span>
-            <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-tighter">
-              Your operations are maxed out. Buy a status Flex to shatter your capacity ceilings.
-            </p>
-          </div>
-        )}
       </div>
     </>
   );

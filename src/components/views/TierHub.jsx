@@ -47,22 +47,47 @@ const tierStyles = [
 ];
 
 export const TierHub = () => {
-  const { pl, setTab, selTier, rRest, rRetire, setMod } = useGame();
+  const { pl, setTab, selTier, rRest, rRetire, setMod, cap, flex } = useGame();
 
   const tierIdx = parseInt(selTier);
   const tier = TIERS[tierIdx];
   const isLocked = pl.tier < tierIdx;
 
+  // Directed Action Logic
+  const isCapped = (pl?.aura >= cap || pl?.clout >= cap) && pl?.tier >= 2;
+  const needsCapacityFlex = !flex.penthouse.owned || !flex.logistics.owned || !flex.jet.owned;
+  const showCapWarning = isCapped && needsCapacityFlex;
+  const showMhWarning = pl?.mentalHealth < 20;
+
   return (
     <div className={`flex flex-col gap-5 mb-8 p-4 rounded-3xl border transition-all duration-500 ${!isNaN(tierIdx) ? tierStyles[tierIdx] : 'border-slate-800 bg-slate-900/20'}`}>
-      <div className="grid grid-cols-1">
+      <div className="grid grid-cols-2 gap-4">
+        {/* Left Column: Compact Rest Button */}
         <button
           onClick={rRest}
-          className="w-full py-4 bg-purple-900/40 border-2 border-purple-500 rounded-xl font-black text-purple-400 tracking-widest hover:bg-purple-800/40 transition-all active:scale-95 duration-100 flex items-center justify-center gap-3"
+          className="w-full h-full py-4 bg-purple-900/40 border-2 border-purple-500 rounded-xl font-black text-purple-400 tracking-widest hover:bg-purple-800/40 transition-all active:scale-95 duration-100 flex flex-col items-center justify-center gap-2"
         >
-          <span className="text-2xl">😴</span>
-          TAKE SOME MENTAL HEALTH DAYS (+50 MH, ADVANCE 1 MO)
+          <span className="text-3xl">😴</span>
+          <span className="text-[10px] text-center leading-tight">REST UP<br/>(+50 MH)</span>
         </button>
+
+        {/* Right Column: Directed Action Box */}
+        <div className="bg-slate-900/60 border-2 border-slate-700 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden">
+          <div className="flex-shrink-0 text-2xl">🎧</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Advisor Lead</div>
+            <p className="text-[9px] font-bold text-slate-300 leading-tight">
+              {showCapWarning ? (
+                <span className="text-amber-400">🚨 Influence Ceiling Hit! You're maxed at {cap}. Head to [CORP FLEXES] tab to buy a Penthouse and raise the cap.</span>
+              ) : showMhWarning ? (
+                <span className="text-red-400">⚠️ MENTAL HEALTH WARNING! Passive business yields decaying. Rest immediately.</span>
+              ) : (
+                "System optimal. Keep the hustle alive. Market conditions favor continued expansion."
+              )}
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none"></div>
+        </div>
       </div>
 
 
