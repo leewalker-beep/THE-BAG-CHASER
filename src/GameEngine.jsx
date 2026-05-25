@@ -82,7 +82,7 @@ export const TIERS = [
   { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
   { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
-  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV'] },
+  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV', 'SYNDICATE'] },
   { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
 ];
 
@@ -191,6 +191,9 @@ export const GameProvider = ({ children }) => {
   const [mediaBlitzCost, setMediaBlitzCost] = useState(10000000);
   const [isPresident, setIsPresident] = useState(false);
 
+  const [politicalSyndicate, setPoliticalSyndicate] = useState({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
+  const [presidencyEligible, setPresidencyEligible] = useState(false);
+
   const [seenNotifications, setSeenNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
 
@@ -256,6 +259,7 @@ export const GameProvider = ({ children }) => {
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
+    politicalSyndicate, presidencyEligible,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -342,6 +346,8 @@ export const GameProvider = ({ children }) => {
         if (d.lobbyistCost !== undefined) setLobbyistCost(d.lobbyistCost);
         if (d.mediaBlitzCost !== undefined) setMediaBlitzCost(d.mediaBlitzCost);
         if (d.isPresident !== undefined) setIsPresident(d.isPresident);
+        if (d.politicalSyndicate) setPoliticalSyndicate(d.politicalSyndicate);
+        if (d.presidencyEligible !== undefined) setPresidencyEligible(d.presidencyEligible);
         if (d.seenNotifications) setSeenNotifications(d.seenNotifications);
         if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d.pl) setPl(d.pl);
@@ -690,6 +696,17 @@ export const GameProvider = ({ children }) => {
 
     if (!stateRef.current.isPresident) {
       setApprovalRating(prev => Math.max(0, prev - 2.5));
+    }
+
+    // Political Syndicate passive generation
+    const assets = stateRef.current.politicalSyndicate.assetLeasing;
+    if (assets.governors > 0 || assets.senators > 0 || assets.networkAnchors > 0) {
+      setPoliticalSyndicate(prev => {
+        let gain = (assets.governors * 0.5) + (assets.senators * 1.5) + (assets.networkAnchors * 3.0);
+        let nextCapital = Math.min(100, prev.politicalCapital + (gain * months));
+        let nextStatus = nextCapital >= 100 ? 'CAMPAIGN_READY' : prev.status;
+        return { ...prev, politicalCapital: nextCapital, status: nextStatus };
+      });
     }
 
     setSaasUsers(prev => {
@@ -2088,6 +2105,81 @@ export const GameProvider = ({ children }) => {
   const dVp = () => { setPrs(p => ({ ...p, vu: true, rst: p.rst + 4 })); };
   const dDef = () => { setPl(p => ({ ...p, bag: p.bag - 75000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, du: true, sub: p.sub + 5 })); };
 
+  // Political Syndicate Actions
+  const rAcquirePoliticalAsset = async (type, cost, limit) => {
+    if (pl.bag < cost || politicalSyndicate.assetLeasing[type] >= limit) return;
+    setPl(p => ({ ...p, bag: p.bag - cost }));
+    setPoliticalSyndicate(prev => ({
+      ...prev,
+      assetLeasing: { ...prev.assetLeasing, [type]: prev.assetLeasing[type] + 1 }
+    }));
+    setNews(n => [`⚖️ SYNDICATE: Political asset acquired: ${type.toUpperCase()}.`, ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rDeployNarrativeOp = async (opType) => {
+    const assets = politicalSyndicate.assetLeasing;
+    if (opType === 'TAX_LOOPHOLE') {
+      if (assets.senators < 2 || pl.clout < 100) return;
+      setPl(p => ({ ...p, bag: p.bag + 40000000, clout: Math.max(0, p.clout - 100) }));
+      setNews(n => ["⚖️ SYNDICATE: Tax Loophole Bill passed. +$40M Corporate Kickback.", ...n.slice(0, 15)]);
+      triggerImpact('bag', 40000000);
+    } else if (opType === 'CULTURE_WAR') {
+      if (assets.networkAnchors < 1 || pl.aura < 40) return;
+      setPl(p => ({
+        ...p,
+        clout: Math.min(p.maxClout, p.clout + 500),
+        aura: Math.max(0, p.aura - 40)
+      }));
+      setPoliticalSyndicate(prev => ({
+        ...prev,
+        politicalCapital: Math.min(100, prev.politicalCapital + 15),
+        status: (prev.politicalCapital + 15 >= 100) ? 'CAMPAIGN_READY' : prev.status
+      }));
+      setNews(n => ["⚖️ SYNDICATE: Culture War manufactured. Massive Clout and Capital boost.", ...n.slice(0, 15)]);
+    } else if (opType === 'LOBBYIST_STRIKE') {
+      if (pl.bag < 10000000) return;
+      setPl(p => ({ ...p, bag: p.bag - 10000000 }));
+      setPoliticalSyndicate(prev => ({
+        ...prev,
+        politicalCapital: Math.min(100, prev.politicalCapital + 10),
+        status: (prev.politicalCapital + 10 >= 100) ? 'CAMPAIGN_READY' : prev.status
+      }));
+      setNews(n => ["⚖️ SYNDICATE: Lobbyist Strike Team deployed. +10% Political Capital.", ...n.slice(0, 15)]);
+    }
+    adv();
+  };
+
+  const rHostPolicySummit = async () => {
+    if (politicalSyndicate.politicalCapital < 100) return;
+
+    setGBusy(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setGBusy(false);
+
+    setPoliticalSyndicate(prev => ({ ...prev, politicalCapital: 0, status: 'IDLE' }));
+    setPl(p => ({
+      ...p,
+      bag: p.bag + 10000000000,
+      aura: Math.min(p.maxAura, p.aura + 2000),
+      clout: Math.min(p.maxClout, p.clout + 1500)
+    }));
+    setPresidencyEligible(true);
+
+    triggerNotification('SYNDICATE_COMPLETE');
+
+    setMod({
+      s: true,
+      t: "THE STAGE IS SET",
+      m: "Wall Street is bought, the media is controlled, and the delegates are locked. You are officially primed to run for President of the United States.",
+      o: [{ label: "PREPARE FOR CAMPAIGN", action: () => setMod({ s: false }) }],
+      ui: "ui-modal"
+    });
+
+    setNews(n => ["🏆 SYNDICATE: Global Policy Summit concluded. Presidency eligibility unlocked.", ...n.slice(0, 15)]);
+    adv();
+  };
+
   const rRetire = () => {
     window.isResetting = true;
     setDeath(null);
@@ -2181,6 +2273,8 @@ export const GameProvider = ({ children }) => {
     setLobbyistCost(5000000);
     setMediaBlitzCost(10000000);
     setIsPresident(false);
+    setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
+    setPresidencyEligible(false);
     setIsBreakdownActive(false);
     setPassiveFrozen(false);
     setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
@@ -2196,6 +2290,8 @@ export const GameProvider = ({ children }) => {
     setLobbyistCost(5000000);
     setMediaBlitzCost(10000000);
     setIsPresident(false);
+    setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
+    setPresidencyEligible(false);
 
     setPh('PROLOGUE');
     setProSt(0);
@@ -2317,6 +2413,8 @@ export const GameProvider = ({ children }) => {
     setSwfInvestment(0);
     setGeoStability(1.0);
     setAntitrustRisk(0);
+    setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
+    setPresidencyEligible(false);
 
     // Group 4: Crisis & Flag Clears
     setTechItem(null);
@@ -2356,8 +2454,10 @@ export const GameProvider = ({ children }) => {
       pmcHeatLevel, setPmcHeatLevel, pmcMercCost, setPmcMercCost, pmcBribeCost, setPmcBribeCost,
       superPacFunds, setSuperPacFunds, approvalRating, setApprovalRating, lobbyists, setLobbyists,
       lobbyistCost, setLobbyistCost, mediaBlitzCost, setMediaBlitzCost, isPresident, setIsPresident,
+      politicalSyndicate, setPoliticalSyndicate, presidencyEligible, setPresidencyEligible,
       rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle,
       rPmcHire, rPmcDeployContract, rPmcBribe,
+      rAcquirePoliticalAsset, rDeployNarrativeOp, rHostPolicySummit,
       rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, rBuyVaultAsset,
       movieProject, rMovieGreenlight, rMovieHypeBag, rMovieHypeClout, rMovieHypeAura, rMovieRelease,
       smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire,

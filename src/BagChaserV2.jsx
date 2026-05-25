@@ -55,6 +55,7 @@ import {
   SmearTab,
   ElectionTab
 } from './components/tabs/PresidentTabs.jsx';
+import { PoliticalSyndicateTab } from './components/tabs/PoliticalSyndicateTab.jsx';
 
 import { TierHub } from './components/views/TierHub.jsx';
 import { AutopsyReport } from './components/views/AutopsyReport.jsx';
@@ -96,6 +97,7 @@ const TAB_MAP = {
   'PMC':          { component: PmcTab,          tier: 4 },
   'SOVEREIGN':    { component: SovereignTab,    tier: 4 },
   'BILL':         { component: BillTab,         tier: 4 },
+  'SYNDICATE':    { component: PoliticalSyndicateTab, tier: 4 },
   'PAC':          { component: SuperPacTab,     tier: 5 },
   'BLITZ':        { component: BlitzTab,        tier: 5 },
   'SMEAR':        { component: SmearTab,        tier: 5 },
