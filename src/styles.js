@@ -43,4 +43,7 @@ export const styles = `
 
   @keyframes victoryFlash { 0% { background: white; opacity: 1; } 100% { background: transparent; opacity: 0; } }
   .victory-flash { position: fixed; inset: 0; z-index: 1000; background: white; pointer-events: none; animation: victoryFlash 3s ease-out forwards; }
+
+  .washington-theme { border: 4px solid #f59e0b !important; box-shadow: 0 0 50px rgba(245,158,11,0.4) !important; }
+  .golden-seal { background: radial-gradient(circle, #f59e0b 0%, #78350f 100%); width: 80px; height: 80px; border-radius: 50%; border: 4px double #fef3c7; display: flex; items-center; justify-center; font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(245,158,11,0.8)); }
 `;

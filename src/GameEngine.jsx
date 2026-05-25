@@ -194,6 +194,24 @@ export const GameProvider = ({ children }) => {
   const [politicalSyndicate, setPoliticalSyndicate] = useState({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
   const [presidencyEligible, setPresidencyEligible] = useState(false);
 
+  // Flex Showcase System State
+  const [flex, setFlex] = useState({
+    // Bridge 1
+    penthouse: { owned: false, blitzExpiry: 0 },
+    logistics: { owned: false, blitzExpiry: 0 },
+    jet: { owned: false, blitzExpiry: 0 },
+    hypercar: { owned: false, prActive: false },
+    art: { owned: false, prActive: false },
+    watchVault: { owned: false, prActive: false },
+    // Bridge 2
+    yacht: { owned: false, blitzExpiry: 0 },
+    media: { owned: false, blitzExpiry: 0 },
+    foundation: { owned: false, prActive: false },
+    sportsTeam: { owned: false, prActive: false },
+    island: { owned: false, prActive: false },
+    archive: { owned: false, prActive: false }
+  });
+
   const [campaign, setCampaign] = useState({
     currentWeek: 1,
     currentMonth: 1,
@@ -268,7 +286,7 @@ export const GameProvider = ({ children }) => {
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
-    politicalSyndicate, presidencyEligible, campaign,
+    politicalSyndicate, presidencyEligible, flex, campaign,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
   };
@@ -357,6 +375,7 @@ export const GameProvider = ({ children }) => {
         if (d.isPresident !== undefined) setIsPresident(d.isPresident);
         if (d.politicalSyndicate) setPoliticalSyndicate(d.politicalSyndicate);
         if (d.presidencyEligible !== undefined) setPresidencyEligible(d.presidencyEligible);
+        if (d.flex) setFlex(d.flex);
         if (d.campaign) setCampaign(d.campaign);
         if (d.seenNotifications) setSeenNotifications(d.seenNotifications);
         if (d.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
@@ -407,19 +426,39 @@ export const GameProvider = ({ children }) => {
     if (ass.cmYct && pl.tier < 5) {
       cloutCap = currentCap * 10;
     }
+
+    // Showcase Flex Capacity Shattering
+    if (flex.penthouse.owned) {
+      currentCap = Math.max(currentCap, 600);
+      cloutCap = Math.max(cloutCap, 600);
+    }
+    if (flex.logistics.owned) {
+      currentCap = Math.max(currentCap, 1200);
+      cloutCap = Math.max(cloutCap, 1200);
+    }
+    if (flex.jet.owned) {
+      currentCap = Math.max(currentCap, 2000);
+      cloutCap = Math.max(cloutCap, 2000);
+    }
+
     setPl(prev => {
-      if (prev.maxClout === cloutCap && prev.maxAura === currentCap && prev.maxMentalHealth === currentMhCap) return prev;
+      let finalAura = Math.min(currentCap, prev.aura);
+      if (flex.watchVault.owned && flex.watchVault.prActive) {
+        finalAura = Math.max(200, finalAura);
+      }
+
+      if (prev.maxClout === cloutCap && prev.maxAura === currentCap && prev.maxMentalHealth === currentMhCap && prev.aura === finalAura) return prev;
       return {
         ...prev,
         maxClout: cloutCap,
         maxAura: currentCap,
         maxMentalHealth: currentMhCap,
         clout: Math.min(cloutCap, prev.clout),
-        aura: Math.min(currentCap, prev.aura),
+        aura: finalAura,
         mentalHealth: Math.min(currentMhCap, prev.mentalHealth)
       };
     });
-  }, [pl.tier, ph, ass.cmYct]);
+  }, [pl.tier, ph, ass.cmYct, flex.penthouse.owned, flex.logistics.owned, flex.jet.owned, flex.watchVault.owned, flex.watchVault.prActive]);
 
   // Keep Track of Records & Auto Failures
   useEffect(() => {
@@ -640,12 +679,17 @@ export const GameProvider = ({ children }) => {
   };
 
   const updateFatigue = (activeHustle) => {
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+
     setHustleFatigue(prev => {
       const next = { ...prev };
       const isDifferent = lastHustle !== activeHustle;
       Object.keys(next).forEach(k => {
         if (k === activeHustle) {
-          next[k] = Math.min(100, next[k] + 15);
+          const increase = 15 * (1 - mhReduction);
+          next[k] = Math.min(100, next[k] + increase);
         } else if (isDifferent) {
           next[k] = Math.max(0, next[k] - 10);
         }
@@ -713,6 +757,10 @@ export const GameProvider = ({ children }) => {
     if (assets.governors > 0 || assets.senators > 0 || assets.networkAnchors > 0) {
       setPoliticalSyndicate(prev => {
         let gain = (assets.governors * 0.5) + (assets.senators * 1.5) + (assets.networkAnchors * 3.0);
+        if (stateRef.current.flex.yacht.owned) {
+          const isBlitzed = stateRef.current.flex.yacht.blitzExpiry > Date.now();
+          gain *= (isBlitzed ? 2.0 : 1.5);
+        }
         let nextCapital = Math.min(100, prev.politicalCapital + (gain * months));
         let nextStatus = nextCapital >= 100 ? 'CAMPAIGN_READY' : prev.status;
         return { ...prev, politicalCapital: nextCapital, status: nextStatus };
@@ -763,9 +811,14 @@ export const GameProvider = ({ children }) => {
         passiveSrv = Math.floor(500 + (tch.u * tch.srv));
       }
 
-      const smmRev = stateRef.current.smmEmpireActive
+      let smmRev = stateRef.current.smmEmpireActive
         ? Math.floor(25000 * (stateRef.current.pl.clout / 300))
         : (stateRef.current.smmClients * 300) + (stateRef.current.aiSmmFactory ? 1000 : (stateRef.current.smmRetainerActive ? 500 : 0));
+
+      if (stateRef.current.flex.penthouse.owned) {
+        const isBlitzed = stateRef.current.flex.penthouse.blitzExpiry > Date.now();
+        smmRev = Math.floor(smmRev * (isBlitzed ? 1.70 : 1.35));
+      }
       const runnerRev = stateRef.current.runnerCount * 150;
 
       // Audio Syndicate passives
@@ -799,6 +852,7 @@ export const GameProvider = ({ children }) => {
 
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
       const artClout = artHoldings * 20;
+      const artDrift = (stateRef.current.flex.art.owned && stateRef.current.flex.art.prActive) ? 5 : 0;
 
       // Annual 12% Asset Appreciation for Vault Holdings
       if (stateRef.current.collectiblePhase === "VAULT" && stateRef.current.vaultHoldings.length > 0) {
@@ -827,7 +881,7 @@ export const GameProvider = ({ children }) => {
         ...prev,
         mo: prev.mo + months,
         bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
-        aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed + vaultAura)),
+        aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed + vaultAura + artDrift)),
         clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
         heat: prev.heat + pmcHeatContribution,
         mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
@@ -1050,7 +1104,10 @@ export const GameProvider = ({ children }) => {
       return;
     }
     updateFatigue('vintage');
-    setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - 10 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, vintage: prev.vintage + 1 }));
 
     if (triggerChaos('vintage')) {
@@ -1115,7 +1172,10 @@ export const GameProvider = ({ children }) => {
 
   const rSneakerDrop = async () => {
     if (pl.bag < 300 || pl.mentalHealth < 15) return;
-    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
 
     await new Promise(r => setTimeout(r, 800));
 
@@ -1207,7 +1267,10 @@ export const GameProvider = ({ children }) => {
   const rSmmPitch = async () => {
     if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty || smmRetainerActive) return;
     updateFatigue('smm');
-    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 20 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - (20 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, smm: prev.smm + 1 }));
 
     if (triggerChaos('smm')) {
@@ -1238,7 +1301,10 @@ export const GameProvider = ({ children }) => {
 
   const rSmmFix = async () => {
     if (pl.mentalHealth < 15) return;
-    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
     setClientCrisis(false);
     setNews(prev => ["✅ SMM: Content strategy fixed. Crisis averted.", ...prev.slice(0, 15)]);
@@ -1262,28 +1328,40 @@ export const GameProvider = ({ children }) => {
 
   const rDelivery = async () => {
     if (pl.mentalHealth < 15) return;
-    setPl(p => ({ ...p, bag: p.bag + 25, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag + 25, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     adv();
     return 25;
   };
 
   const rPlasma = async () => {
     if (pl.mentalHealth < 40) return;
-    setPl(p => ({ ...p, bag: p.bag + 60, mentalHealth: p.mentalHealth - 40 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag + 60, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     adv();
     return 60;
   };
 
   const rSurvey = async () => {
     if (pl.mentalHealth < 10) return;
-    setPl(p => ({ ...p, bag: p.bag + 10, mentalHealth: p.mentalHealth - 10 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag + 10, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     adv();
     return 10;
   };
 
   const rLabor = async () => {
     if (pl.mentalHealth < 25) return;
-    setPl(p => ({ ...p, bag: p.bag + 45, mentalHealth: p.mentalHealth - 25 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag + 45, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     adv();
     return 45;
   };
@@ -1328,10 +1406,15 @@ export const GameProvider = ({ children }) => {
 
   const rTechFixA = async () => {
     if (pl.bag < 30 || pl.mentalHealth < 10 || !techItem) return;
-    setPl(p => ({ ...p, bag: p.bag - 30, mentalHealth: p.mentalHealth - 10 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 30, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
 
-    if (Math.random() < 0.5) {
+    const isLogisticsOwned = flex.logistics.owned;
+
+    if (isLogisticsOwned || Math.random() < 0.5) {
       const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
       if (financialPhase === 2) triggerNotification('BAG_BOOST_01');
 
@@ -1350,7 +1433,10 @@ export const GameProvider = ({ children }) => {
 
   const rTechFixB = async () => {
     if (pl.bag < 100 || pl.mentalHealth < 15 || !techItem) return;
-    setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - 15, clout: Math.min(p.maxClout, p.clout + 2), aura: Math.min(p.maxAura, p.aura + 1) }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 100, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)), clout: Math.min(p.maxClout, p.clout + 2), aura: Math.min(p.maxAura, p.aura + 1) }));
     setTechFlipsComplete(prev => prev + 1);
     await new Promise(r => setTimeout(r, 1000));
     const payout = Math.floor(750 * legacyMultiplier);
@@ -1365,7 +1451,10 @@ export const GameProvider = ({ children }) => {
   const rRunnerRecruit = async () => {
     if (pl.bag < 300 || pl.mentalHealth < 25 || pl.clout < 20) return;
     updateFatigue('runners');
-    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - 25 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 300, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, runners: prev.runners + 1 }));
 
     if (triggerChaos('runners')) {
@@ -1397,7 +1486,10 @@ export const GameProvider = ({ children }) => {
 
   const rSaasClick = async () => {
     if (pl.bag < 5000 || pl.mentalHealth < 20) return;
-    setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - 20 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - (20 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, saas: (prev.saas || 0) + 1 }));
 
     // Click Catastrophe: Cyber Breach (2%)
@@ -1418,7 +1510,10 @@ export const GameProvider = ({ children }) => {
 
   const rAiAgencyClick = async () => {
     if (pl.bag < 2500 || pl.mentalHealth < 15 || pl.bag < 1000000 || pl.clout < 150 || pl.aura < 100) return;
-    setPl(p => ({ ...p, bag: p.bag - 2500, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 2500, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, ai_agency: (prev.ai_agency || 0) + 1 }));
 
     // Click Catastrophe: API Poisoning (2%)
@@ -1440,7 +1535,10 @@ export const GameProvider = ({ children }) => {
 
   const rCreBuyOffice = async () => {
     if (pl.bag < 15000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
-    setPl(p => ({ ...p, bag: p.bag - 15000000, mentalHealth: p.mentalHealth - 30 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 15000000, mentalHealth: p.mentalHealth - (30 * (1 - mhReduction)) }));
     setCreOfficeCount(t => t + 1);
     setHustleClicks(prev => ({ ...prev, cre: (prev.cre || 0) + 1 }));
     setNews(prev => ["🏢 CRE: Office Tower acquisition complete. Massive passive rent added.", ...prev.slice(0, 15)]);
@@ -1449,7 +1547,10 @@ export const GameProvider = ({ children }) => {
 
   const rCreBuyRetail = async () => {
     if (pl.bag < 5000000 || pl.mentalHealth < 30 || pl.clout < 200 || pl.aura < 250) return;
-    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 30 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - (30 * (1 - mhReduction)) }));
     setCreRetailCount(t => t + 1);
     setHustleClicks(prev => ({ ...prev, cre: (prev.cre || 0) + 1 }));
     setNews(prev => ["🏢 CRE: Retail Strip acquisition complete. Monthly yield increased.", ...prev.slice(0, 15)]);
@@ -1458,7 +1559,10 @@ export const GameProvider = ({ children }) => {
 
   const rFranchiseClick = async () => {
     if (pl.bag < 500000 || pl.mentalHealth < 25 || pl.bag < 5000000 || pl.clout < 300 || pl.aura < 200) return;
-    setPl(p => ({ ...p, bag: p.bag - 500000, mentalHealth: p.mentalHealth - 25 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 500000, mentalHealth: p.mentalHealth - (25 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, franchise: (prev.franchise || 0) + 1 }));
 
     // Click Catastrophe: Union Strike (2%)
@@ -1500,7 +1604,10 @@ export const GameProvider = ({ children }) => {
 
   const rPeClick = async () => {
     if (pl.bag < 25000000 || pl.mentalHealth < 40) return;
-    setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - 40 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
     // Click Catastrophe: SEC Pension Subpoena (2%)
@@ -1529,7 +1636,10 @@ export const GameProvider = ({ children }) => {
   const rArtBuy = async () => {
     const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
     if (pl.bag < acquisitionCost || pl.mentalHealth < 35) return;
-    setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - 35 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - (35 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
 
     // Click Catastrophe: Forgery Scandal (2%)
@@ -1591,7 +1701,10 @@ export const GameProvider = ({ children }) => {
 
   const rAudioRelease = async () => {
     if (pl.bag < 1000 || pl.mentalHealth < 15) return;
-    setPl(p => ({ ...p, bag: p.bag - 1000, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 1000, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 800));
 
     let successChance = 0.6;
@@ -1620,7 +1733,10 @@ export const GameProvider = ({ children }) => {
 
   const rPmcDeploy = async () => {
     if (pl.bag < 5000000 || pl.mentalHealth < 40) return;
-    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - 40 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - 5000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
     await new Promise(r => setTimeout(r, 1200));
     if (Math.random() < 0.5) {
       setPmcSquads(s => s + 1);
@@ -1683,7 +1799,10 @@ export const GameProvider = ({ children }) => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
     if (pl.mentalHealth < 15) return;
     updateFatigue('streetwear');
-    setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - 15 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
 
     if (triggerChaos('streetwear')) {
@@ -1760,7 +1879,10 @@ export const GameProvider = ({ children }) => {
     const costBasis = drp.u * 10 + drp.a;
     if (pl.mentalHealth < 10 || dropshipLock > 0) return;
     updateFatigue('dropship');
-    setPl(p => ({ ...p, bag: p.bag - costBasis, mentalHealth: p.mentalHealth - 10 }));
+    const isJetOwned = flex.jet.owned;
+    const isJetBlitzed = isJetOwned && flex.jet.blitzExpiry > Date.now();
+    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
+    setPl(p => ({ ...p, bag: p.bag - costBasis, mentalHealth: p.mentalHealth - (10 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, dropship: prev.dropship + 1 }));
 
     if (triggerChaos('dropship')) {
@@ -1886,6 +2008,15 @@ export const GameProvider = ({ children }) => {
       aura: Math.min(p.maxAura, p.aura + (auraGain || 0)),
       heat: p.heat + finalHeatGain
     }));
+
+    if (flex.media.owned && (cloutGain || 0) > 0) {
+      const pcGain = (cloutGain || 0) * 0.1;
+      setPoliticalSyndicate(prev => ({
+        ...prev,
+        politicalCapital: Math.min(100, prev.politicalCapital + pcGain),
+        status: (prev.politicalCapital + pcGain >= 100) ? 'CAMPAIGN_READY' : prev.status
+      }));
+    }
     setTally(t => ({ ...t, box: t.box + 1 }));
     setHl(h => ({ ...h, box: h.box + Math.max(0, profit) }));
     triggerImpact('bag', profit);
@@ -2045,6 +2176,15 @@ export const GameProvider = ({ children }) => {
       mentalHealth: Math.max(0, p.mentalHealth - mhPen)
     }));
 
+    if (flex.media.owned && cloutGain > 0) {
+      const pcGain = cloutGain * 0.1;
+      setPoliticalSyndicate(prev => ({
+        ...prev,
+        politicalCapital: Math.min(100, prev.politicalCapital + pcGain),
+        status: (prev.politicalCapital + pcGain >= 100) ? 'CAMPAIGN_READY' : prev.status
+      }));
+    }
+
     setMod({
       s: true,
       t: outcomeTitle,
@@ -2203,18 +2343,18 @@ export const GameProvider = ({ children }) => {
     let gainPolls = { region: '', amount: 0 };
 
     if (type === 'RUST_BELT_RALLY') {
-      costMH = 15;
-      costClout = 30;
-      gainPolls = { region: 'rustBelt', amount: 4 };
-      gainAura = 15;
+      costMH = 20;
+      costClout = 50;
+      gainPolls = { region: 'rustBelt', amount: 5 };
+      gainAura = 20;
     } else if (type === 'SUN_BELT_ADS') {
-      costBag = 300000000;
-      gainPolls = { region: 'sunBelt', amount: 3 };
-      gainClout = 250;
+      costBag = 500000000;
+      gainPolls = { region: 'sunBelt', amount: 4 };
+      gainClout = 300;
     } else if (type === 'SILICON_GALA') {
-      costAura = 100;
-      gainWarchest = 750000000;
-      gainPolls = { region: 'blueWall', amount: 5 };
+      costAura = 150;
+      gainWarchest = 1200000000;
+      gainPolls = { region: 'blueWall', amount: 6 };
     }
 
     if (pl.mentalHealth < costMH || pl.clout < costClout || pl.aura < costAura || campaign.warchest < costBag) return;
@@ -2222,12 +2362,17 @@ export const GameProvider = ({ children }) => {
     const nextWeek = campaign.currentWeek + 1;
     const isMonthEnd = nextWeek > 1 && (nextWeek - 1) % 4 === 0;
 
-    setPl(prev => ({
-      ...prev,
-      mentalHealth: Math.max(0, prev.mentalHealth - costMH),
-      clout: Math.max(0, prev.clout - costClout),
-      aura: Math.max(0, prev.aura - costAura),
-    }));
+    // Apply Weekly Institutional Decay: -5 Aura, -10 Clout
+    setPl(prev => {
+      let nextAura = prev.aura - costAura - 5 + gainAura;
+      let nextClout = prev.clout - costClout - 10 + gainClout;
+      return {
+        ...prev,
+        mentalHealth: Math.max(0, prev.mentalHealth - costMH),
+        clout: Math.max(0, Math.min(prev.maxClout, nextClout)),
+        aura: Math.max(0, Math.min(prev.maxAura, nextAura)),
+      };
+    });
 
     setCampaign(prev => ({
       ...prev,
@@ -2235,12 +2380,15 @@ export const GameProvider = ({ children }) => {
       warchest: prev.warchest - costBag - 100000000 + gainWarchest, // Weekly ops fee $100M
       regionalPolling: {
         ...prev.regionalPolling,
-        [gainPolls.region]: Math.min(100, prev.regionalPolling[gainPolls.region] + gainPolls.amount)
+        [gainPolls.region]: Math.min(100, prev.regionalPolling[gainPolls.region] + (gainPolls.amount || 0))
+      },
+      // Weekly Incumbency Advantage: +0.5% Opponent drift in all regions
+      opponentPolling: {
+        blueWall: Math.min(100, prev.opponentPolling.blueWall + 0.5),
+        rustBelt: Math.min(100, prev.opponentPolling.rustBelt + 0.5),
+        sunBelt: Math.min(100, prev.opponentPolling.sunBelt + 0.5)
       }
     }));
-
-    if (gainAura) setPl(p => ({ ...p, aura: Math.min(p.maxAura, p.aura + gainAura) }));
-    if (gainClout) setPl(p => ({ ...p, clout: Math.min(p.maxClout, p.clout + gainClout) }));
 
     if (isMonthEnd) {
       triggerOctoberSurprise();
@@ -2328,6 +2476,72 @@ export const GameProvider = ({ children }) => {
     setNews(n => [`🦅 CAMPAIGN: Entering Month ${campaign.currentMonth + 1} of the election cycle.`, ...n.slice(0, 15)]);
   };
 
+  const rBuyFlex = (id, cost) => {
+    if (pl.bag < cost) return;
+    setPl(prev => ({ ...prev, bag: prev.bag - cost }));
+    setFlex(prev => ({
+      ...prev,
+      [id]: { ...prev[id], owned: true }
+    }));
+    setNews(n => [`💎 FLEX ACQUIRED: Ownership confirmed. Points locked until PR release.`, ...n.slice(0, 15)]);
+  };
+
+  const rTriggerFlexPR = (id, useCash, cost) => {
+    const target = flex[id];
+    if (!target.owned || (target.prActive !== undefined && target.prActive)) return;
+
+    if (useCash) {
+      if (pl.bag < cost) return;
+      setPl(prev => ({ ...prev, bag: prev.bag - cost }));
+    }
+
+    setFlex(prev => {
+      const next = { ...prev };
+      if (prev[id].blitzExpiry !== undefined) {
+        // Functional Flex - 24h Blitz
+        next[id] = { ...prev[id], blitzExpiry: Date.now() + (24 * 60 * 60 * 1000) };
+      } else {
+        // Badge of Honor - Permanent PR Release
+        next[id] = { ...prev[id], prActive: true };
+      }
+      return next;
+    });
+
+    // Grant instant rewards for Badges upon PR activation
+    if (target.prActive !== undefined) {
+      let cloutGain = 0;
+      let auraGain = 0;
+      if (id === 'hypercar') cloutGain = 250;
+      if (id === 'sportsTeam') auraGain = 1500;
+      if (id === 'island') { cloutGain = 1000; auraGain = 500; }
+      if (id === 'archive') auraGain = 800;
+
+      if (cloutGain > 0 || auraGain > 0) {
+        setPl(prev => ({
+          ...prev,
+          clout: Math.min(prev.maxClout, prev.clout + cloutGain),
+          aura: Math.min(prev.maxAura, prev.aura + auraGain)
+        }));
+      }
+    }
+
+    setNews(n => [`📢 MEDIA BLITZ: PR campaign launched for ${id.toUpperCase()}. Rewards unlocked.`, ...n.slice(0, 15)]);
+  };
+
+  const rFoundationSink = (amount) => {
+    if (pl.bag < amount || !flex.foundation.owned) return;
+    setPl(prev => ({ ...prev, bag: prev.bag - amount }));
+    setCampaign(prev => ({
+      ...prev,
+      regionalPolling: {
+        blueWall: Math.min(100, prev.regionalPolling.blueWall + (amount / 100000000)),
+        rustBelt: Math.min(100, prev.regionalPolling.rustBelt + (amount / 100000000)),
+        sunBelt: Math.min(100, prev.regionalPolling.sunBelt + (amount / 100000000))
+      }
+    }));
+    setNews(n => [`🏛️ PHILANTHROPY: Global Foundation donation confirmed. Polling baseline increased.`, ...n.slice(0, 15)]);
+  };
+
   const rElectionNightResolution = async () => {
     if (campaign.currentWeek < 52) return;
 
@@ -2388,6 +2602,20 @@ export const GameProvider = ({ children }) => {
     }
 
     // Reset everything else
+    setFlex({
+      penthouse: { owned: false, blitzExpiry: 0 },
+      logistics: { owned: false, blitzExpiry: 0 },
+      jet: { owned: false, blitzExpiry: 0 },
+      hypercar: { owned: false, prActive: false },
+      art: { owned: false, prActive: false },
+      watchVault: { owned: false, prActive: false },
+      yacht: { owned: false, blitzExpiry: 0 },
+      media: { owned: false, blitzExpiry: 0 },
+      foundation: { owned: false, prActive: false },
+      sportsTeam: { owned: false, prActive: false },
+      island: { owned: false, prActive: false },
+      archive: { owned: false, prActive: false }
+    });
     setTab('HUB');
     setSelTier('0');
     setDeath(null);
@@ -2506,9 +2734,8 @@ export const GameProvider = ({ children }) => {
   }, [pl.tier]);
 
   const cap = useMemo(() => {
-    const caps = [100, 250, 300, 5000, 5000, 999999999];
-    return caps[pl.tier] || caps[0];
-  }, [pl.tier]);
+    return pl.maxClout || 100;
+  }, [pl.maxClout]);
 
   const performHardReset = () => {
     window.isResetting = true;
@@ -2613,6 +2840,20 @@ export const GameProvider = ({ children }) => {
     setSwfInvestment(0);
     setGeoStability(1.0);
     setAntitrustRisk(0);
+    setFlex({
+      penthouse: { owned: false, blitzExpiry: 0 },
+      logistics: { owned: false, blitzExpiry: 0 },
+      jet: { owned: false, blitzExpiry: 0 },
+      hypercar: { owned: false, prActive: false },
+      art: { owned: false, prActive: false },
+      watchVault: { owned: false, prActive: false },
+      yacht: { owned: false, blitzExpiry: 0 },
+      media: { owned: false, blitzExpiry: 0 },
+      foundation: { owned: false, prActive: false },
+      sportsTeam: { owned: false, prActive: false },
+      island: { owned: false, prActive: false },
+      archive: { owned: false, prActive: false }
+    });
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
     setCampaign({
@@ -2671,6 +2912,7 @@ export const GameProvider = ({ children }) => {
       rSneakerDrop, rBuyConsignment, rBuyVault, rVaultAuction, rBuyVaultAsset,
       movieProject, rMovieGreenlight, rMovieHypeBag, rMovieHypeClout, rMovieHypeAura, rMovieRelease,
       smmRetainerActive, rLaunchSmmRetainer, aiSmmFactory, rBuySmmFactory, smmEmpireActive, rBuySmmEmpire,
+      flex, rBuyFlex, rTriggerFlexPR, rFoundationSink,
     activeNotification, triggerNotification, closeNotification,
       generationCount, legacyMultiplier, rRetire, performHardReset
     }}>

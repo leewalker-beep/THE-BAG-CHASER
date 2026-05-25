@@ -56,6 +56,7 @@ import {
   ElectionTab
 } from './components/tabs/PresidentTabs.jsx';
 import { PoliticalSyndicateTab } from './components/tabs/PoliticalSyndicateTab.jsx';
+import { FlexShowcaseTab } from './components/tabs/FlexShowcaseTab.jsx';
 import ElectionWarRoomTab from './components/tabs/ElectionWarRoomTab.jsx';
 import VictorySpeechTab from './components/tabs/VictorySpeechTab.jsx';
 
@@ -100,6 +101,7 @@ const TAB_MAP = {
   'SOVEREIGN':    { component: SovereignTab,    tier: 4 },
   'BILL':         { component: BillTab,         tier: 4 },
   'SYNDICATE':    { component: PoliticalSyndicateTab, tier: 4 },
+  'FLEX_SHOWCASE': { component: FlexShowcaseTab },
   'WAR_ROOM':     { component: ElectionWarRoomTab,    tier: 5 },
   'PAC':          { component: SuperPacTab,     tier: 5 },
   'BLITZ':        { component: BlitzTab,        tier: 5 },
@@ -114,8 +116,8 @@ const TAB_MAP = {
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl, prs, ass, mkt, tab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
-    activeEvent, isEventModalOpen, setIsEventModalOpen
+    pl, prs, ass, mkt, tab, setTab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
+    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident
   } = game || {};
 
 
@@ -196,6 +198,27 @@ const GameInterface = () => {
             >
               CONTINUE THE MOTION
             </button>
+          </div>
+        </div>
+      )}
+
+      {isPresident && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[150] w-full max-w-md animate-fadeIn px-4">
+          <div className="bg-gradient-to-r from-amber-600/30 via-yellow-400/50 to-amber-600/30 backdrop-blur-xl border-2 border-yellow-400/60 rounded-3xl p-4 text-center shadow-[0_0_50px_rgba(245,158,11,0.5)] washington-theme relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
+            <div className="flex flex-col items-center gap-4 relative z-10">
+              <div className="golden-seal">🦅</div>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-yellow-100 font-black text-xs tracking-[0.3em] uppercase drop-shadow-md">The President of the United States</h2>
+                <div className="h-0.5 w-32 bg-yellow-400/50 mx-auto"></div>
+              </div>
+              <button
+                onClick={() => setTab('VICTORY_SPEECH')}
+                className="bg-gradient-to-b from-yellow-300 to-yellow-600 text-black font-black text-xs px-8 py-3 rounded-xl hover:scale-105 transition-all active:scale-95 tracking-[0.2em] uppercase shadow-[0_10px_20px_rgba(0,0,0,0.3)] border-2 border-yellow-200/50 animate-pulse"
+              >
+                EXECUTIVE ORDER: OVAL OFFICE
+              </button>
+            </div>
           </div>
         </div>
       )}
