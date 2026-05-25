@@ -7,8 +7,10 @@ export const PoliticalSyndicateTab = () => {
   const {
     pl, politicalSyndicate, presidencyEligible,
     rAcquirePoliticalAsset, rDeployNarrativeOp, rHostPolicySummit,
-    setTab
+    setTab, flex
   } = useGame();
+
+  if (!flex.yacht.owned) return <LockedTierScreen section={4} />;
 
   const { politicalCapital, assetLeasing, status } = politicalSyndicate;
 
