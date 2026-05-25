@@ -38,7 +38,10 @@ test('Flex Showcase system verifies stat cap shattering', async ({ page }) => {
     await page.waitForTimeout(500);
   }
 
-  // Check if Flex Showcase tab is in the HUD
-  const flexTab = page.locator('button:has-text("FLEX SHOWCASE")');
-  await expect(flexTab).toBeVisible({ timeout: 10000 });
+  // Check if consolidated Flex tabs are in the HUD
+  const corpFlexTab = page.locator('button:has-text("CORP FLEXES")');
+  await expect(corpFlexTab).toBeVisible({ timeout: 10000 });
+
+  const sovFlexTab = page.locator('button:has-text("SOV FLEXES")');
+  await expect(sovFlexTab).toBeVisible({ timeout: 10000 });
 });

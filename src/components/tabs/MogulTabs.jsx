@@ -106,28 +106,19 @@ const AiTrainBtn = () => {
 };
 
 export const BillTab = () => {
-  const { pl, ass, setAss, setPl, bAss, mkt, setTab } = useGame();
-  const sellPrice = (base) => Math.floor(base * (mkt === 1 ? 1.5 + Math.random() * 0.5 : mkt === 2 ? 0.5 + Math.random() * 0.2 : 1.1 + Math.random() * 0.1));
+  const { pl, setPl, mkt, setTab, flex, dUp, up } = useGame();
   const mktTag = mkt === 1 ? '🟢 BULL' : mkt === 2 ? '🔴 RECESSION' : '⚪ NORMAL';
   return (
     <LabShell t="LIFESTYLE & LEGACY" c="green" onHub={() => setTab('HUB')} tier={4}>
-      <div className="text-[10px] font-bold text-slate-300 drop-shadow-sm uppercase tracking-widest text-center">Assets</div>
-      {ass.pent
-        ? <div className="flex items-center gap-2"><div className="flex-1 p-3 bg-green-900/30 border border-green-700 text-green-500 text-center font-bold text-xs tracking-widest rounded-xl">✓ PENTHOUSE {ass.mtgPent ? '(MORTGAGED +60k/mo)' : '(CASH +10k/mo)'}</div><button onClick={() => { const p = sellPrice(5000000); setPl(s => ({ ...s, bag: s.bag + p })); setAss(a => ({ ...a, pent: false, mtgPent: false })); }} className="shrink-0 px-3 py-3 bg-red-900/60 border border-red-700 text-red-400 font-black text-[10px] tracking-widest rounded-xl hover:bg-red-800 active:scale-95 transition-all duration-100">SELL</button></div>
-        : <button onClick={() => { if (pl.bag >= 1000000) { setAss(a => ({ ...a, pent: true, mtgPent: true })); setPl(p => ({ ...p, bag: p.bag - 200000 })); } }} className="w-full p-3 bg-slate-900 border border-slate-700 text-slate-300 drop-shadow-sm text-center font-bold text-xs tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition-all duration-100">🏢 MORTGAGE PENTHOUSE ($200K DOWN)</button>}
-      {ass.mans
-        ? <div className="flex items-center gap-2"><div className="flex-1 p-3 bg-green-900/30 border border-green-700 text-green-500 text-center font-bold text-xs tracking-widest rounded-xl">✓ MANSION {ass.mtgMans ? '(MORTGAGED +250k/mo)' : '(CASH +50k/mo)'}</div><button onClick={() => { const p = sellPrice(25000000); setPl(s => ({ ...s, bag: s.bag + p })); setAss(a => ({ ...a, mans: false, mtgMans: false })); }} className="shrink-0 px-3 py-3 bg-red-900/60 border border-red-700 text-red-400 font-black text-[10px] tracking-widest rounded-xl hover:bg-red-800 active:scale-95 transition-all duration-100">SELL</button></div>
-        : <button onClick={() => { if (pl.bag >= 5000000) { setAss(a => ({ ...a, mans: true, mtgMans: true })); setPl(p => ({ ...p, bag: p.bag - 1000000 })); } }} className="w-full p-3 bg-slate-900 border border-slate-700 text-slate-300 drop-shadow-sm text-center font-bold text-xs tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition-all duration-100">🏡 MORTGAGE MANSION ($1M DOWN)</button>}
-      <div className="text-[10px] font-bold text-slate-300 drop-shadow-sm uppercase mt-2 tracking-widest text-center">Flex Fleet</div>
-      {ass.jet
-        ? <div className="flex items-center gap-2"><div className="flex-1 p-3 bg-green-900/30 border border-green-700 text-green-500 text-center font-bold text-xs tracking-widest rounded-xl">✓ PRIVATE JET {ass.mtgJet ? '(FINANCED +1.5M/mo)' : '(CASH +250k/mo)'}</div><button onClick={() => { const p = sellPrice(100000000); setPl(s => ({ ...s, bag: s.bag + p })); setAss(a => ({ ...a, jet: false, mtgJet: false })); }} className="shrink-0 px-3 py-3 bg-red-900/60 border border-red-700 text-red-400 font-black text-[10px] tracking-widest rounded-xl hover:bg-red-800 active:scale-95 transition-all duration-100">SELL</button></div>
-        : <button onClick={() => { if (pl.bag >= 20000000) { setAss(a => ({ ...a, jet: true, mtgJet: true })); setPl(p => ({ ...p, bag: p.bag - 5000000 })); } }} className="w-full p-3 bg-slate-900 border border-slate-700 text-slate-300 drop-shadow-sm text-center font-bold text-xs tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition-all duration-100">🛩️ FINANCE PRIVATE JET ($5M DOWN)</button>}
       <div className="text-[10px] font-bold text-slate-300 drop-shadow-sm uppercase mt-4 tracking-widest text-center">God Tier Flexes</div>
-      <UpgBtn onClk={() => bAss('spt', 2000000000, 'SPORTS TEAM')} cost={2000000000} title="SPORTS TEAM" unl={ass.spt} pB={pl.bag} />
-      <UpgBtn onClk={() => bAss('spc', 10000000000, 'SPACE CORP')} cost={10000000000} title="SPACE CORP" unl={ass.spc} pB={pl.bag} />
+      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center">
+        <p className="text-[10px] text-slate-400 italic mb-3">Managed via SOVEREIGN FLEXES Dashboard</p>
+        <button onClick={() => setTab('SOV_FLEXES')} className="px-6 py-2 bg-yellow-600 text-white font-black text-[10px] tracking-widest rounded-xl hover:bg-yellow-500 active:scale-95 transition-all">OPEN SOVEREIGN HUB</button>
+      </div>
       <div className="text-[10px] font-bold text-slate-300 drop-shadow-sm uppercase mt-4 tracking-widest text-center">Legacy Prestige (New Game+)</div>
-      <UpgBtn onClk={() => bAss('swf', 25000000000, 'SOVEREIGN WEALTH')} cost={25000000000} title="SOVEREIGN WEALTH FUND" unl={ass.swf} pB={pl.bag} />
-      <div className="text-[8px] text-slate-300 drop-shadow-sm text-center mt-1">{mktTag} — sell prices vary with market</div>
+      <UpgBtn onClk={() => dUp('spc', 10000000000, 'SPACE CORP SECURED.')} cost={10000000000} title="SPACE CORP" unl={up.spc} pB={pl.bag} />
+      <UpgBtn onClk={() => dUp('swf_legacy', 25000000000, 'SOVEREIGN WEALTH FUND ESTABLISHED.')} cost={25000000000} title="SOVEREIGN WEALTH FUND" unl={up.swf_legacy} pB={pl.bag} />
+      <div className="text-[8px] text-slate-300 drop-shadow-sm text-center mt-1">{mktTag} — global prestige tracked</div>
     </LabShell>
   );
 };
