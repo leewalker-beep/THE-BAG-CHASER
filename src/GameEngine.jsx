@@ -91,118 +91,119 @@ export const useGame = () => useContext(GameContext);
 
 const SAVE_KEY = 'bag-chaser-save-v1';
 
-export const GameProvider = ({ children }) => {
+export const getInitialGameState = () => ({
+  version: "1.1",
   // Navigation & Core Frame
-  const [ph, setPh] = useState('PROLOGUE');
-  const [proSt, setProSt] = useState(0);
-  const [alias, setAlias] = useState('');
-  const [diff, setDiff] = useState(2);
-  const [tab, setTab] = useState('HUB');
-  const [selTier, setSelTier] = useState('0');
-  const [death, setDeath] = useState(null);
-  const [cancelIntro, setCancelIntro] = useState(null);
-  const [gBusy, setGBusy] = useState(false);
-  const [rain, setRain] = useState(false);
-  const [swFatigue, setSwFatigue] = useState(0);
-  const [hustleFatigue, setHustleFatigue] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
-  const [karmaFlags, setKarmaFlags] = useState({ usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false });
-  const [fatalTragedyMessage, setFatalTragedyMessage] = useState(null);
-  const [lastHustle, setLastHustle] = useState(null);
-  const [dropshipLock, setDropshipLock] = useState(0);
-  const [vintageLock, setVintageLock] = useState(0);
-  const [smmPenalty, setSmmPenalty] = useState(false);
-  const [techSourceCost, setTechSourceCost] = useState(150);
+  ph: 'PROLOGUE',
+  proSt: 0,
+  alias: '',
+  diff: 2,
+  tab: 'HUB',
+  selTier: '0',
+  death: null,
+  cancelIntro: null,
+  gBusy: false,
+  rain: false,
+  swFatigue: 0,
+  hustleFatigue: { streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 },
+  karmaFlags: { usedCheapBlanks: false, ignoredRefunds: false, soldBootleg: false, ignoredSmmCrisis: false, usedCheapParts: false, ignoredRunnerWelfare: false },
+  fatalTragedyMessage: null,
+  lastHustle: null,
+  dropshipLock: 0,
+  vintageLock: 0,
+  smmPenalty: false,
+  techSourceCost: 150,
 
-  const [smmClients, setSmmClients] = useState(0);
-  const [clientCrisis, setClientCrisis] = useState(false);
-  const [vinCh, setVinCh] = useState(null);
-  const [hustleClicks, setHustleClicks] = useState({ streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 });
-  const [techItem, setTechItem] = useState(null);
-  const [techFlipsComplete, setTechFlipsComplete] = useState(0);
-  const [runnerCount, setRunnerCount] = useState(0);
-  const [runnerBurnout, setRunnerBurnout] = useState(false);
+  smmClients: 0,
+  clientCrisis: false,
+  vinCh: null,
+  hustleClicks: { streetwear: 0, dropship: 0, vintage: 0, tech: 0, smm: 0, runners: 0 },
+  techItem: null,
+  techFlipsComplete: 0,
+  runnerCount: 0,
+  runnerBurnout: false,
 
-  const [saasUsers, setSaasUsers] = useState(0);
-  const [saasPrice, setSaasPrice] = useState(50);
-  const [saasChurn, setSaasChurn] = useState(0.05);
-  const [saasPenaltyActive, setSaasPenaltyActive] = useState(false);
-  const [corpClients, setCorpClients] = useState(0);
-  const [apiLockoutMonths, setApiLockoutMonths] = useState(0);
-  const [creOfficeCount, setCreOfficeCount] = useState(0);
-  const [creRetailCount, setCreRetailCount] = useState(0);
-  const [franchiseCount, setFranchiseCount] = useState(0);
-  const [unionStrikeActive, setUnionStrikeActive] = useState(false);
-  const [unionStrikeIgnored, setUnionStrikeIgnored] = useState(false);
+  saasUsers: 0,
+  saasPrice: 50,
+  saasChurn: 0.05,
+  saasPenaltyActive: false,
+  corpClients: 0,
+  apiLockoutMonths: 0,
+  creOfficeCount: 0,
+  creRetailCount: 0,
+  franchiseCount: 0,
+  unionStrikeActive: false,
+  unionStrikeIgnored: false,
 
-  const [peProgress, setPeProgress] = useState(0);
-  const [guttedFirms, setGuttedFirms] = useState(0);
-  const [supplyChainDisruption, setSupplyChainDisruption] = useState(false);
-  const [peCompoundingYield, setPeCompoundingYield] = useState(1.0);
-  const [artMarketSentiment, setArtMarketSentiment] = useState(0);
-  const [artHoldings, setArtHoldings] = useState(0);
+  peProgress: 0,
+  guttedFirms: 0,
+  supplyChainDisruption: false,
+  peCompoundingYield: 1.0,
+  artMarketSentiment: 0,
+  artHoldings: 0,
 
-  const [audioTracks, setAudioTracks] = useState(0);
-  const [sampleStrike, setSampleStrike] = useState(false);
-  const [pmcSquads, setPmcSquads] = useState(0);
-  const [intelLeak, setIntelLeak] = useState(false);
+  audioTracks: 0,
+  sampleStrike: false,
+  pmcSquads: 0,
+  intelLeak: false,
 
   // Tech Flipping Extensions
-  const [techInterns, setTechInterns] = useState(0);
-  const [bulkPalletsUnlocked, setBulkPalletsUnlocked] = useState(false);
-  const [enterpriseContracts, setEnterpriseContracts] = useState(0);
+  techInterns: 0,
+  bulkPalletsUnlocked: false,
+  enterpriseContracts: 0,
 
   // Indie Audio Syndicate Extensions
-  const [audioUpgrades, setAudioUpgrades] = useState({ mixingSuite: false, analogConsole: false });
-  const [talentScouters, setTalentScouters] = useState(0);
-  const [holwoodSyncActive, setHollywoodSyncActive] = useState(false);
+  audioUpgrades: { mixingSuite: false, analogConsole: false },
+  talentScouters: 0,
+  holwoodSyncActive: false,
 
   // Vintage to Collectible Empire Evolution Line
-  const [collectiblePhase, setCollectiblePhase] = useState('VINTAGE');
-  const [vintageRevenueTracker, setVintageRevenueTracker] = useState(0);
-  const [vintageBoostActive, setVintageBoostActive] = useState(false);
-  const [sneakerBackdoorPlug, setSneakerBackdoorPlug] = useState(false);
-  const [consignmentFeeActive, setConsignmentFeeActive] = useState(false);
-  const [vaultHoldings, setVaultHoldings] = useState([]);
+  collectiblePhase: 'VINTAGE',
+  vintageRevenueTracker: 0,
+  vintageBoostActive: false,
+  sneakerBackdoorPlug: false,
+  consignmentFeeActive: false,
+  vaultHoldings: [],
 
   // SMM Retainer Phase 2
-  const [smmRetainerActive, setSmmRetainerActive] = useState(false);
-  const [aiSmmFactory, setAiSmmFactory] = useState(false);
-  const [smmEmpireActive, setSmmEmpireActive] = useState(false);
+  smmRetainerActive: false,
+  aiSmmFactory: false,
+  smmEmpireActive: false,
 
   // PMC Loop Phase 4
-  const [pmcUnlocked, setPmcUnlocked] = useState(false);
-  const [pmcMercenaries, setPmcMercenaries] = useState(0);
-  const [pmcActiveContracts, setPmcActiveContracts] = useState(0);
-  const [pmcHeatLevel, setPmcHeatLevel] = useState(0.0);
-  const [pmcMercCost, setPmcMercCost] = useState(50000);
-  const [pmcBribeCost, setPmcBribeCost] = useState(25000);
+  pmcUnlocked: false,
+  pmcMercenaries: 0,
+  pmcActiveContracts: 0,
+  pmcHeatLevel: 0.0,
+  pmcMercCost: 50000,
+  pmcBribeCost: 25000,
 
-  const [conglomActive, setConglomActive] = useState(false);
-  const [movieProject, setMovieProject] = useState({ status: 'IDLE', budgetTier: 1, hypeLevel: 0 });
-  const [antitrustRisk, setAntitrustRisk] = useState(0);
-  const [swfInvestment, setSwfInvestment] = useState(0);
-  const [geoStability, setGeoStability] = useState(1.0);
-  const [swfFrozen, setSwfFrozen] = useState(false);
+  conglomActive: false,
+  movieProject: { status: 'IDLE', budgetTier: 1, hypeLevel: 0 },
+  antitrustRisk: 0,
+  swfInvestment: 0,
+  geoStability: 1.0,
+  swfFrozen: false,
 
   // Politics Tier 5
-  const [superPacFunds, setSuperPacFunds] = useState(0);
-  const [approvalRating, setApprovalRating] = useState(15.0);
-  const [lobbyists, setLobbyists] = useState(0);
-  const [lobbyistCost, setLobbyistCost] = useState(5000000);
-  const [mediaBlitzCost, setMediaBlitzCost] = useState(10000000);
-  const [isPresident, setIsPresident] = useState(false);
+  superPacFunds: 0,
+  approvalRating: 15.0,
+  lobbyists: 0,
+  lobbyistCost: 5000000,
+  mediaBlitzCost: 10000000,
+  isPresident: false,
 
-  const [politicalSyndicate, setPoliticalSyndicate] = useState({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
-  const [presidencyEligible, setPresidencyEligible] = useState(false);
+  politicalSyndicate: { politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' },
+  presidencyEligible: false,
 
   // Real World Monitor Ticker Engine
-  const [tickerAdvice, setTickerAdvice] = useState('MARKET WATCH: Global conditions stable. Continue the grind.');
-  const [artBubbleMonths, setArtBubbleMonths] = useState(0);
-  const [supplyChainShockMonths, setSupplyChainShockMonths] = useState(0);
-  const [viralPopMonths, setViralPopMonths] = useState(0);
+  tickerAdvice: 'MARKET WATCH: Global conditions stable. Continue the grind.',
+  artBubbleMonths: 0,
+  supplyChainShockMonths: 0,
+  viralPopMonths: 0,
 
   // Flex Showcase System State
-  const [flex, setFlex] = useState({
+  flex: {
     // Bridge 1 - Corporate
     penthouse: { owned: false, expiresAt: 0 },
     logistics: { owned: false, expiresAt: 0 },
@@ -217,62 +218,224 @@ export const GameProvider = ({ children }) => {
     spt: { owned: false, prActive: false },
     island: { owned: false, prActive: false },
     archive: { owned: false, prActive: false }
-  });
+  },
 
-  const [campaign, setCampaign] = useState({
+  campaign: {
     currentWeek: 1,
     currentMonth: 1,
     warchest: 10000000000,
     phase: 'POLITICS',
     regionalPolling: { blueWall: 35, rustBelt: 35, sunBelt: 35 },
     opponentPolling: { blueWall: 42, rustBelt: 42, sunBelt: 42 }
-  });
+  },
 
-  const [seenNotifications, setSeenNotifications] = useState([]);
-  const [activeNotification, setActiveNotification] = useState(null);
+  seenNotifications: [],
+  activeNotification: null,
 
-  const [activeEvent, setActiveEvent] = useState(null);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  activeEvent: null,
+  isEventModalOpen: false,
 
-  const [isBreakdownActive, setIsBreakdownActive] = useState(false);
-  const [shakeActive, setShakeActive] = useState(false);
-  const [passiveFrozen, setPassiveFrozen] = useState(false);
+  isBreakdownActive: false,
+  shakeActive: false,
+  passiveFrozen: false,
 
   // Financial Systems & Vital Signs
-  const [pl, setPl] = useState({ bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 });
+  pl: { bag: 25000, aura: 100, clout: 20, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 },
+
+  // Macro Environment
+  mkt: 0,
+  news: ['Booting life simulation... System optimal.', 'Market Cycle initialized: NORMAL economy.'],
+  imp: [],
+  mod: { s: false, t: '', m: '', o: [], ui: '' },
+
+  // Tech Tree Infrastructure
+  up: { swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false },
+  skl: { neg: 0, tax: 0, inf: 0 },
+  ass: { mtgPent: false, mans: false, mtgMans: false, mtgJet: false, mtgYct: false, spc: false, swf: false, legalTeam: false },
+
+  // Active Venture Vectors
+  sw: { i: 1, u: 250, p: 45, a: 5000 },
+  drp: { i: 1, u: 500, p: 35, a: 10000 },
+  cc: { m: 'solo', v: 1, n: 1 },
+  pod: { g: 1, q: 20000 },
+  box: { v: 1, t: 1, b: 100000, p: 1 },
+  tur: { t: 1, m: 150000, a: 50000, l: 100000 },
+  tch: { l: false, u: 1200, srv: 0.15, pw: false, vc: false, m: 15000 },
+  crp: { l: 0, t: '', i: 25000, m: 15000 },
+  mov: { g: 1, w: 1, d: 1, s: 1, m: 5000000 },
+  hf: { r: 0, t: 'NVDA', c: 5000000, l: 5 },
+  ai: { ig: false, p: 0, r: 0, d: 1, c: 1, s: 1, dj: 0 },
+  prs: { r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 },
+
+  // Legacy Registry
+  peaks: { peakB: 25000, peakA: 100, peakC: 20 },
+  hl: { sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 },
+  tally: { cryp: 0, box: 0, hf: 0, pres: 0 },
+  generationCount: 0
+});
+
+export const GameProvider = ({ children }) => {
+  const init = getInitialGameState();
+
+  // Navigation & Core Frame
+  const [ph, setPh] = useState(init.ph);
+  const [proSt, setProSt] = useState(init.proSt);
+  const [alias, setAlias] = useState(init.alias);
+  const [diff, setDiff] = useState(init.diff);
+  const [tab, setTab] = useState(init.tab);
+  const [selTier, setSelTier] = useState(init.selTier);
+  const [death, setDeath] = useState(init.death);
+  const [cancelIntro, setCancelIntro] = useState(init.cancelIntro);
+  const [gBusy, setGBusy] = useState(init.gBusy);
+  const [rain, setRain] = useState(init.rain);
+  const [swFatigue, setSwFatigue] = useState(init.swFatigue);
+  const [hustleFatigue, setHustleFatigue] = useState(init.hustleFatigue);
+  const [karmaFlags, setKarmaFlags] = useState(init.karmaFlags);
+  const [fatalTragedyMessage, setFatalTragedyMessage] = useState(init.fatalTragedyMessage);
+  const [lastHustle, setLastHustle] = useState(init.lastHustle);
+  const [dropshipLock, setDropshipLock] = useState(init.dropshipLock);
+  const [vintageLock, setVintageLock] = useState(init.vintageLock);
+  const [smmPenalty, setSmmPenalty] = useState(init.smmPenalty);
+  const [techSourceCost, setTechSourceCost] = useState(init.techSourceCost);
+
+  const [smmClients, setSmmClients] = useState(init.smmClients);
+  const [clientCrisis, setClientCrisis] = useState(init.clientCrisis);
+  const [vinCh, setVinCh] = useState(init.vinCh);
+  const [hustleClicks, setHustleClicks] = useState(init.hustleClicks);
+  const [techItem, setTechItem] = useState(init.techItem);
+  const [techFlipsComplete, setTechFlipsComplete] = useState(init.techFlipsComplete);
+  const [runnerCount, setRunnerCount] = useState(init.runnerCount);
+  const [runnerBurnout, setRunnerBurnout] = useState(init.runnerBurnout);
+
+  const [saasUsers, setSaasUsers] = useState(init.saasUsers);
+  const [saasPrice, setSaasPrice] = useState(init.saasPrice);
+  const [saasChurn, setSaasChurn] = useState(init.saasChurn);
+  const [saasPenaltyActive, setSaasPenaltyActive] = useState(init.saasPenaltyActive);
+  const [corpClients, setCorpClients] = useState(init.corpClients);
+  const [apiLockoutMonths, setApiLockoutMonths] = useState(init.apiLockoutMonths);
+  const [creOfficeCount, setCreOfficeCount] = useState(init.creOfficeCount);
+  const [creRetailCount, setCreRetailCount] = useState(init.creRetailCount);
+  const [franchiseCount, setFranchiseCount] = useState(init.franchiseCount);
+  const [unionStrikeActive, setUnionStrikeActive] = useState(init.unionStrikeActive);
+  const [unionStrikeIgnored, setUnionStrikeIgnored] = useState(init.unionStrikeIgnored);
+
+  const [peProgress, setPeProgress] = useState(init.peProgress);
+  const [guttedFirms, setGuttedFirms] = useState(init.guttedFirms);
+  const [supplyChainDisruption, setSupplyChainDisruption] = useState(init.supplyChainDisruption);
+  const [peCompoundingYield, setPeCompoundingYield] = useState(init.peCompoundingYield);
+  const [artMarketSentiment, setArtMarketSentiment] = useState(init.artMarketSentiment);
+  const [artHoldings, setArtHoldings] = useState(init.artHoldings);
+
+  const [audioTracks, setAudioTracks] = useState(init.audioTracks);
+  const [sampleStrike, setSampleStrike] = useState(init.sampleStrike);
+  const [pmcSquads, setPmcSquads] = useState(init.pmcSquads);
+  const [intelLeak, setIntelLeak] = useState(init.intelLeak);
+
+  // Tech Flipping Extensions
+  const [techInterns, setTechInterns] = useState(init.techInterns);
+  const [bulkPalletsUnlocked, setBulkPalletsUnlocked] = useState(init.bulkPalletsUnlocked);
+  const [enterpriseContracts, setEnterpriseContracts] = useState(init.enterpriseContracts);
+
+  // Indie Audio Syndicate Extensions
+  const [audioUpgrades, setAudioUpgrades] = useState(init.audioUpgrades);
+  const [talentScouters, setTalentScouters] = useState(init.talentScouters);
+  const [holwoodSyncActive, setHollywoodSyncActive] = useState(init.holwoodSyncActive);
+
+  // Vintage to Collectible Empire Evolution Line
+  const [collectiblePhase, setCollectiblePhase] = useState(init.collectiblePhase);
+  const [vintageRevenueTracker, setVintageRevenueTracker] = useState(init.vintageRevenueTracker);
+  const [vintageBoostActive, setVintageBoostActive] = useState(init.vintageBoostActive);
+  const [sneakerBackdoorPlug, setSneakerBackdoorPlug] = useState(init.sneakerBackdoorPlug);
+  const [consignmentFeeActive, setConsignmentFeeActive] = useState(init.consignmentFeeActive);
+  const [vaultHoldings, setVaultHoldings] = useState(init.vaultHoldings);
+
+  // SMM Retainer Phase 2
+  const [smmRetainerActive, setSmmRetainerActive] = useState(init.smmRetainerActive);
+  const [aiSmmFactory, setAiSmmFactory] = useState(init.aiSmmFactory);
+  const [smmEmpireActive, setSmmEmpireActive] = useState(init.smmEmpireActive);
+
+  // PMC Loop Phase 4
+  const [pmcUnlocked, setPmcUnlocked] = useState(init.pmcUnlocked);
+  const [pmcMercenaries, setPmcMercenaries] = useState(init.pmcMercenaries);
+  const [pmcActiveContracts, setPmcActiveContracts] = useState(init.pmcActiveContracts);
+  const [pmcHeatLevel, setPmcHeatLevel] = useState(init.pmcHeatLevel);
+  const [pmcMercCost, setPmcMercCost] = useState(init.pmcMercCost);
+  const [pmcBribeCost, setPmcBribeCost] = useState(init.pmcBribeCost);
+
+  const [conglomActive, setConglomActive] = useState(init.conglomActive);
+  const [movieProject, setMovieProject] = useState(init.movieProject);
+  const [antitrustRisk, setAntitrustRisk] = useState(init.antitrustRisk);
+  const [swfInvestment, setSwfInvestment] = useState(init.swfInvestment);
+  const [geoStability, setGeoStability] = useState(init.geoStability);
+  const [swfFrozen, setSwfFrozen] = useState(init.swfFrozen);
+
+  // Politics Tier 5
+  const [superPacFunds, setSuperPacFunds] = useState(init.superPacFunds);
+  const [approvalRating, setApprovalRating] = useState(init.approvalRating);
+  const [lobbyists, setLobbyists] = useState(init.lobbyists);
+  const [lobbyistCost, setLobbyistCost] = useState(init.lobbyistCost);
+  const [mediaBlitzCost, setMediaBlitzCost] = useState(init.mediaBlitzCost);
+  const [isPresident, setIsPresident] = useState(init.isPresident);
+
+  const [politicalSyndicate, setPoliticalSyndicate] = useState(init.politicalSyndicate);
+  const [presidencyEligible, setPresidencyEligible] = useState(init.presidencyEligible);
+
+  // Real World Monitor Ticker Engine
+  const [tickerAdvice, setTickerAdvice] = useState(init.tickerAdvice);
+  const [artBubbleMonths, setArtBubbleMonths] = useState(init.artBubbleMonths);
+  const [supplyChainShockMonths, setSupplyChainShockMonths] = useState(init.supplyChainShockMonths);
+  const [viralPopMonths, setViralPopMonths] = useState(init.viralPopMonths);
+
+  // Flex Showcase System State
+  const [flex, setFlex] = useState(init.flex);
+
+  const [campaign, setCampaign] = useState(init.campaign);
+
+  const [seenNotifications, setSeenNotifications] = useState(init.seenNotifications);
+  const [activeNotification, setActiveNotification] = useState(init.activeNotification);
+
+  const [activeEvent, setActiveEvent] = useState(init.activeEvent);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(init.isEventModalOpen);
+
+  const [isBreakdownActive, setIsBreakdownActive] = useState(init.isBreakdownActive);
+  const [shakeActive, setShakeActive] = useState(init.shakeActive);
+  const [passiveFrozen, setPassiveFrozen] = useState(init.passiveFrozen);
+
+  // Financial Systems & Vital Signs
+  const [pl, setPl] = useState(init.pl);
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
 
   // Macro Environment
-  const [mkt, setMkt] = useState(0);
-  const [news, setNews] = useState(['Booting life simulation... System optimal.', 'Market Cycle initialized: NORMAL economy.']);
-  const [imp, setImp] = useState([]);
-  const [mod, setMod] = useState({ s: false, t: '', m: '', o: [], ui: '' });
+  const [mkt, setMkt] = useState(init.mkt);
+  const [news, setNews] = useState(init.news);
+  const [imp, setImp] = useState(init.imp);
+  const [mod, setMod] = useState(init.mod);
 
   // Tech Tree Infrastructure
-  const [up, setUp] = useState({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
-  const [skl, setSkl] = useState({ neg: 0, tax: 0, inf: 0 });
-  const [ass, setAss] = useState({ mtgPent: false, mans: false, mtgMans: false, mtgJet: false, mtgYct: false, spc: false, swf: false, legalTeam: false });
+  const [up, setUp] = useState(init.up);
+  const [skl, setSkl] = useState(init.skl);
+  const [ass, setAss] = useState(init.ass);
 
   // Active Venture Vectors
-  const [sw, setSw] = useState({ i: 1, u: 250, p: 45, a: 5000 });
-  const [drp, setDrp] = useState({ i: 1, u: 500, p: 35, a: 10000 });
-  const [cc, setCc] = useState({ m: 'solo', v: 1, n: 1 });
-  const [pod, setPod] = useState({ g: 1, q: 20000 });
-  const [box, setBox] = useState({ v: 1, t: 1, b: 100000, p: 1 });
-  const [tur, setTur] = useState({ t: 1, m: 150000, a: 50000, l: 100000 });
-  const [tch, setTch] = useState({ l: false, u: 1200, srv: 0.15, pw: false, vc: false, m: 15000 });
-  const [crp, setCrp] = useState({ l: 0, t: '', i: 25000, m: 15000 });
-  const [mov, setMov] = useState({ g: 1, w: 1, d: 1, s: 1, m: 5000000 });
-  const [hf, setHf] = useState({ r: 0, t: 'NVDA', c: 5000000, l: 5 });
-  const [ai, setAi] = useState({ ig: false, p: 0, r: 0, d: 1, c: 1, s: 1, dj: 0 });
-  const [prs, setPrs] = useState({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
+  const [sw, setSw] = useState(init.sw);
+  const [drp, setDrp] = useState(init.drp);
+  const [cc, setCc] = useState(init.cc);
+  const [pod, setPod] = useState(init.pod);
+  const [box, setBox] = useState(init.box);
+  const [tur, setTur] = useState(init.tur);
+  const [tch, setTch] = useState(init.tch);
+  const [crp, setCrp] = useState(init.crp);
+  const [mov, setMov] = useState(init.mov);
+  const [hf, setHf] = useState(init.hf);
+  const [ai, setAi] = useState(init.ai);
+  const [prs, setPrs] = useState(init.prs);
 
   // Legacy Registry
-  const [peaks, setPeaks] = useState({ peakB: 25000, peakA: 100, peakC: 20 });
-  const [hl, setHl] = useState({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
-  const [tally, setTally] = useState({ cryp: 0, box: 0, hf: 0, pres: 0 });
-  const [generationCount, setGenerationCount] = useState(0);
+  const [peaks, setPeaks] = useState(init.peaks);
+  const [hl, setHl] = useState(init.hl);
+  const [tally, setTally] = useState(init.tally);
+  const [generationCount, setGenerationCount] = useState(init.generationCount);
   const legacyMultiplier = 1 + (generationCount * 0.25);
 
   // Persistent Save Engine Ref for Stable Background Saves
@@ -296,14 +459,46 @@ export const GameProvider = ({ children }) => {
     politicalSyndicate, presidencyEligible, tickerAdvice, artBubbleMonths, supplyChainShockMonths, viralPopMonths,
     flex, campaign,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
-    box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount
+    box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount,
+    version: "1.1"
   };
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
-        const d = JSON.parse(saved);
+        let d = JSON.parse(saved);
+
+        // MIGRATION LAYER
+        if (!d.version || d.version === "1.0") {
+          // Deep merge helper to ensure nested properties (like flex) are not lost
+          const deepMerge = (target, source) => {
+            for (const key in source) {
+              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                if (!target[key]) target[key] = {};
+                deepMerge(target[key], source[key]);
+              } else {
+                target[key] = source[key];
+              }
+            }
+            return target;
+          };
+
+          // Translate legacy keys
+          if (d.blitzExpiry) {
+            // Map old blitzExpiry to relevant functional flexes if appropriate,
+            // but usually it was global or tied to one.
+            // For safety, we map it to penthouse if owned.
+            if (d.flex?.penthouse?.owned) {
+              d.flex.penthouse.expiresAt = d.blitzExpiry;
+            }
+            delete d.blitzExpiry;
+          }
+
+          d = deepMerge(init, d);
+          d.version = "1.1";
+        }
+
         if (d?.ph) setPh(d.ph);
         if (d?.proSt !== undefined) setProSt(d.proSt);
         if (d?.alias) setAlias(d.alias);

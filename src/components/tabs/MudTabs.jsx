@@ -17,7 +17,6 @@ export const SwTab = () => {
     else if (roll < 0.35) { rev = Math.floor(200000 * (1.2 + Math.random() * 0.8)); msg = 'Slow month. Global retail net +$' + fMny(rev - 200000); }
     else if (roll < 0.80) { rev = Math.floor(200000 * (2.5 + Math.random() * 1.5)); msg = 'Units moved worldwide. Net +$' + fMny(rev - 200000); }
     else { rev = Math.floor(200000 * (5 + Math.random() * 3)); msg = 'VIRAL SELLOUT GLOBALLY! Net +$' + fMny(rev - 200000); }
-    console.log(msg);
     setPl(p => ({ ...p, bag: p.bag - 200000 + rev }));
     adv(); return rev - 200000;
   };
