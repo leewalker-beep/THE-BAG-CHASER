@@ -76,6 +76,7 @@ export const CorporateFlexesTab = () => {
             <button
               disabled={!canAfford}
               onClick={() => rBuyFlex(item.id, item.cost)}
+              data-testid={`buy-flex-${item.id}`}
               className={`text-[10px] font-black px-4 py-2 rounded-xl transition-all active:scale-95 ${canAfford ? 'bg-white text-black hover:bg-slate-200 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
             >
               PURCHASE

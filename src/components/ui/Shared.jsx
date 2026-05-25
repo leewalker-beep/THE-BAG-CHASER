@@ -150,7 +150,7 @@ export const LockedTierScreen = ({ section }) => {
   if (!tier) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-slate-900/80 border border-slate-700 rounded-2xl text-center gap-4">
+    <div data-testid={`locked-tier-${section}`} className="flex flex-col items-center justify-center p-8 bg-slate-900/80 border border-slate-700 rounded-2xl text-center gap-4">
       <div className="text-6xl">🔒</div>
       <h2 className="text-2xl font-black text-white uppercase tracking-widest">{tier.label} LOCKED</h2>
       <p className="text-slate-300 drop-shadow-sm text-sm">Reach the required milestones to unlock this sector.</p>

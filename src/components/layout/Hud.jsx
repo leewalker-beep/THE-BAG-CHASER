@@ -35,6 +35,7 @@ export const Hud = () => {
               <div className="text-[9px] font-bold text-slate-300 drop-shadow-sm tracking-widest leading-none font-hack">NET WORTH — {alias || 'ANON'}</div>
               <button
                 onClick={handleHardReset}
+                data-testid="wipe-save-btn"
                 className="text-[8px] font-black text-red-500 hover:text-red-400 border border-red-500/30 hover:border-red-500 px-1.5 py-0.5 rounded bg-red-900/10 transition-all active:scale-95 uppercase tracking-widest font-hack"
               >
                 Wipe Save
@@ -75,7 +76,9 @@ export const Hud = () => {
             const items = [];
 
             items.push(
-              <button key={t.id} onClick={() => { setSelTier(idx.toString()); setTab('HUB'); }}
+              <button key={t.id}
+                onClick={() => { setSelTier(idx.toString()); setTab('HUB'); }}
+                data-testid={`tier-nav-${idx}`}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${ (tab === 'HUB' && selTier === idx.toString()) ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${!unlocked ? 'opacity-60' : ''}`}>
                 {unlocked ? t.label.toUpperCase() : `🔒 ${t.label.toUpperCase()}`}
               </button>
@@ -84,7 +87,9 @@ export const Hud = () => {
             // "CORPORATE FLEXES" after Corporate (Idx 2)
             if (idx === 2) {
               items.push(
-                <button key="corp_flex_nav" onClick={() => { setTab('CORP_FLEXES'); }}
+                <button key="corp_flex_nav"
+                  onClick={() => { setTab('CORP_FLEXES'); }}
+                  data-testid="nav-corp-flexes"
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 relative ${tab === 'CORP_FLEXES' ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${showFlexAlert ? 'animate-pulse border border-yellow-500/50' : ''}`}>
                   CORP FLEXES
                 </button>
@@ -94,7 +99,9 @@ export const Hud = () => {
             // "SOV FLEXES" between Mogul (Idx 4) and President (Idx 5)
             if (idx === 4) {
               items.push(
-                <button key="sov_flex_nav" onClick={() => { setTab('SOV_FLEXES'); }}
+                <button key="sov_flex_nav"
+                  onClick={() => { setTab('SOV_FLEXES'); }}
+                  data-testid="nav-sov-flexes"
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'SOV_FLEXES' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
                   SOV FLEXES
                 </button>

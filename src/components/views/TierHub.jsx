@@ -65,6 +65,7 @@ export const TierHub = () => {
         {/* Left Column: Compact Rest Button */}
         <button
           onClick={rRest}
+          data-testid="rest-btn"
           className="w-full h-full py-4 bg-purple-900/40 border-2 border-purple-500 rounded-xl font-black text-purple-400 tracking-widest hover:bg-purple-800/40 transition-all active:scale-95 duration-100 flex flex-col items-center justify-center gap-2"
         >
           <span className="text-3xl">😴</span>
@@ -123,6 +124,7 @@ export const TierHub = () => {
           <div key={hKey} className="relative aspect-[4/3]">
             <button
               onClick={() => !isStub && setTab?.(hKey)}
+              data-testid={`hustle-btn-${hKey}`}
               className={`w-full h-full p-6 rounded-xl border font-bold text-sm tracking-wide transition-all active:scale-95 duration-100 shadow-lg flex flex-col items-center justify-between
                 ${isStub
                   ? 'bg-slate-900/40 border-slate-800 text-slate-300 drop-shadow-sm cursor-not-allowed'
