@@ -51,14 +51,14 @@ export const CorporateFlexesTab = () => {
   const { pl, flex, rBuyFlex, rTriggerFlexPR, setTab } = useGame();
 
   const renderFlexCard = (item) => {
-    const status = flex[item.id];
+    const status = flex?.[item.id];
     const isOwned = status?.owned;
     const isBlitzed = status?.expiresAt > Date.now();
     const isPRActive = status?.prActive;
-    const canAfford = pl.bag >= item.cost;
+    const canAfford = (pl?.bag || 0) >= item.cost;
 
     const prCost = Math.floor(item.cost * 0.25); // "High Cash Premium" - 25%
-    const canAffordPR = pl.bag >= prCost;
+    const canAffordPR = (pl?.bag || 0) >= prCost;
 
     return (
       <div key={item.id} className={`glass-card p-5 rounded-2xl border transition-all ${item.type === 'trophy' ? 'border-emerald-500/40 bg-emerald-900/10' : 'border-blue-500/40 bg-blue-900/10'}`}>

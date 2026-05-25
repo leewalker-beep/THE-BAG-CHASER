@@ -115,7 +115,7 @@ const GameInterface = () => {
   const game = useGame();
   const {
     pl, prs, ass, mkt, tab, setTab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
-    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident
+    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex
   } = game || {};
 
 

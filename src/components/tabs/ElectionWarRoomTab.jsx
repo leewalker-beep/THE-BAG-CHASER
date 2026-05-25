@@ -12,7 +12,7 @@ const ElectionWarRoomTab = () => {
     setTab
   } = useGame();
 
-  const { currentWeek, currentMonth, warchest, phase, regionalPolling, opponentPolling } = campaign;
+  const { currentWeek, currentMonth, warchest, phase, regionalPolling, opponentPolling } = campaign || {};
 
   const isHqPhase = phase === 'CORPORATE_HQ';
   const isCompleted = phase === 'COMPLETED';

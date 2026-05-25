@@ -57,14 +57,14 @@ export const SovereignFlexesTab = () => {
   }
 
   const renderFlexCard = (item) => {
-    const status = flex[item.id];
+    const status = flex?.[item.id];
     const isOwned = status?.owned;
     const isBlitzed = status?.expiresAt > Date.now();
     const isPRActive = status?.prActive;
-    const canAfford = pl.bag >= item.cost;
+    const canAfford = (pl?.bag || 0) >= item.cost;
 
     const prCost = Math.floor(item.cost * 0.20); // Sovereign PR cost - 20%
-    const canAffordPR = pl.bag >= prCost;
+    const canAffordPR = (pl?.bag || 0) >= prCost;
 
     return (
       <div key={item.id} className={`glass-card p-6 rounded-2xl border transition-all ${item.type === 'trophy' ? 'border-amber-500/40 bg-amber-900/10' : 'border-purple-500/40 bg-purple-900/10'}`}>
@@ -128,8 +128,8 @@ export const SovereignFlexesTab = () => {
               <div className="bg-black/60 p-4 rounded-2xl border border-purple-500/20 shadow-inner">
                 <div className="text-[10px] font-black text-purple-400 mb-3 uppercase tracking-widest text-center">Inject Capital into National Narrative</div>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => rFoundationSink(100000000)} className="py-2.5 bg-slate-900 border border-slate-700 text-white text-[9px] font-black rounded-xl hover:bg-slate-800 hover:border-purple-500/40 transition-all uppercase">Donate $100M</button>
-                  <button onClick={() => rFoundationSink(500000000)} className="py-2.5 bg-slate-900 border border-slate-700 text-white text-[9px] font-black rounded-xl hover:bg-slate-800 hover:border-purple-500/40 transition-all uppercase">Donate $500M</button>
+                  <button onClick={() => rFoundationSink?.(100000000)} className="py-2.5 bg-slate-900 border border-slate-700 text-white text-[9px] font-black rounded-xl hover:bg-slate-800 hover:border-purple-500/40 transition-all uppercase">Donate $100M</button>
+                  <button onClick={() => rFoundationSink?.(500000000)} className="py-2.5 bg-slate-900 border border-slate-700 text-white text-[9px] font-black rounded-xl hover:bg-slate-800 hover:border-purple-500/40 transition-all uppercase">Donate $500M</button>
                 </div>
               </div>
             )}

@@ -5,7 +5,7 @@ import { LabShell, FlashBtn, LockedTierScreen } from '../ui/Shared.jsx';
 
 const CampaignResumeBtn = () => {
   const { campaign, rResumeCampaign } = useGame();
-  if (campaign.phase !== 'CORPORATE_HQ') return null;
+  if (campaign?.phase !== 'CORPORATE_HQ') return null;
 
   return (
     <div className="mt-4 p-4 bg-red-900/20 border-2 border-red-600 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.3)]">
@@ -13,7 +13,7 @@ const CampaignResumeBtn = () => {
         onClick={rResumeCampaign}
         className="w-full py-3 bg-red-600 text-white font-black tracking-widest text-sm rounded-xl hover:bg-red-500 transition-all active:scale-95"
       >
-        RESUME CAMPAIGN TRAIL (MONTH {campaign.currentMonth + 1})
+        RESUME CAMPAIGN TRAIL (MONTH {(campaign?.currentMonth || 0) + 1})
       </button>
     </div>
   );
