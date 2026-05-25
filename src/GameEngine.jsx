@@ -1709,22 +1709,62 @@ export const GameProvider = ({ children }) => {
     return 650;
   };
 
-  const rProcessBulkPallet = async () => {
+  const rProcessBulkPallet = async (correct = 0, incorrect = 0) => {
     const baseCost = 5000;
     const shockMultiplier = stateRef.current.supplyChainShockMonths > 0 ? 1.2 : 1.0;
     const cost = Math.floor(baseCost * shockMultiplier);
 
     if (pl.bag < cost || pl.mentalHealth < 40) return;
-    setPl(p => ({ ...p, bag: p.bag - cost, mentalHealth: p.mentalHealth - 40 }));
-    await new Promise(r => setTimeout(r, 1500));
-    // Math: 15 units, baseline profit $650 per unit. Scalar 14x for wholesale efficiency.
+
+    const mhPenalty = incorrect * 2;
+    setPl(p => ({
+      ...p,
+      bag: p.bag - cost,
+      mentalHealth: Math.max(0, p.mentalHealth - 40 - mhPenalty)
+    }));
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Math: Correct flicks apply 14x profit scalar.
     const unitProfit = 650;
-    const bulkProfit = unitProfit * 14;
+    const bulkProfit = (unitProfit * 14) * (correct / Math.max(1, correct + incorrect));
     const finalPayout = Math.floor((baseCost + bulkProfit) * legacyMultiplier);
+
     setPl(p => ({ ...p, bag: p.bag + finalPayout, clout: Math.min(p.maxClout, p.clout + 10) }));
-    setTechFlipsComplete(prev => prev + 15);
+    setTechFlipsComplete(prev => prev + correct);
+
     triggerImpact('bag', finalPayout - cost);
-    setNews(n => [`📦 TECH: Bulk Pallet Processed! 15 units flipped. Net Profit: $${(finalPayout - cost).toLocaleString()}.`, ...n.slice(0, 15)]);
+    setNews(n => [`📦 TECH: Bulk Pallet Processed! ${correct} units salvaged. Net Profit: $${(finalPayout - cost).toLocaleString()}.`, ...n.slice(0, 15)]);
+    adv();
+  };
+
+  const rTechMicroSolder = async (success) => {
+    const cost = 1000;
+    if (pl.bag < cost) return;
+
+    setPl(p => ({ ...p, bag: p.bag - cost }));
+    await new Promise(r => setTimeout(r, 500));
+
+    if (success) {
+      // Double yield of a premium repair ($750 * 2 = $1500)
+      const payout = Math.floor(1500 * legacyMultiplier);
+      setPl(p => ({
+        ...p,
+        bag: p.bag + payout,
+        clout: Math.min(p.maxClout, p.clout + 50),
+        aura: Math.min(p.maxAura, p.aura + 5)
+      }));
+      setTechFlipsComplete(prev => prev + 5);
+      triggerImpact('bag', payout - cost);
+      setNews(n => [`🔬 TECH: Micro-Soldering Successful! Yield doubled, +50 Clout.`, ...n.slice(0, 15)]);
+    } else {
+      setPl(p => ({
+        ...p,
+        aura: Math.max(0, p.aura - 10),
+        mentalHealth: Math.max(0, p.mentalHealth - 15)
+      }));
+      setNews(n => [`💥 TECH: Circuit Shorted! Equipment damaged, reputation hit.`, ...n.slice(0, 15)]);
+    }
     adv();
   };
 
@@ -3197,7 +3237,7 @@ export const GameProvider = ({ children }) => {
     <GameContext.Provider value={{
       ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
-      rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
+      rTechSource, rTechFixA, rTechFixB, rTechMicroSolder, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
       rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,

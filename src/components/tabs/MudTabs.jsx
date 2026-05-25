@@ -87,7 +87,25 @@ export const DropTab = () => {
 
 
 export const TechFlipTab = () => {
-  const { pl, setPl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, setTab, karmaFlags, setKarmaFlags, techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts, executeChaosRoll } = useGame();
+  const { pl, setPl, techItem, techFlipsComplete, rTechSource, rTechFixA, rTechFixB, rProcessBulkPallet, rTechMicroSolder, setTab, karmaFlags, setKarmaFlags, techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts, executeChaosRoll } = useGame();
+
+  const [repairProgress, setRepairProgress] = React.useState(0);
+  const [lastX, setLastX] = React.useState(null);
+
+  // Level 2 State
+  const [bulkTriageActive, setBulkTriageActive] = React.useState(false);
+  const [triageTimer, setTriageTimer] = React.useState(0);
+  const [currentCard, setCurrentCard] = React.useState(null);
+  const [triageCorrect, setTriageCorrect] = React.useState(0);
+  const [triageIncorrect, setTriageIncorrect] = React.useState(0);
+  const [flickAnim, setFlickAnim] = React.useState('');
+
+  // Level 3 State
+  const [labActive, setLabActive] = React.useState(false);
+  const [sliderVal, setSliderVal] = React.useState(50);
+  const [targetY, setTargetY] = React.useState(40); // 0-80
+  const [holdTime, setHoldTime] = React.useState(0);
+  const [labStatus, setLabStatus] = React.useState('IDLE');
 
   const buyIntern = () => {
     if (pl.bag >= 2000) {
@@ -110,6 +128,110 @@ export const TechFlipTab = () => {
     }
   };
 
+  const handleSwipe = (e) => {
+    if (repairProgress >= 100) return;
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    if (lastX !== null) {
+      const delta = Math.abs(clientX - lastX);
+      if (delta > 5) {
+        setRepairProgress(prev => Math.min(100, prev + 2));
+      }
+    }
+    setLastX(clientX);
+  };
+
+  const resetSwipe = () => setLastX(null);
+
+  // Level 2 Logic
+  const startBulkPallet = () => {
+    if (pl.bag < 5000 || pl.mentalHealth < 40) return;
+    setBulkTriageActive(true);
+    setTriageTimer(5);
+    setTriageCorrect(0);
+    setTriageIncorrect(0);
+    spawnCard();
+  };
+
+  const spawnCard = () => {
+    const types = ['SCRAP', 'REPAIRABLE', 'PRISTINE'];
+    setCurrentCard(types[Math.floor(Math.random() * types.length)]);
+    setFlickAnim('');
+  };
+
+  const handleFlick = (dir) => {
+    if (!bulkTriageActive || !currentCard) return;
+
+    let isCorrect = false;
+    if (dir === 'left' && currentCard === 'SCRAP') isCorrect = true;
+    if (dir === 'right' && currentCard === 'REPAIRABLE') isCorrect = true;
+    if (dir === 'up' && currentCard === 'PRISTINE') isCorrect = true;
+
+    if (isCorrect) setTriageCorrect(prev => prev + 1);
+    else setTriageIncorrect(prev => prev + 1);
+
+    setFlickAnim(dir);
+    setTimeout(spawnCard, 200);
+  };
+
+  React.useEffect(() => {
+    let interval;
+    if (bulkTriageActive && triageTimer > 0) {
+      interval = setInterval(() => setTriageTimer(t => t - 1), 1000);
+    } else if (bulkTriageActive && triageTimer === 0) {
+      setBulkTriageActive(false);
+      rProcessBulkPallet(triageCorrect, triageIncorrect);
+    }
+    return () => clearInterval(interval);
+  }, [bulkTriageActive, triageTimer, triageCorrect, triageIncorrect, rProcessBulkPallet]);
+
+  // Level 3 Logic
+  const startLab = () => {
+    if (pl.bag < 1000) return; // Entry cost for high-end gear
+    setLabActive(true);
+    setLabStatus('CALIBRATING');
+    setHoldTime(0);
+  };
+
+  React.useEffect(() => {
+    let interval;
+    if (labActive && labStatus === 'CALIBRATING') {
+      interval = setInterval(() => {
+        // Simple oscillation logic simulated here or via CSS
+        // For logic check, we need to know where the oscillating target is.
+        // We'll use a ref or state updated by a timer for better precision if needed,
+        // but let's stick to a 100ms tick for the "sweet spot" check.
+
+        // Let's simulate targetY oscillation 0-80
+        setTargetY(y => {
+          const time = Date.now() / 1000;
+          return 40 + Math.sin(time * 2) * 40;
+        });
+
+        const diff = Math.abs(sliderVal - targetY);
+        if (diff < 10) {
+          setHoldTime(h => {
+            if (h >= 20) { // 2 seconds
+              setLabStatus('SUCCESS');
+              return h;
+            }
+            return h + 1;
+          });
+        } else {
+          setHoldTime(0);
+        }
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [labActive, labStatus, sliderVal, targetY]);
+
+  React.useEffect(() => {
+    if (labStatus === 'SUCCESS') {
+      setLabActive(false);
+      rTechMicroSolder(true);
+      setLabStatus('IDLE');
+    }
+  }, [labStatus, rTechMicroSolder]);
+
   return (
     <LabShell hustleKey="tech" t="TECH FLIPPING" c="cyan" fontCls="font-tech" onHub={() => setTab('HUB')} tier={0}>
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -121,10 +243,7 @@ export const TechFlipTab = () => {
           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${karmaFlags.usedCheapParts ? 'right-1' : 'left-1'}`}></div>
         </button>
       </div>
-      <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Repair Cost</div>
-        <div className="text-xs font-black text-purple-400">10-15 MENTAL HEALTH</div>
-      </div>
+
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
           <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Mastery</div>
@@ -136,20 +255,141 @@ export const TechFlipTab = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 mb-4">
-        {!bulkPalletsUnlocked ? (
-          <button onClick={buyPallets} disabled={pl.bag < 10000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
-            Unlock Bulk Pallets ($10k)
-          </button>
+      {/* LEVEL 3: MICRO-SOLDERING LAB */}
+      {labActive && (
+        <div className="tech-lab p-6 rounded-xl mb-4 flex gap-4 items-center h-64 overflow-hidden relative">
+            <div className="flex-1 flex flex-col justify-between h-full">
+               <div className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Calibration Wave</div>
+               <div className="relative flex-1 bg-black/40 rounded border border-purple-500/30 my-2 overflow-hidden">
+                  {/* Sweet Spot Boundary */}
+                  <div
+                    className="absolute w-full bg-green-500/20 border-y border-green-500/50 transition-all duration-100"
+                    style={{ height: '20%', top: `${targetY}%` }}
+                  ></div>
+                  {/* Pointer */}
+                  <div
+                    className="absolute w-full h-1 bg-white shadow-[0_0_8px_white] transition-all duration-75"
+                    style={{ top: `${sliderVal}%` }}
+                  ></div>
+               </div>
+               <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-500 transition-all duration-100" style={{ width: `${(holdTime/20)*100}%` }}></div>
+               </div>
+            </div>
+
+            <div className="w-12 h-full flex flex-col items-center gap-2">
+               <div className="text-[8px] font-bold text-purple-300 uppercase">Fader</div>
+               <input
+                type="range"
+                min="0" max="100"
+                value={sliderVal}
+                onChange={(e) => setSliderVal(parseInt(e.target.value))}
+                className="w-full h-full accent-purple-500 cursor-pointer appearance-none bg-slate-800 rounded-lg"
+                style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+               />
+            </div>
+
+            <button
+              onClick={() => { setLabActive(false); rTechMicroSolder(false); }}
+              className="absolute top-2 right-2 text-white/30 hover:text-white"
+            >✕</button>
+        </div>
+      )}
+
+      {/* LEVEL 2: BULK PALLET TRIAGE */}
+      {bulkTriageActive && !labActive && (
+        <div className="tech-bulk p-4 rounded-xl mb-4 relative overflow-hidden flex flex-col items-center">
+           <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-0.5 rounded font-black text-xs">0:0{triageTimer}</div>
+           <div className="text-[10px] font-bold text-yellow-500 mb-4 uppercase tracking-tighter text-center">Flick: Left (Scrap) | Right (Repair) | Up (Pristine)</div>
+
+           <div className="relative w-48 h-64 flex items-center justify-center">
+              {currentCard && (
+                <div
+                  className={`flick-card w-40 h-56 bg-slate-700 border-2 border-slate-500 rounded-lg shadow-xl flex items-center justify-center text-xl font-black
+                    ${flickAnim === 'left' ? '-translate-x-64 -rotate-12 opacity-0' :
+                      flickAnim === 'right' ? 'translate-x-64 rotate-12 opacity-0' :
+                      flickAnim === 'up' ? '-translate-y-64 opacity-0' : ''}`}
+                >
+                  [{currentCard}]
+                </div>
+              )}
+           </div>
+
+           <div className="grid grid-cols-3 gap-2 w-full mt-4">
+              <button onClick={() => handleFlick('left')} className="py-2 bg-red-900/40 border border-red-500 text-red-500 text-[10px] font-bold rounded-lg uppercase">Scrap</button>
+              <button onClick={() => handleFlick('up')} className="py-2 bg-cyan-900/40 border border-cyan-500 text-cyan-500 text-[10px] font-bold rounded-lg uppercase">Pristine</button>
+              <button onClick={() => handleFlick('right')} className="py-2 bg-green-900/40 border border-green-500 text-green-500 text-[10px] font-bold rounded-lg uppercase">Repair</button>
+           </div>
+        </div>
+      )}
+
+      {/* LEVEL 1: THE WORKBENCH */}
+      {!bulkTriageActive && !labActive && (
+      <div className="tech-workbench p-4 rounded-xl mb-4 relative overflow-hidden">
+        {!techItem ? (
+           <div className="flex flex-col gap-2">
+             <FlashBtn
+                onClick={() => executeChaosRoll('TECH', rTechSource)}
+                dis={pl.bag < 150}
+                label="SOURCE BRICKED UNIT ($150)"
+                color="cyan-600"
+                txt="white"
+              />
+              {!bulkPalletsUnlocked ? (
+                <button onClick={buyPallets} disabled={pl.bag < 10000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg">
+                  Unlock Bulk Pallets ($10k)
+                </button>
+              ) : (
+                <button onClick={startBulkPallet} disabled={pl.bag < 5000 || pl.mentalHealth < 40} className="w-full py-2 bg-yellow-600 text-black text-[10px] font-black uppercase rounded-lg">
+                  📦 PROCESS BULK PALLET (-$5K)
+                </button>
+              )}
+           </div>
         ) : (
-          <button
-            onClick={rProcessBulkPallet}
-            disabled={pl.bag < 5000 || pl.mentalHealth < 40}
-            className="w-full py-2 bg-cyan-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all"
-          >
-            📦 PROCESS BULK PALLET (-$5K, -40 MH)
-          </button>
+          <div className="flex flex-col items-center">
+             <div
+              onMouseMove={handleSwipe}
+              onTouchMove={handleSwipe}
+              onMouseUp={resetSwipe}
+              onMouseLeave={resetSwipe}
+              onTouchEnd={resetSwipe}
+              className="w-full h-32 bg-black/40 border-2 border-dashed border-cyan-500/50 rounded-lg flex items-center justify-center relative cursor-crosshair mb-4"
+             >
+                {repairProgress < 100 ? (
+                  <>
+                    <div className="absolute inset-0 opacity-10 animate-pulse bg-[url('https://www.transparenttextures.com/patterns/blueprint.png')]"></div>
+                    <div className="text-cyan-500/50 font-black text-4xl uppercase opacity-20">Damaged</div>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[8px] text-cyan-400 animate-bounce">↔ SWIPE TO REPAIR ↔</div>
+                  </>
+                ) : (
+                  <div className="bg-cyan-500 text-black px-4 py-1 rounded font-black text-sm rotate-12 shadow-lg animate-bounce">REFURBISHED</div>
+                )}
+             </div>
+
+             <div className="w-full h-2 bg-slate-800 rounded-full mb-4 overflow-hidden border border-slate-700">
+                <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${repairProgress}%` }}></div>
+             </div>
+
+             {repairProgress >= 100 ? (
+               <FlashBtn
+                onClick={async () => {
+                  const res = await rTechFixB();
+                  setRepairProgress(0);
+                  return res;
+                }}
+                label="FLIP FOR PROFIT"
+                color="green-500"
+                txt="white"
+               />
+             ) : (
+               <div className="text-[10px] text-slate-400 italic">"Gently polish and align components..."</div>
+             )}
+          </div>
         )}
+      </div>
+      )}
+
+      <div className="flex flex-col gap-2">
         <button onClick={buyIntern} disabled={pl.bag < 2000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
           Hire Tech Intern ($2k)
         </button>
@@ -158,42 +398,14 @@ export const TechFlipTab = () => {
             Sign Enterprise Contract ($50k)
           </button>
         )}
+        {techInterns > 0 && (
+          <button onClick={startLab} disabled={pl.bag < 1000 || labActive} className="w-full py-2 bg-purple-900/40 border border-purple-400 text-white text-[10px] font-bold uppercase rounded-lg">
+            🔬 OPEN MICRO-SOLDERING LAB ($1K)
+          </button>
+        )}
       </div>
 
-      {!techItem ? (
-        <FlashBtn
-          onClick={() => executeChaosRoll('TECH', rTechSource)}
-          dis={pl.bag < 150}
-          label="SOURCE BRICKED UNIT ($150)"
-          color="cyan-600"
-          txt="white"
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          <div className="bg-cyan-900/20 border border-cyan-700 p-3 rounded-lg text-center">
-            <div className="text-xs font-bold text-cyan-400 uppercase">Item Sourced: {techItem.name}</div>
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            <FlashBtn
-              onClick={rTechFixA}
-              costStm={10}
-              dis={pl.bag < 30}
-              label="CHEAP PARTS ($30, 50% WIN)"
-              color="slate"
-              txt="white"
-            />
-            <FlashBtn
-              onClick={rTechFixB}
-              costStm={15}
-              dis={pl.bag < 100}
-              label="PREMIUM OEM PARTS ($100, 100% WIN)"
-              color="cyan-600"
-              txt="white"
-            />
-          </div>
-        </div>
-      )}
-      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"Cheap parts risk bricking the unit and losing Aura."</p>
+      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"High-precision repairs require steady hands."</p>
     </LabShell>
   );
 };

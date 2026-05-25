@@ -46,4 +46,17 @@ export const styles = `
 
   .washington-theme { border: 4px solid #f59e0b !important; box-shadow: 0 0 50px rgba(245,158,11,0.4) !important; }
   .golden-seal { background: radial-gradient(circle, #f59e0b 0%, #78350f 100%); width: 80px; height: 80px; border-radius: 50%; border: 4px double #fef3c7; display: flex; items-center; justify-center; font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(245,158,11,0.8)); }
+
+  /* Tech Flipping Redesign Styles */
+  .tech-workbench { background: linear-gradient(135deg, #020617 0%, #0891b2 100%); border: 1px solid #22d3ee; }
+  .tech-bulk { background: #334155; border: 4px solid #eab308; }
+  .tech-lab { background: rgba(88, 28, 135, 0.4); backdrop-filter: blur(12px); border: 2px solid #a855f7; }
+
+  @keyframes oscillating-target { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(80px); } }
+  .animate-oscillate { animation: oscillating-target 3s ease-in-out infinite; }
+
+  @keyframes swipe-hint { 0% { transform: translateX(-20px); opacity: 0.2; } 50% { transform: translateX(20px); opacity: 0.8; } 100% { transform: translateX(-20px); opacity: 0.2; } }
+  .swipe-glow { box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); }
+
+  .flick-card { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s; }
 `;
