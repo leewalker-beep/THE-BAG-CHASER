@@ -3,6 +3,22 @@ import { useGame } from '../../GameEngine.jsx';
 import { fMny } from '../../config.js';
 import { LabShell, FlashBtn, LockedTierScreen } from '../ui/Shared.jsx';
 
+const CampaignResumeBtn = () => {
+  const { campaign, rResumeCampaign } = useGame();
+  if (campaign.phase !== 'CORPORATE_HQ') return null;
+
+  return (
+    <div className="mt-4 p-4 bg-red-900/20 border-2 border-red-600 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+      <button
+        onClick={rResumeCampaign}
+        className="w-full py-3 bg-red-600 text-white font-black tracking-widest text-sm rounded-xl hover:bg-red-500 transition-all active:scale-95"
+      >
+        RESUME CAMPAIGN TRAIL (MONTH {campaign.currentMonth + 1})
+      </button>
+    </div>
+  );
+};
+
 export const TechTab = () => {
   const { pl, saasUsers, saasPrice, saasChurn, saasPenaltyActive, techFlipsComplete, rSaasClick, setTab } = useGame();
   const locked = (pl?.bag || 0) < 1000000 || (pl?.clout || 0) < 150 || (pl?.aura || 0) < 50;
@@ -39,6 +55,7 @@ export const TechTab = () => {
         <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">
           {speedBoost ? "Hardware Mastery boosting acquisition by 20%." : "Master 10 Tech Flips to boost user acquisition."}
         </p>
+        <CampaignResumeBtn />
       </div>
     </LabShell>
   );
@@ -78,6 +95,7 @@ export const AiAgencyTab = () => {
         txt="white"
       />
       <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"40% success rate per deployment. Watch for API Poisoning."</p>
+      <CampaignResumeBtn />
     </LabShell>
   );
 };
@@ -141,6 +159,7 @@ export const CreTab = () => {
       <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">
         "Assets subject to background vacancy risk and market volatility."
       </p>
+      <CampaignResumeBtn />
     </LabShell>
   );
 };
@@ -188,6 +207,7 @@ export const FranchiseTab = () => {
           txt="black"
         />
       )}
+      <CampaignResumeBtn />
     </LabShell>
   );
 };

@@ -56,6 +56,8 @@ import {
   ElectionTab
 } from './components/tabs/PresidentTabs.jsx';
 import { PoliticalSyndicateTab } from './components/tabs/PoliticalSyndicateTab.jsx';
+import ElectionWarRoomTab from './components/tabs/ElectionWarRoomTab.jsx';
+import VictorySpeechTab from './components/tabs/VictorySpeechTab.jsx';
 
 import { TierHub } from './components/views/TierHub.jsx';
 import { AutopsyReport } from './components/views/AutopsyReport.jsx';
@@ -98,10 +100,12 @@ const TAB_MAP = {
   'SOVEREIGN':    { component: SovereignTab,    tier: 4 },
   'BILL':         { component: BillTab,         tier: 4 },
   'SYNDICATE':    { component: PoliticalSyndicateTab, tier: 4 },
+  'WAR_ROOM':     { component: ElectionWarRoomTab,    tier: 5 },
   'PAC':          { component: SuperPacTab,     tier: 5 },
   'BLITZ':        { component: BlitzTab,        tier: 5 },
   'SMEAR':        { component: SmearTab,        tier: 5 },
   'ELECTION':     { component: ElectionTab,     tier: 5 },
+  'VICTORY_SPEECH': { component: VictorySpeechTab, tier: 5 },
   'EXP':          { component: ExpView },
   'FLEX_SHOP':    { component: FlexShopView },
   'FLEXES':       { component: FlexesView },
@@ -137,7 +141,7 @@ const GameInterface = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${game.isPresident ? 'bg-washington' : prs?.r ? 'bg-oval' : ass?.mans ? 'bg-mansion' : ass?.pent ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
 
 
       {isBreakdownActive && (
@@ -225,11 +229,13 @@ const GameInterface = () => {
 };
 
 const BagChaserInner = () => {
-  const { ph, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset } = useGame();
+  const game = useGame();
+  const { ph, pl, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset } = game || {};
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
+      {pl?.isPresident && game?.campaign?.phase === 'COMPLETED' && <div className="victory-flash" />}
       {activeNotification && <NotificationOverlay />}
       {fatalTragedyMessage && (
         <div className="fixed inset-0 bg-black z-[300] flex items-center justify-center p-4 animate-fadeIn">
