@@ -35,11 +35,11 @@ export const VintageTab = () => {
         <div className="flex flex-col gap-4 animate-fadeIn">
           <div className="bg-slate-900 border border-green-500/30 p-4 rounded-2xl text-center">
             <h3 className="text-xl font-black text-green-400 font-hype tracking-widest">THRIFT BIN DIPPING</h3>
-            <p className="text-[10px] text-slate-400 mt-1 italic">"Accumulate $10,000 gross revenue to unlock the Sneaker Underworld."</p>
+            <p className="text-[10px] text-slate-400 mt-1 italic">"Accumulate $2,500 gross revenue to unlock the Sneaker Underworld."</p>
             <div className="mt-3 bg-black/40 h-2 rounded-full overflow-hidden border border-slate-800">
-              <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${Math.min(100, (vintageRevenueTracker / 10000) * 100)}%` }}></div>
+              <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${Math.min(100, (vintageRevenueTracker / 2500) * 100)}%` }}></div>
             </div>
-            <div className="text-[9px] text-slate-400 mt-1 font-mono">${fMny(vintageRevenueTracker)} / $10,000 SECURED</div>
+            <div className="text-[9px] text-slate-400 mt-1 font-mono">${fMny(vintageRevenueTracker)} / $2,500 SECURED</div>
           </div>
 
           {vinCh === 'bootleg' ? (

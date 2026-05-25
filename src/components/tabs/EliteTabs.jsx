@@ -77,14 +77,14 @@ export const PeTab = () => {
 };
 
 export const ArtTab = () => {
-  const { pl, artHoldings, artMarketSentiment, rArtBuy, rArtAuction, setTab } = useGame();
+  const { pl, artHoldings, artMarketSentiment, rArtBuy, rArtAuction, rArtSpeculate, setTab } = useGame();
   const locked = pl.bag < 10000000;
 
   if (locked) return <LockedTierScreen section={3} />;
 
   const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
-  const sentimentLabel = artMarketSentiment > 0.3 ? "🔥 BULLISH" : artMarketSentiment < -0.3 ? "🧊 BEARISH" : "⚖️ NEUTRAL";
-  const sentimentColor = artMarketSentiment > 0.3 ? "text-green-400" : artMarketSentiment < -0.3 ? "text-red-400" : "text-slate-300";
+  const sentimentLabel = artMarketSentiment > 0 ? "📈 TRENDING UP (+10%)" : artMarketSentiment < 0 ? "📉 TRENDING DOWN (-10%)" : "⚖️ STAGNANT";
+  const sentimentColor = artMarketSentiment > 0 ? "text-green-400" : artMarketSentiment < 0 ? "text-red-400" : "text-slate-300";
 
   return (
     <LabShell t="ART SPECULATION" c="pink" fontCls="font-hype" onHub={() => setTab('HUB')} tier={3}>
@@ -97,6 +97,14 @@ export const ArtTab = () => {
       </div>
 
       <div className="flex flex-col gap-2">
+        <FlashBtn
+          onClick={rArtSpeculate}
+          costStm={20}
+          dis={pl.mentalHealth < 20}
+          label="SPECULATE ON MARKET TRENDS (-20 MH)"
+          color="slate-800"
+          txt="pink-400"
+        />
         <FlashBtn
           onClick={rArtBuy}
           costStm={35}

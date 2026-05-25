@@ -159,6 +159,7 @@ export const GameProvider = ({ children }) => {
   // Vintage to Collectible Empire Evolution Line
   const [collectiblePhase, setCollectiblePhase] = useState('VINTAGE');
   const [vintageRevenueTracker, setVintageRevenueTracker] = useState(0);
+  const [vintageBoostActive, setVintageBoostActive] = useState(false);
   const [sneakerBackdoorPlug, setSneakerBackdoorPlug] = useState(false);
   const [consignmentFeeActive, setConsignmentFeeActive] = useState(false);
   const [vaultHoldings, setVaultHoldings] = useState([]);
@@ -278,10 +279,10 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    artMarketSentiment, artHoldings, rArtSpeculate, audioTracks, sampleStrike, pmcSquads, intelLeak,
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
-    collectiblePhase, vintageRevenueTracker, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
+    collectiblePhase, vintageRevenueTracker, vintageBoostActive, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
     smmRetainerActive, aiSmmFactory, smmEmpireActive,
     pmcUnlocked, pmcMercenaries, pmcActiveContracts, pmcHeatLevel, pmcMercCost, pmcBribeCost,
     conglomActive, movieProject, antitrustRisk, swfInvestment,
@@ -348,6 +349,7 @@ export const GameProvider = ({ children }) => {
         if (d.holwoodSyncActive !== undefined) setHollywoodSyncActive(d.holwoodSyncActive);
         if (d.collectiblePhase) setCollectiblePhase(d.collectiblePhase);
         if (d.vintageRevenueTracker !== undefined) setVintageRevenueTracker(d.vintageRevenueTracker);
+        if (d.vintageBoostActive !== undefined) setVintageBoostActive(d.vintageBoostActive);
         if (d.sneakerBackdoorPlug !== undefined) setSneakerBackdoorPlug(d.sneakerBackdoorPlug);
         if (d.consignmentFeeActive !== undefined) setConsignmentFeeActive(d.consignmentFeeActive);
         if (d.vaultHoldings) setVaultHoldings(d.vaultHoldings);
@@ -848,6 +850,10 @@ export const GameProvider = ({ children }) => {
       const enterpriseRev = stateRef.current.enterpriseContracts * 5000;
 
       // Vintage / Collectible passives
+      let vintagePassives = 0;
+      if (stateRef.current.vintageBoostActive) {
+        vintagePassives = (stateRef.current.hustleClicks.vintage * 50) * 0.5; // Estimated 50% boost value
+      }
       let consignmentRev = 0; if (stateRef.current.collectiblePhase === "CONSIGNMENT") { consignmentRev = Math.floor(5000 * (stateRef.current.pl.clout / 100)); }
 
       const saasRev = (stateRef.current.saasUsers * saasPrice) * (saasPenaltyActive ? 0.5 : 1);
@@ -889,7 +895,7 @@ export const GameProvider = ({ children }) => {
       }
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev) * legacyMultiplier);
+      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives) * legacyMultiplier);
       if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
@@ -1177,7 +1183,12 @@ export const GameProvider = ({ children }) => {
       setVintageRevenueTracker(prev => {
         const next = prev + net;
         // Phase Transitions: Only VINTAGE -> SNEAKER is automatic
-        if (next >= 10000 && collectiblePhase === 'VINTAGE') setCollectiblePhase('SNEAKER');
+        if (next >= 2500 && collectiblePhase === 'VINTAGE') {
+          setCollectiblePhase('SNEAKER');
+          setVintageBoostActive(true);
+          setPl(p => ({ ...p, aura: p.aura + 500 }));
+          setNews(n => ["🌟 VINTAGE EMPIRE UNLOCKED! +500 Aura & +50% Passive Revenue Boost!", ...n.slice(0, 15)]);
+        }
         return next;
       });
     }
@@ -1464,6 +1475,21 @@ export const GameProvider = ({ children }) => {
     return 650;
   };
 
+  const rProcessBulkPallet = async () => {
+    if (pl.bag < 5000 || pl.mentalHealth < 40) return;
+    setPl(p => ({ ...p, bag: p.bag - 5000, mentalHealth: p.mentalHealth - 40 }));
+    await new Promise(r => setTimeout(r, 1500));
+    // Math: 15 units, baseline profit $650 per unit. Scalar 14x for wholesale efficiency.
+    const unitProfit = 650;
+    const bulkProfit = unitProfit * 14;
+    const finalPayout = Math.floor((5000 + bulkProfit) * legacyMultiplier);
+    setPl(p => ({ ...p, bag: p.bag + finalPayout, clout: Math.min(p.maxClout, p.clout + 10) }));
+    setTechFlipsComplete(prev => prev + 15);
+    triggerImpact('bag', finalPayout - 5000);
+    setNews(n => [`📦 TECH: Bulk Pallet Processed! 15 units flipped. Net Profit: $${(finalPayout - 5000).toLocaleString()}.`, ...n.slice(0, 15)]);
+    adv();
+  };
+
   const rRunnerRecruit = async () => {
     if (pl.bag < 300 || pl.mentalHealth < 25 || pl.clout < 20) return;
     updateFatigue('runners');
@@ -1646,6 +1672,16 @@ export const GameProvider = ({ children }) => {
       }
       return next;
     });
+    adv();
+  };
+
+  const rArtSpeculate = async () => {
+    if (pl.mentalHealth < 20) return;
+    setPl(p => ({ ...p, mentalHealth: p.mentalHealth - 20 }));
+    // Shift sentiment randomly to represent "Speculation"
+    const shift = (Math.random() - 0.5) * 0.4;
+    setArtMarketSentiment(prev => Math.max(-1, Math.min(1, prev + shift)));
+    setNews(prev => ["🎨 ART: Market speculation executed. Sentiment shifted.", ...prev.slice(0, 15)]);
     adv();
   };
 
@@ -2911,21 +2947,21 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, isEventModalOpen, setIsEventModalOpen, activeEvent,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
       rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
       supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
-      artMarketSentiment, artHoldings,
+      artMarketSentiment, artHoldings, rArtSpeculate,
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
       audioTracks, setAudioTracks, sampleStrike, setSampleStrike, pmcSquads, setPmcSquads, intelLeak, setIntelLeak,
       techInterns, setTechInterns, bulkPalletsUnlocked, setBulkPalletsUnlocked, enterpriseContracts, setEnterpriseContracts,
       audioUpgrades, setAudioUpgrades, talentScouters, setTalentScouters, holwoodSyncActive, setHollywoodSyncActive,
-      collectiblePhase, setCollectiblePhase, vintageRevenueTracker, setVintageRevenueTracker, sneakerBackdoorPlug, setSneakerBackdoorPlug, consignmentFeeActive, setConsignmentFeeActive, vaultHoldings, setVaultHoldings,
+      collectiblePhase, setCollectiblePhase, vintageRevenueTracker, setVintageRevenueTracker, vintageBoostActive, setVintageBoostActive, sneakerBackdoorPlug, setSneakerBackdoorPlug, consignmentFeeActive, setConsignmentFeeActive, vaultHoldings, setVaultHoldings,
       pmcUnlocked, setPmcUnlocked, pmcMercenaries, setPmcMercenaries, pmcActiveContracts, setPmcActiveContracts,
       pmcHeatLevel, setPmcHeatLevel, pmcMercCost, setPmcMercCost, pmcBribeCost, setPmcBribeCost,
       superPacFunds, setSuperPacFunds, approvalRating, setApprovalRating, lobbyists, setLobbyists,

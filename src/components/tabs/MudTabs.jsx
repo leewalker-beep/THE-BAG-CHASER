@@ -138,9 +138,17 @@ export const TechFlipTab = () => {
       </div>
 
       <div className="flex flex-col gap-2 mb-4">
-        {!bulkPalletsUnlocked && (
-          <button onClick={buyPallets} disabled={pl.bag < 2000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
+        {!bulkPalletsUnlocked ? (
+          <button onClick={buyPallets} disabled={pl.bag < 10000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
             Unlock Bulk Pallets ($10k)
+          </button>
+        ) : (
+          <button
+            onClick={rProcessBulkPallet}
+            disabled={pl.bag < 5000 || pl.mentalHealth < 40}
+            className="w-full py-2 bg-cyan-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all"
+          >
+            📦 PROCESS BULK PALLET (-$5K, -40 MH)
           </button>
         )}
         <button onClick={buyIntern} disabled={pl.bag < 2000} className="w-full py-2 bg-slate-800 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
