@@ -232,6 +232,7 @@ export const getInitialGameState = () => ({
   seenNotifications: [],
   activeNotification: null,
 
+  pfwActive: false,
   activeEvent: null,
   isEventModalOpen: false,
 
@@ -394,6 +395,7 @@ export const GameProvider = ({ children }) => {
   const [seenNotifications, setSeenNotifications] = useState(init.seenNotifications);
   const [activeNotification, setActiveNotification] = useState(init.activeNotification);
 
+  const [pfwActive, setPfwActive] = useState(init.pfwActive);
   const [activeEvent, setActiveEvent] = useState(init.activeEvent);
   const [isEventModalOpen, setIsEventModalOpen] = useState(init.isEventModalOpen);
 
@@ -457,7 +459,7 @@ export const GameProvider = ({ children }) => {
     conglomActive, movieProject, antitrustRisk, swfInvestment,
     superPacFunds, approvalRating, lobbyists, lobbyistCost, mediaBlitzCost, isPresident,
     politicalSyndicate, presidencyEligible, tickerAdvice, artBubbleMonths, supplyChainShockMonths, viralPopMonths,
-    flex, campaign,
+    pfwActive, flex, campaign,
     geoStability, swfFrozen, passiveFrozen, pl, mkt, news, up, skl, ass, sw, drp, cc, pod,
     box, tur, tch, crp, mov, hf, ai, prs, peaks, hl, tally, generationCount,
     version: "1.1"
@@ -583,6 +585,7 @@ export const GameProvider = ({ children }) => {
         if (d?.artBubbleMonths !== undefined) setArtBubbleMonths(d.artBubbleMonths);
         if (d?.supplyChainShockMonths !== undefined) setSupplyChainShockMonths(d.supplyChainShockMonths);
         if (d?.viralPopMonths !== undefined) setViralPopMonths(d.viralPopMonths);
+        if (d?.pfwActive !== undefined) setPfwActive(d.pfwActive);
         if (d?.flex) setFlex(prev => ({ ...prev, ...d.flex }));
         if (d?.campaign) setCampaign(prev => ({ ...prev, ...d.campaign }));
         if (d?.seenNotifications) setSeenNotifications(d.seenNotifications);
@@ -2127,6 +2130,46 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
+  const rSwSpin = async (bet) => {
+    if (pl.bag < bet || pl.mentalHealth < 10) return;
+
+    // Evaluate PFW_ACTIVE: Only allowed if Flagship (Soho Store) is owned
+    const effectivePfw = pfwActive && up.swFlg;
+    const pool = effectivePfw ? ['🧍‍♂️', '🧍‍♀️', '🕴️'] : ['👕', '🧥', '🥼'];
+    const theme = effectivePfw ? "High Fashion Editorial Payout" : "Standard Drop Payout";
+
+    setPl(p => ({ ...p, bag: p.bag - bet, mentalHealth: p.mentalHealth - 10 }));
+
+    await new Promise(r => setTimeout(r, 600));
+
+    const reels = [
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)]
+    ];
+
+    let streak = 1;
+    for (let i = 1; i < 4; i++) {
+      if (reels[i] === reels[0]) streak++;
+      else break;
+    }
+
+    let multiplier = 0;
+    if (streak === 4) multiplier = 2.0;
+    else if (streak === 3) multiplier = 1.0;
+    else if (streak === 2) multiplier = 0.5;
+
+    const payout = Math.floor(bet * multiplier);
+    const profit = payout - bet;
+
+    setPl(p => ({ ...p, bag: p.bag + payout }));
+    setNews(n => [`🎰 RISK TERMINAL: ${theme}. [${reels.join('')}] Streak: ${streak}. Net: $${fMny(profit)}`, ...n.slice(0, 15)]);
+
+    adv();
+    return { reels, profit, streak };
+  };
+
   const rSw = async () => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
     if (pl.mentalHealth < 15) return;
@@ -3036,6 +3079,7 @@ export const GameProvider = ({ children }) => {
     setLobbyistCost(5000000);
     setMediaBlitzCost(10000000);
     setIsPresident(false);
+    setPfwActive(false);
     setPoliticalSyndicate({ politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 }, status: 'IDLE' });
     setPresidencyEligible(false);
     setTickerAdvice('MARKET WATCH: Global conditions stable. Continue the grind.');
@@ -3227,6 +3271,7 @@ export const GameProvider = ({ children }) => {
     setApiLockoutMonths(0);
     setSwfFrozen(false);
     setConglomActive(false);
+    setPfwActive(false);
 
     setTimeout(() => {
       window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
@@ -3235,7 +3280,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rSwSpin, pfwActive, setPfwActive, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rTechMicroSolder, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
