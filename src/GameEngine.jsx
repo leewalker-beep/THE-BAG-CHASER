@@ -292,9 +292,9 @@ export const GameProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
         const d = JSON.parse(saved);
         if (d.ph) setPh(d.ph);
         if (d.proSt !== undefined) setProSt(d.proSt);
@@ -401,9 +401,9 @@ export const GameProvider = ({ children }) => {
         if (d.hl) setHl(d.hl);
         if (d.tally) setTally(d.tally);
         if (d.generationCount !== undefined) setGenerationCount(d.generationCount);
-      } catch (e) {
-        console.error("Failed to load save data", e);
       }
+    } catch (e) {
+      console.error("Critical Failure in hydration:", e);
     }
   }, []);
 
@@ -422,25 +422,27 @@ export const GameProvider = ({ children }) => {
     let mhCap = mhCaps[tier] || mhCaps[0];
     let cloutCap = auraCap;
 
-    if (currentFlex.yacht.owned && tier < 5) {
+    if (!currentFlex) return { auraCap, cloutCap, mhCap };
+
+    if (currentFlex.yacht?.owned && tier < 5) {
       cloutCap = auraCap * 10;
     }
 
     // Showcase Flex Capacity Shattering
-    if (currentFlex.penthouse.owned) {
+    if (currentFlex.penthouse?.owned) {
       auraCap = Math.max(auraCap, 600);
       cloutCap = Math.max(cloutCap, 1500); // Mogul Runway
     }
-    if (currentFlex.logistics.owned) {
+    if (currentFlex.logistics?.owned) {
       auraCap = Math.max(auraCap, 1200);
       cloutCap = Math.max(cloutCap, 1500);
     }
-    if (currentFlex.jet.owned) {
+    if (currentFlex.jet?.owned) {
       auraCap = Math.max(auraCap, 2000);
       cloutCap = Math.max(cloutCap, 2000);
     }
 
-    if (currentFlex.watch.owned && currentFlex.watch.prActive) {
+    if (currentFlex.watch?.owned && currentFlex.watch?.prActive) {
       auraCap = Math.max(200, auraCap);
     }
 
@@ -449,27 +451,33 @@ export const GameProvider = ({ children }) => {
 
   // Dynamic Stat Caps
   useEffect(() => {
-    if (ph !== 'PLAYING') return;
-    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, flex);
+    try {
+      if (ph !== 'PLAYING') return;
+      const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl?.tier || 0, flex);
 
-    setPl(prev => {
-      if (prev.maxClout === cloutCap && prev.maxAura === auraCap && prev.maxMentalHealth === mhCap) return prev;
-      return {
-        ...prev,
-        maxClout: cloutCap,
-        maxAura: auraCap,
-        maxMentalHealth: mhCap,
-        clout: Math.min(cloutCap, prev.clout),
-        aura: Math.min(auraCap, prev.aura),
-        mentalHealth: Math.min(mhCap, prev.mentalHealth)
-      };
-    });
-  }, [pl.tier, ph, flex.yacht.owned, flex.penthouse.owned, flex.logistics.owned, flex.jet.owned, flex.watch.owned, flex.watch.prActive]);
+      setPl(prev => {
+        if (!prev) return prev;
+        if (prev.maxClout === cloutCap && prev.maxAura === auraCap && prev.maxMentalHealth === mhCap) return prev;
+        return {
+          ...prev,
+          maxClout: cloutCap,
+          maxAura: auraCap,
+          maxMentalHealth: mhCap,
+          clout: Math.min(cloutCap, prev.clout || 0),
+          aura: Math.min(auraCap, prev.aura || 0),
+          mentalHealth: Math.min(mhCap, prev.mentalHealth || 0)
+        };
+      });
+    } catch (e) {
+      console.error("Initialization Error in Stat Caps:", e);
+    }
+  }, [pl?.tier, ph, flex?.yacht?.owned, flex?.penthouse?.owned, flex?.logistics?.owned, flex?.jet?.owned, flex?.watch?.owned, flex?.watch?.prActive]);
 
   // Keep Track of Records & Auto Failures
   useEffect(() => {
-    if (ph !== 'PLAYING' || !pl) return;
-    if ((pl.bag || 0) > (peaks?.peakB || 0) || (pl.aura || 0) > (peaks?.peakA || 0) || (pl.clout || 0) > (peaks?.peakC || 0)) {
+    try {
+      if (ph !== 'PLAYING' || !pl) return;
+      if ((pl.bag || 0) > (peaks?.peakB || 0) || (pl.aura || 0) > (peaks?.peakA || 0) || (pl.clout || 0) > (peaks?.peakC || 0)) {
       setPeaks(prev => ({
         peakB: Math.max(prev?.peakB || 0, pl.bag || 0),
         peakA: Math.max(prev?.peakA || 0, pl.aura || 0),
@@ -523,20 +531,23 @@ export const GameProvider = ({ children }) => {
       setCancelIntro({ r: "PERMANENT DE-PLATFORMING SCANDAL", i: "Public sentiment reached total rejection. Sponsors canceled you, your platforms were erased." });
     }
 
-    if (pl.mentalHealth <= 0 && !isBreakdownActive) {
-      setIsBreakdownActive(true);
-      setShakeActive(true);
-      setGBusy(true);
-      setTimeout(() => setShakeActive(false), 500);
-    }
+      if (pl.mentalHealth <= 0 && !isBreakdownActive) {
+        setIsBreakdownActive(true);
+        setShakeActive(true);
+        setGBusy(true);
+        setTimeout(() => setShakeActive(false), 500);
+      }
 
-    // Notification Trigger Evaluator
-    const financialPhase = pl.bag < 10000 ? 1 : pl.bag < 100000 ? 2 : pl.bag < 500000 ? 3 : 0;
-    if (financialPhase > 0) {
-      if (pl.bag <= 0 && financialPhase === 1) triggerNotification('BAG_FAIL_01');
-      if (pl.aura < (pl.maxAura * 0.1) && financialPhase === 1) triggerNotification('AUR_LOW_01');
-      if (pl.mentalHealth < (pl.maxMentalHealth * 0.1) && financialPhase === 1) triggerNotification('HEA_LOW_01');
-      if (pl.mentalHealth <= 0 && financialPhase === 3) triggerNotification('HEA_FAIL_01');
+      // Notification Trigger Evaluator
+      const financialPhase = (pl.bag || 0) < 10000 ? 1 : (pl.bag || 0) < 100000 ? 2 : (pl.bag || 0) < 500000 ? 3 : 0;
+      if (financialPhase > 0) {
+        if ((pl.bag || 0) <= 0 && financialPhase === 1) triggerNotification('BAG_FAIL_01');
+        if ((pl.aura || 0) < ((pl.maxAura || 100) * 0.1) && financialPhase === 1) triggerNotification('AUR_LOW_01');
+        if ((pl.mentalHealth || 0) < ((pl.maxMentalHealth || 100) * 0.1) && financialPhase === 1) triggerNotification('HEA_LOW_01');
+        if ((pl.mentalHealth || 0) <= 0 && financialPhase === 3) triggerNotification('HEA_FAIL_01');
+      }
+    } catch (e) {
+      console.error("Initialization Error in Records tracking:", e);
     }
   }, [pl, ph, peaks, isBreakdownActive]);
 
@@ -554,8 +565,9 @@ export const GameProvider = ({ children }) => {
 
   // Tier Progression System
   useEffect(() => {
-    if (ph !== 'PLAYING' || !pl) return;
-    let nextTier = pl.tier || 0;
+    try {
+      if (ph !== 'PLAYING' || !pl) return;
+      let nextTier = pl.tier || 0;
     const tiersCount = TIERS?.length || 0;
     for (let i = nextTier + 1; i < tiersCount; i++) {
       const req = TIERS[i]?.req;
@@ -566,10 +578,13 @@ export const GameProvider = ({ children }) => {
         break;
       }
     }
-    if (nextTier !== (pl.tier || 0)) {
-      setPl(prev => ({ ...prev, tier: nextTier }));
-      if (nextTier >= 4) setPmcUnlocked(true);
-      setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier]?.label || 'Next'} Tier.`, ...prev.slice(0, 15)]);
+      if (nextTier !== (pl.tier || 0)) {
+        setPl(prev => ({ ...prev, tier: nextTier }));
+        if (nextTier >= 4) setPmcUnlocked(true);
+        setNews(prev => [`🏆 TIER UP! You have ascended to the ${TIERS[nextTier]?.label || 'Next'} Tier.`, ...prev.slice(0, 15)]);
+      }
+    } catch (e) {
+      console.error("Initialization Error in Tier Progression:", e);
     }
   }, [peaks, ph, pl.tier]);
 
