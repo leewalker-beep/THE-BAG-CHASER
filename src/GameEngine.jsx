@@ -196,18 +196,18 @@ export const GameProvider = ({ children }) => {
 
   // Flex Showcase System State
   const [flex, setFlex] = useState({
-    // Bridge 1
+    // Bridge 1 - Corporate
     penthouse: { owned: false, expiresAt: 0 },
     logistics: { owned: false, expiresAt: 0 },
     jet: { owned: false, expiresAt: 0 },
-    hypercar: { owned: false, prActive: false },
+    watch: { owned: false, prActive: false },
+    car: { owned: false, prActive: false },
     art: { owned: false, prActive: false },
-    watchVault: { owned: false, prActive: false },
-    // Bridge 2
+    // Bridge 2 - Sovereign
     yacht: { owned: false, expiresAt: 0 },
     media: { owned: false, expiresAt: 0 },
-    foundation: { owned: false, prActive: false },
-    sportsTeam: { owned: false, prActive: false },
+    foundation: { owned: false, expiresAt: 0 },
+    spt: { owned: false, prActive: false },
     island: { owned: false, prActive: false },
     archive: { owned: false, prActive: false }
   });
@@ -245,7 +245,7 @@ export const GameProvider = ({ children }) => {
   // Tech Tree Infrastructure
   const [up, setUp] = useState({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
   const [skl, setSkl] = useState({ neg: 0, tax: 0, inf: 0 });
-  const [ass, setAss] = useState({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
+  const [ass, setAss] = useState({ mtgPent: false, mans: false, mtgMans: false, mtgJet: false, mtgYct: false, spc: false, swf: false, legalTeam: false });
 
   // Active Venture Vectors
   const [sw, setSw] = useState({ i: 1, u: 250, p: 45, a: 5000 });
@@ -415,14 +415,14 @@ export const GameProvider = ({ children }) => {
     return () => clearInterval(window.autoSaveInterval);
   }, []);
 
-  const getUpdatedCaps = (tier, currentAss, currentFlex) => {
+  const getUpdatedCaps = (tier, currentFlex) => {
     const caps = [100, 250, 300, 5000, 5000, 999999999];
     const mhCaps = [100, 150, 300, 500, 500, 1000];
     let auraCap = caps[tier] || caps[0];
     let mhCap = mhCaps[tier] || mhCaps[0];
     let cloutCap = auraCap;
 
-    if (currentAss.cmYct && tier < 5) {
+    if (currentFlex.yacht.owned && tier < 5) {
       cloutCap = auraCap * 10;
     }
 
@@ -440,7 +440,7 @@ export const GameProvider = ({ children }) => {
       cloutCap = Math.max(cloutCap, 2000);
     }
 
-    if (currentFlex.watchVault.owned && currentFlex.watchVault.prActive) {
+    if (currentFlex.watch.owned && currentFlex.watch.prActive) {
       auraCap = Math.max(200, auraCap);
     }
 
@@ -450,7 +450,7 @@ export const GameProvider = ({ children }) => {
   // Dynamic Stat Caps
   useEffect(() => {
     if (ph !== 'PLAYING') return;
-    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, ass, flex);
+    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, flex);
 
     setPl(prev => {
       if (prev.maxClout === cloutCap && prev.maxAura === auraCap && prev.maxMentalHealth === mhCap) return prev;
@@ -464,7 +464,7 @@ export const GameProvider = ({ children }) => {
         mentalHealth: Math.min(mhCap, prev.mentalHealth)
       };
     });
-  }, [pl.tier, ph, ass.cmYct, flex.penthouse.owned, flex.logistics.owned, flex.jet.owned, flex.watchVault.owned, flex.watchVault.prActive]);
+  }, [pl.tier, ph, flex.yacht.owned, flex.penthouse.owned, flex.logistics.owned, flex.jet.owned, flex.watch.owned, flex.watch.prActive]);
 
   // Keep Track of Records & Auto Failures
   useEffect(() => {
@@ -794,17 +794,12 @@ export const GameProvider = ({ children }) => {
 
       // Asset Yield and Maintenance
       let yieldIncome = 0;
-      if (ass?.watch) yieldIncome += 750;
-      if (ass?.pent) yieldIncome += 15000;
-
-      if (ass?.pent && ass?.mtgPent) expenseBurn += 60000;
-      if (ass?.mans && ass?.mtgMans) expenseBurn += 250000;
-      if (ass?.jet && ass?.mtgJet) expenseBurn += 1500000;
-      if (ass?.yct && ass?.mtgYct) expenseBurn += 3000000;
+      if (flex.watch.owned) yieldIncome += 750;
+      if (flex.penthouse.owned) yieldIncome += 15000;
 
       // New balance sheet impacts
-      if (ass?.car) expenseBurn += 8000;
-      if (ass?.yct && !ass?.mtgYct) expenseBurn += 250000;
+      if (flex.car.owned) expenseBurn += 8000;
+      if (flex.yacht.owned) expenseBurn += 250000;
 
       // Deducting level perk buffs
       if (ass.legalTeam) expenseBurn += 1000000;
@@ -890,7 +885,7 @@ export const GameProvider = ({ children }) => {
         aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed + vaultAura + artDrift)),
         clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
         heat: prev.heat + pmcHeatContribution,
-        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (ass.hePent ? 30 : 15))
+        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (flex.penthouse.owned ? 30 : 15))
       };
     });
 
@@ -2488,7 +2483,7 @@ export const GameProvider = ({ children }) => {
       ...flex,
       [id]: { ...flex[id], owned: true }
     };
-    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, ass, updatedFlex);
+    const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl.tier, updatedFlex);
 
     setPl(prev => ({
       ...prev,
@@ -2498,6 +2493,7 @@ export const GameProvider = ({ children }) => {
       maxMentalHealth: mhCap
     }));
     setFlex(updatedFlex);
+    if (id === 'penthouse') setPassiveFrozen(false);
     setNews(n => [`💎 FLEX ACQUIRED: Ownership confirmed. Points locked until PR release.`, ...n.slice(0, 15)]);
   };
 
@@ -2526,8 +2522,9 @@ export const GameProvider = ({ children }) => {
     if (target.prActive !== undefined) {
       let cloutGain = 0;
       let auraGain = 0;
-      if (id === 'hypercar') cloutGain = 250;
-      if (id === 'sportsTeam') auraGain = 1500;
+      if (id === 'watch') cloutGain = 25;
+      if (id === 'car') cloutGain = 150;
+      if (id === 'spt') auraGain = 1500;
       if (id === 'island') { cloutGain = 1000; auraGain = 500; }
       if (id === 'archive') auraGain = 800;
 
@@ -2621,13 +2618,13 @@ export const GameProvider = ({ children }) => {
       penthouse: { owned: false, expiresAt: 0 },
       logistics: { owned: false, expiresAt: 0 },
       jet: { owned: false, expiresAt: 0 },
-      hypercar: { owned: false, prActive: false },
+      watch: { owned: false, prActive: false },
+      car: { owned: false, prActive: false },
       art: { owned: false, prActive: false },
-      watchVault: { owned: false, prActive: false },
       yacht: { owned: false, expiresAt: 0 },
       media: { owned: false, expiresAt: 0 },
-      foundation: { owned: false, prActive: false },
-      sportsTeam: { owned: false, prActive: false },
+      foundation: { owned: false, expiresAt: 0 },
+      spt: { owned: false, prActive: false },
       island: { owned: false, prActive: false },
       archive: { owned: false, prActive: false }
     });
@@ -2714,7 +2711,7 @@ export const GameProvider = ({ children }) => {
     setPassiveFrozen(false);
     setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
     setSkl({ neg: 0, tax: 0, inf: 0 });
-    setAss({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
+    setAss({ mtgPent: false, mans: false, mtgMans: false, mtgJet: false, mtgYct: false, spc: false, swf: false, legalTeam: false });
     setPeaks({ peakB: 25000, peakA: 100, peakC: 20 });
     setHl({ sw: 0, drop: 0, cc: 0, pod: 0, box: 0, tch: 0, cryp: 0, tour: 0, mov: 0, hf: 0 });
     setTally({ cryp: 0, box: 0, hf: 0, pres: 0 });
@@ -2808,7 +2805,7 @@ export const GameProvider = ({ children }) => {
     setPrs({ r: false, m: 0, cd: 0, rem: false, rst: 44, sun: 42, sub: 45, vp: 1, fr: false, vu: false, du: false, sh: false, ot: false, p1tt: false, p1op: false, p1et: false, ev: { d1: false, d2: false, o: false }, chest: 0, polls: 0 });
     setUp({ swIp: false, swFlg: false, swPar: false, swGlb: false, drpFac: false, ccAge: false, ccNet: false, podCmp: false, boxLg: false, boxBrd: false, trFst: false, tchGov: false, movStr: false, movUni: false });
     setSkl({ neg: 0, tax: 0, inf: 0 });
-    setAss({ watch: false, pent: false, mtgPent: false, mans: false, mtgMans: false, jet: false, mtgJet: false, yct: false, mtgYct: false, spt: false, spc: false, swf: false, hePent: false, cmYct: false, legalTeam: false });
+    setAss({ mtgPent: false, mans: false, mtgMans: false, mtgJet: false, mtgYct: false, spc: false, swf: false, legalTeam: false });
 
     // Group 3: Counters & Active Trackers
     setSmmClients(0);
@@ -2859,13 +2856,13 @@ export const GameProvider = ({ children }) => {
       penthouse: { owned: false, expiresAt: 0 },
       logistics: { owned: false, expiresAt: 0 },
       jet: { owned: false, expiresAt: 0 },
-      hypercar: { owned: false, prActive: false },
+      watch: { owned: false, prActive: false },
+      car: { owned: false, prActive: false },
       art: { owned: false, prActive: false },
-      watchVault: { owned: false, prActive: false },
       yacht: { owned: false, expiresAt: 0 },
       media: { owned: false, expiresAt: 0 },
-      foundation: { owned: false, prActive: false },
-      sportsTeam: { owned: false, prActive: false },
+      foundation: { owned: false, expiresAt: 0 },
+      spt: { owned: false, prActive: false },
       island: { owned: false, prActive: false },
       archive: { owned: false, prActive: false }
     });

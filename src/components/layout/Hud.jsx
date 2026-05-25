@@ -45,7 +45,7 @@ export const Hud = () => {
                 ? <div className="text-2xl font-black billionaire-bag leading-none">${fMny(displayBag || 0)}</div>
                 : <div className="text-2xl font-black text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)] leading-none font-hack">${fMny(displayBag || 0)}</div>
               }
-              <div className="text-lg">{prs?.r ? '🇺🇸' : ass?.mans ? '🤳😎' : ass?.pent ? '🕴️💎' : '🧢🎒'}</div>
+              <div className="text-lg">{prs?.r ? '🇺🇸' : flex?.island?.owned ? '🤳😎' : flex?.penthouse?.owned ? '🕴️💎' : '🧢🎒'}</div>
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-1 min-w-0">
@@ -72,27 +72,39 @@ export const Hud = () => {
         <div className="flex gap-1 overflow-x-auto mt-2 pb-1 scrollbar-hide items-center">
           {TIERS?.map((t, idx) => {
             const unlocked = (pl?.tier || 0) >= idx;
-            return (
+            const items = [];
+
+            items.push(
               <button key={t.id} onClick={() => { setSelTier(idx.toString()); setTab('HUB'); }}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${ (tab === 'HUB' && selTier === idx.toString()) ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${!unlocked ? 'opacity-60' : ''}`}>
                 {unlocked ? t.label.toUpperCase() : `🔒 ${t.label.toUpperCase()}`}
               </button>
             );
+
+            // "CORPORATE FLEXES" after Corporate (Idx 2)
+            if (idx === 2) {
+              items.push(
+                <button key="corp_flex_nav" onClick={() => { setTab('CORP_FLEXES'); }}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 relative ${tab === 'CORP_FLEXES' ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${showFlexAlert ? 'animate-pulse border border-yellow-500/50' : ''}`}>
+                  CORP FLEXES
+                  {showFlexAlert && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full shadow-[0_0_8px_#facc15] border border-black animate-bounce"></span>}
+                </button>
+              );
+            }
+
+            // "SOV FLEXES" between Mogul (Idx 4) and President (Idx 5)
+            if (idx === 4) {
+              items.push(
+                <button key="sov_flex_nav" onClick={() => { setTab('SOV_FLEXES'); }}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'SOV_FLEXES' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
+                  SOV FLEXES
+                </button>
+              );
+            }
+
+            return items;
           })}
           <span className="text-slate-700 mx-1">|</span>
-          <button onClick={() => { setTab('FLEX_SHOWCASE'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 relative ${tab === 'FLEX_SHOWCASE' ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'} ${showFlexAlert ? 'animate-pulse border border-yellow-500/50' : ''}`}>
-            FLEX SHOWCASE
-            {showFlexAlert && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full shadow-[0_0_8px_#facc15] border border-black animate-bounce"></span>}
-          </button>
-          <button onClick={() => { setTab('FLEXES'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'FLEXES' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
-            FLEXES
-          </button>
-          <button onClick={() => { setTab('FLEX_SHOP'); }}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'FLEX_SHOP' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
-            FLEX SHOP
-          </button>
           <button onClick={() => { setTab('EXP'); }}
             className={`px-3 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap tracking-wide transition-all active:scale-95 duration-100 ${tab === 'EXP' ? 'bg-white text-black' : 'bg-slate-800 text-slate-300 drop-shadow-sm hover:bg-slate-700'}`}>
             EXP POINTS
