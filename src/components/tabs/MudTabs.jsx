@@ -4,18 +4,24 @@ import { fMny } from '../../config.js';
 import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper } from '../ui/Shared.jsx';
 
 export const SwTab = () => {
-  const { pl, setPl, up, sw, setSw, dUp, rSw, rSwSpin, pfwActive, setPfwActive, adv, karmaFlags, setKarmaFlags } = useGame();
+  const { pl, up, sw, setSw, dUp, rSw, pfwActive, setPfwActive, adv, karmaFlags, setKarmaFlags } = useGame();
 
-  const [bet, setBet] = React.useState(100);
   const [spinning, setSpinning] = React.useState(false);
   const [reels, setReels] = React.useState(['?', '?', '?', '?']);
 
-  const handleSpin = async () => {
-    if (spinning || pl.bag < bet || pl.mentalHealth < 10) return;
+  const dropCost = React.useMemo(() => {
+    return (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
+  }, [sw.u, sw.i, up.swFlg, sw.a]);
+
+  const totalValue = sw.u * sw.p;
+  const stake = up.swFlg ? totalValue : dropCost;
+
+  const handleDrop = async () => {
+    if (spinning || pl.bag < stake || pl.mentalHealth < 15) return;
     setSpinning(true);
     setReels(['🌀', '🌀', '🌀', '🌀']);
 
-    const res = await rSwSpin(bet);
+    const res = await rSw();
     if (res) {
       setTimeout(() => {
         setReels(res.reels);
@@ -25,10 +31,6 @@ export const SwTab = () => {
       setSpinning(false);
     }
   };
-
-  const dropCost = React.useMemo(() => {
-    return (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
-  }, [sw.u, sw.i, up.swFlg, sw.a]);
 
   const handleGlobalSupply = async () => {
     await new Promise(r => setTimeout(r, 2000));
@@ -54,7 +56,7 @@ export const SwTab = () => {
       </div>
       <div className="bg-black/30 p-2 rounded-lg border border-slate-800 mb-2 text-center">
         <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Hustle Cost</div>
-        <div className="text-xs font-black text-purple-400">15 MH (DROP) / 10 MH (SPIN)</div>
+        <div className="text-xs font-black text-purple-400">15 MENTAL HEALTH</div>
       </div>
       {up.swPar && up.swFlg && (
         <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -82,37 +84,24 @@ export const SwTab = () => {
         <Stepper val={sw.u} setVal={v => setSw(s => ({ ...s, u: v }))} min={10} max={up.swPar ? 50000 : up.swFlg ? 2000 : 2500} step={50} label="Units" isCurr={false} />
         <Stepper val={sw.p} setVal={v => setSw(s => ({ ...s, p: v }))} min={15} max={up.swPar ? 2500 : up.swFlg ? 1000 : 500} step={5} label="Price" />
         {!up.swFlg && <Stepper val={sw.a} setVal={v => setSw(s => ({ ...s, a: v }))} min={0} max={250000} step={5000} label="Ad Spend" />}
-        <FlashBtn onClick={rSw} costStm={15} dis={pl.bag < dropCost} label={`DROP - ${fMny(dropCost)}`} />
 
         {up.swFlg && (
-          <div className="mt-6 p-4 bg-black/60 border-2 border-purple-500/50 rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-            <h4 className="text-center text-xs font-black text-purple-300 mb-4 uppercase tracking-tighter italic">🎰 STREETWEAR RISK TERMINAL 🎰</h4>
-
-            <div className="grid grid-cols-4 gap-2 mb-6">
+          <div className="mt-4 p-3 bg-black/60 border border-purple-500/30 rounded-xl mb-4">
+            <div className="text-[10px] font-black text-purple-400 mb-2 uppercase tracking-tighter text-center">Market Reception Terminal</div>
+            <div className="grid grid-cols-4 gap-2">
               {reels.map((s, i) => (
-                <div key={i} className={`h-16 flex items-center justify-center bg-slate-900 border-2 border-slate-700 rounded-xl text-3xl shadow-inner ${spinning ? 'animate-pulse scale-95 opacity-50' : 'animate-bounce-short'}`}>
+                <div key={i} className={`h-12 flex items-center justify-center bg-slate-900 border border-slate-700 rounded-lg text-2xl shadow-inner ${spinning ? 'animate-pulse scale-95 opacity-50' : 'animate-bounce-short'}`}>
                   {s}
                 </div>
               ))}
             </div>
-
-            <div className="space-y-4">
-              <Stepper val={bet} setVal={setBet} min={100} max={10000} step={100} label="Risk Amount" />
-              <button
-                onClick={handleSpin}
-                disabled={spinning || pl.bag < bet || pl.mentalHealth < 10}
-                className={`w-full py-4 rounded-xl font-black tracking-widest text-lg transition-all active:scale-95 shadow-lg
-                  ${spinning ? 'bg-slate-700 text-slate-500 cursor-wait' : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500'}`}
-              >
-                {spinning ? 'PROCESSING...' : 'EXECUTE SPIN'}
-              </button>
-
-              <div className="bg-black/40 p-2 rounded-lg border border-slate-800 text-[8px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                Payout: 4=200% | 3=100% | 2=50% | 1=BUST
-              </div>
+            <div className="mt-2 bg-black/40 p-1 rounded border border-slate-800 text-[7px] text-slate-400 font-bold uppercase tracking-widest text-center">
+              Streak: 4=200% | 3=100% | 2=50% | 1=BUST
             </div>
           </div>
         )}
+
+        <FlashBtn onClick={handleDrop} costStm={15} dis={spinning || pl.bag < stake} label={`DROP - ${fMny(stake)}`} />
       </>}
     </LabShell>
   );

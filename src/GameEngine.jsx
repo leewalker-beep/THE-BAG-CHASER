@@ -2130,54 +2130,19 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
-  const rSwSpin = async (bet) => {
-    if (pl.bag < bet || pl.mentalHealth < 10) return;
-
-    // Evaluate PFW_ACTIVE: Only allowed if Flagship (Soho Store) is owned
-    const effectivePfw = pfwActive && up.swFlg;
-    const pool = effectivePfw ? ['🧍‍♂️', '🧍‍♀️', '🕴️'] : ['👕', '🧥', '🥼'];
-    const theme = effectivePfw ? "High Fashion Editorial Payout" : "Standard Drop Payout";
-
-    setPl(p => ({ ...p, bag: p.bag - bet, mentalHealth: p.mentalHealth - 10 }));
-
-    await new Promise(r => setTimeout(r, 600));
-
-    const reels = [
-      pool[Math.floor(Math.random() * pool.length)],
-      pool[Math.floor(Math.random() * pool.length)],
-      pool[Math.floor(Math.random() * pool.length)],
-      pool[Math.floor(Math.random() * pool.length)]
-    ];
-
-    let streak = 1;
-    for (let i = 1; i < 4; i++) {
-      if (reels[i] === reels[0]) streak++;
-      else break;
-    }
-
-    let multiplier = 0;
-    if (streak === 4) multiplier = 2.0;
-    else if (streak === 3) multiplier = 1.0;
-    else if (streak === 2) multiplier = 0.5;
-
-    const payout = Math.floor(bet * multiplier);
-    const profit = payout - bet;
-
-    setPl(p => ({ ...p, bag: p.bag + payout }));
-    setNews(n => [`🎰 RISK TERMINAL: ${theme}. [${reels.join('')}] Streak: ${streak}. Net: $${fMny(profit)}`, ...n.slice(0, 15)]);
-
-    adv();
-    return { reels, profit, streak };
-  };
-
   const rSw = async () => {
     const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
-    if (pl.mentalHealth < 15) return;
+    const totalValue = sw.u * sw.p;
+
+    // Stakes logic: If Soho flagship owned, the total value is at risk.
+    const stake = up.swFlg ? totalValue : totalOut;
+
+    if (pl.mentalHealth < 15 || pl.bag < stake) return;
     updateFatigue('streetwear');
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    setPl(p => ({ ...p, bag: p.bag - totalOut, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
+    setPl(p => ({ ...p, bag: p.bag - stake, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     setHustleClicks(prev => ({ ...prev, streetwear: prev.streetwear + 1 }));
 
     if (triggerChaos('streetwear')) {
@@ -2198,43 +2163,86 @@ export const GameProvider = ({ children }) => {
       return undefined;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-
-    const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
-    let hype = (pl.aura * 0.5) + (pl.clout * 0.3) + (sw.a / 2500);
-    if (mkt === 1) hype *= 1.6;
-
-    if (sw.p > baseValue) {
-      hype *= Math.max(0, 1 - ((sw.p - baseValue) * 0.04));
+    if (!up.swFlg) {
+      // MUD TIER LOGIC (Old)
+      await new Promise(r => setTimeout(r, 1000));
+      const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
+      let hype = (pl.aura * 0.5) + (pl.clout * 0.3) + (sw.a / 2500);
+      if (mkt === 1) hype *= 1.6;
+      if (sw.p > baseValue) hype *= Math.max(0, 1 - ((sw.p - baseValue) * 0.04));
+      hype *= Math.max(0, 1 - (swFatigue * 0.15));
+      let unitsSold = Math.floor(Math.min(sw.u, Math.max(0, hype * (5 + Math.random() * 5))));
+      unitsSold = Math.max(0, unitsSold);
+      const revenue = Math.floor(unitsSold * sw.p * legacyMultiplier);
+      const profit = revenue - stake;
+      setSwFatigue(prev => prev + (sw.u / 1000));
+      let auraGain = 0; let cloutGain = 0; let newsMsg = "";
+      if (unitsSold >= sw.u * 0.8) {
+        auraGain = 10; cloutGain = 5; newsMsg = "👟 VIRAL SELLOUT! Cleared all inventory.";
+      } else if (unitsSold < sw.u * 0.2) {
+        auraGain = -15; newsMsg = "👟 Bricked. Heavy boxes sitting in the warehouse.";
+      } else {
+        newsMsg = `👟 Drop concluded. Moved ${unitsSold.toLocaleString()} units.`;
+      }
+      setPl(p => ({
+        ...p,
+        bag: p.bag + revenue,
+        aura: Math.min(p.maxAura, Math.max(0, p.aura + auraGain)),
+        clout: Math.min(p.maxClout, p.clout + (cloutGain || 0))
+      }));
+      setNews(prev => [newsMsg, ...prev.slice(0, 15)]);
+      setHl(h => ({ ...h, sw: h.sw + Math.max(0, profit) }));
+      triggerImpact('bag', profit);
+      adv();
+      return { profit };
     }
 
-    hype *= Math.max(0, 1 - (swFatigue * 0.15));
+    // SOHO FLAGSHIP LOGIC (Reels)
+    const effectivePfw = pfwActive && up.swFlg;
+    const pool = effectivePfw ? ['🧍‍♂️', '🧍‍♀️', '🕴️'] : ['👕', '🧥', '🥼'];
 
-    let unitsSold = Math.floor(Math.min(sw.u, Math.max(0, hype * (5 + Math.random() * 5))));
-    unitsSold = Math.max(0, unitsSold);
+    await new Promise(r => setTimeout(r, 600));
 
-    const revenue = Math.floor(unitsSold * sw.p * legacyMultiplier);
-    const profit = revenue - totalOut;
+    const reels = [
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)],
+      pool[Math.floor(Math.random() * pool.length)]
+    ];
 
-    setSwFatigue(prev => prev + (sw.u / 1000));
+    let streak = 1;
+    for (let i = 1; i < 4; i++) {
+      if (reels[i] === reels[0]) streak++;
+      else break;
+    }
 
+    let multiplier = 0;
+    let newsMsg = "";
     let auraGain = 0;
     let cloutGain = 0;
-    let newsMsg = "";
 
-    if (unitsSold >= sw.u * 0.8) {
-      const financialPhase = stateRef.current.pl.bag < 10000 ? 1 : stateRef.current.pl.bag < 100000 ? 2 : stateRef.current.pl.bag < 500000 ? 3 : 0;
-      if (pl.bag < 500000 && financialPhase === 3) triggerNotification('BAG_WIN_01');
-
-      auraGain = 10;
-      cloutGain = 5;
-      newsMsg = "👟 VIRAL SELLOUT! Cleared all inventory.";
-    } else if (unitsSold < sw.u * 0.2) {
-      auraGain = -15;
-      newsMsg = "👟 Bricked. Heavy boxes sitting in the warehouse.";
+    if (streak === 4) {
+      multiplier = 2.0;
+      newsMsg = effectivePfw ? "👑 RUNWAY CLEAN SWEEP! COUTURE ECLIPSE!" : "🔥 JACKPOT OUTCOME: 200% RETURN!";
+      auraGain = 10; cloutGain = 5;
+    } else if (streak === 3) {
+      multiplier = 1.0;
+      newsMsg = effectivePfw ? "📸 COUTURE PLACEMENT MATURED." : "📦 STABLE DROP: 100% BREAK-EVEN.";
+      auraGain = 5; cloutGain = 2;
+    } else if (streak === 2) {
+      multiplier = 0.5;
+      newsMsg = effectivePfw ? "👠 OFF-CATWALK STUMBLE (50% PAYOUT)." : "📉 SLOW DEMAND: 50% LIQUIDATED PAYBACK.";
+      auraGain = -5;
     } else {
-      newsMsg = `👟 Drop concluded. Moved ${unitsSold.toLocaleString()} units.`;
+      multiplier = 0;
+      newsMsg = effectivePfw ? "❌ DESIGN REJECTED BY EDITORS. TOTAL BUST." : "❌ DROP FLOPPED: 0% BUST. TOTAL LOSS.";
+      auraGain = -15;
     }
+
+    const revenue = Math.floor(totalValue * multiplier * legacyMultiplier);
+    const profit = revenue - stake;
+
+    setSwFatigue(prev => prev + (sw.u / 1000));
 
     setPl(p => ({
       ...p,
@@ -2247,7 +2255,7 @@ export const GameProvider = ({ children }) => {
     setHl(h => ({ ...h, sw: h.sw + Math.max(0, profit) }));
     triggerImpact('bag', profit);
     adv();
-    return profit;
+    return { reels, profit, streak };
   };
 
   const rDrp = async () => {
@@ -3280,7 +3288,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, rSwSpin, pfwActive, setPfwActive, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
+      ph, setPh, proSt, setProSt, alias, setAlias, diff, setDiff, death, setDeath, cancelIntro, gBusy, rain, swFatigue, setSwFatigue, hustleFatigue, setHustleFatigue, karmaFlags, setKarmaFlags, fatalTragedyMessage, setFatalTragedyMessage, smmClients, setSmmClients, clientCrisis, setClientCrisis, vinCh, setVinCh, tab, setTab, selTier, setSelTier, pl, setPl, displayBag, age, mkt, news, imp, mod, setMod, up, setUp, skl, setSkl, ass, setAss, sw, setSw, drp, setDrp, cc, setCc, pod, setPod, box, setBox, tur, setTur, tch, setTch, crp, setCrp, mov, setMov, hf, setHf, ai, setAi, prs, setPrs, peaks, hl, tally, adv, exStart, dUp, bAss, rVintage, rVinCh, rSw, pfwActive, setPfwActive, rDrp, rSmmPitch, rSmmFix, rRest, rCc, rPod, rBox, rTur, rTch, rCrp, rMov, rHf, rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef, isTierUnlocked, cap, executeChaosRoll, rDelivery, rPlasma, rSurvey, rLabor, rProcessBulkPallet, isEventModalOpen, setIsEventModalOpen, activeEvent,
       hustleClicks, setHustleClicks, techItem, setTechItem, techFlipsComplete, setTechFlipsComplete, runnerCount, setRunnerCount, runnerBurnout, setRunnerBurnout,
       rTechSource, rTechFixA, rTechFixB, rTechMicroSolder, rRunnerRecruit, rRunnerFix, techSourceCost,
       isBreakdownActive, shakeActive, rDischarge,
