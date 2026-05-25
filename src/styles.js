@@ -59,4 +59,7 @@ export const styles = `
   .swipe-glow { box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); }
 
   .flick-card { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s; }
+
+  @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .animate-bounce-short { animation: bounce-short 0.5s ease-in-out infinite; }
 `;
