@@ -292,7 +292,7 @@ export const useGameStore = create()(
           if (flex.watch.owned) yieldIncome += 750;
           if (flex.penthouse.owned) yieldIncome += 15000;
           if (flex.car.owned) expenseBurn += 8000;
-          if (flex.yacht.owned) expenseBurn += 250000;
+          if (flex.yacht.owned) expenseBurn += 25000;
           if (ass.legalTeam) expenseBurn += 1000000;
           expenseBurn = Math.floor(expenseBurn * (1 - (skl.tax * 0.04)));
 
@@ -376,6 +376,12 @@ export const useGameStore = create()(
           }
           if (ai.ig) nextState.ai = { ...ai, p: Math.min(100, ai.p + ai.c * (1.2 + Math.random() * 2) * intervals), r: Math.min(100, ai.r + (1.8 + Math.random() * 2.5) * intervals) };
           if (prs.r) nextState.prs = { ...prs, m: prs.m + intervals };
+
+          if (campaign.phase === 'POLITICS') {
+            const op = { ...campaign.opponentPolling };
+            ['blueWall', 'rustBelt', 'sunBelt'].forEach(reg => { op[reg] = Math.min(100, op[reg] + 0.5 * intervals); });
+            nextState.campaign = { ...campaign, opponentPolling: op };
+          }
 
           return { ...nextState, lastProcessedTimestamp: now, news: [...newsUpdate, ...state.news.slice(0, 15 - newsUpdate.length)] };
         });
