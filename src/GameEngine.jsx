@@ -169,19 +169,6 @@ export const GameProvider = ({ children }) => {
   const isTierUnlocked = useMemo(() => (idx) => pl.tier >= idx, [pl.tier]);
   const cap = useMemo(() => pl.maxClout || 100, [pl.maxClout]);
 
-  const rPrsA = async (type) => {
-    if (type === 'gala') { setPl(p => ({ ...p, bag: p.bag + 200000000 })); triggerImpact('bag', 200000000); }
-    else if (type === 'tv') { setPl(p => ({ ...p, bag: p.bag - 100000000, clout: Math.max(0, p.clout - 10) })); setPrs(prev => ({ ...prev, rst: prev.rst + 3, sun: prev.sun + 2, sub: prev.sub + 4 })); }
-    else if (type === 'smear') { setPl(p => ({ ...p, aura: Math.max(0, p.aura - 25) })); setPrs(prev => ({ ...prev, rst: prev.rst + 2, sun: prev.sun + 3 })); }
-    else { setPl(p => ({ ...p, bag: p.bag - 2000000 })); setPrs(prev => ({ ...prev, rst: prev.rst + 0.8, sun: prev.sun + 1 })); }
-    adv(); return undefined;
-  };
-
-  const rPrs1TT = async () => { setPl(p => ({ ...p, bag: p.bag - 100000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, p1tt: true, sh: true })); return undefined; };
-  const rPrs1OP = async () => { setPl(p => ({ ...p, bag: p.bag - 150000000, aura: Math.max(0, p.aura - 30) })); setPrs(p => ({ ...p, p1op: true, ot: true })); return undefined; };
-  const rPrs1ET = async () => { setPl(p => ({ ...p, bag: p.bag - 50000000, clout: Math.max(0, p.clout - 25) })); setPrs(p => ({ ...p, p1et: true })); return undefined; };
-  const dVp = () => { setPrs(p => ({ ...p, vu: true, rst: p.rst + 4 })); };
-  const dDef = () => { setPl(p => ({ ...p, bag: p.bag - 75000000, clout: Math.max(0, p.clout - 20) })); setPrs(p => ({ ...p, du: true, sub: p.sub + 5 })); };
 
   const rCampaignActionProxy = async (type) => {
     const isOctoberSurprise = await rCampaignAction(type);
@@ -205,26 +192,11 @@ export const GameProvider = ({ children }) => {
     setMod({ s: true, t: "MONTHLY BRIEFING", m: "Return to HQ.", o: [{ label: "ACKNOWLEDGE", action: () => setMod({ s: false }) }], ui: "ui-modal" });
   };
 
-  const rElectionNightResolution = async () => {
-    if (campaign.currentWeek < 52) return;
-    setGBusy(true); await new Promise(r => setTimeout(r, 3000)); setGBusy(false);
-    let playerEVs = (campaign.regionalPolling.blueWall > campaign.opponentPolling.blueWall ? 44 : 0) + (campaign.regionalPolling.rustBelt > campaign.opponentPolling.rustBelt ? 46 : 0) + (campaign.regionalPolling.sunBelt > campaign.opponentPolling.sunBelt ? 55 : 0) + 130;
-    if (playerEVs >= 270) {
-      setIsPresident(true); setCampaign(prev => ({ ...prev, phase: 'COMPLETED' }));
-      setMod({ s: true, t: "VICTORY", m: `EVs: ${playerEVs}`, o: [{ label: "ASCEND", action: () => { setTab('VICTORY_SPEECH'); setMod({ s: false }); } }], ui: "ui-victory" });
-    } else {
-      setCampaign(prev => ({ ...prev, phase: 'COMPLETED' }));
-      setMod({ s: true, t: "CONCESSION", m: `EVs: ${playerEVs}`, o: [{ label: "RESUME", action: () => setMod({ s: false }) }], ui: "ui-crisis" });
-    }
-  };
-
   return (
     <GameContext.Provider value={{
       ...store,
       displayBag, age, legacyMultiplier, isTierUnlocked, cap,
-      rPrsA, rPrs1TT, rPrs1OP, rPrs1ET, dVp, dDef,
       rCampaignAction: rCampaignActionProxy,
-      rElectionNightResolution
     }}>
       {children}
     </GameContext.Provider>
