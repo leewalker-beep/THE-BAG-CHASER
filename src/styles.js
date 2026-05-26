@@ -20,6 +20,21 @@ export const styles = `
   .bg-washington { background: linear-gradient(to bottom right, #f59e0b, #92400e, #f59e0b); background-size: 400% 400%; animation: billionaireShimmer 15s ease infinite; }
   body { color: white; margin: 0; overflow-x: hidden; background: #000; }
   .ui-modal { background: #0f172a; border: 2px solid #3b82f6; border-radius: 12px; } .ui-crisis { background: #450a0a; border: 2px solid #ef4444; border-radius: 12px; }
+  .ui-cyberpunk { background-color: #0b0e14; border: 1px solid #1a2a44; padding: 20px; border-radius: 8px; }
+  .ui-cyberpunk h2 { font-size: 1.4rem !important; font-weight: bold !important; color: white !important; text-align: center !important; margin-bottom: 1rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; }
+  .ui-cyberpunk p { font-style: italic !important; text-align: center !important; color: #94a3b8 !important; line-height: 1.6 !important; }
+
+  .modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 420px;
+    z-index: 10000;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  }
+
   .ui-victory { background: linear-gradient(135deg, #f59e0b 0%, #78350f 100%); border: 4px solid #fef3c7; border-radius: 24px; box-shadow: 0 0 100px rgba(245,158,11,0.6); }
   .mobile-hud { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
   .ticker-wrap { position: fixed; bottom: 0; width: 100%; overflow: hidden; background-color: rgba(0,0,0,0.95); border-top: 2px solid #3b82f6; height: 3rem; z-index: 100; display: flex; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }

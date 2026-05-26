@@ -229,11 +229,6 @@ const GameInterface = () => {
             return <Component />;
           })()}
 
-          <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700 my-6">
-            <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold tracking-widest mb-2 text-center uppercase">📡 REAL WORLD MONITOR</div>
-            <div className={`text-center font-black text-sm mb-1 ${mkt === 1 ? 'text-green-400' : mkt === 2 ? 'text-red-400' : mkt === 3 ? 'text-purple-400' : 'text-white'}`}>{MARKETS[mkt]?.n || 'NORMAL'}</div>
-            <p className="text-slate-300 drop-shadow-sm text-[10px] text-center">{MARKETS[mkt]?.desc}</p>
-          </div>
         </div>
       </div>
 
@@ -281,16 +276,13 @@ const BagChaserInner = () => {
         <div className="animate-fadeIn">
           {/* Backdrop Element */}
           <div
-            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 10000 }}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 9999 }}
             onClick={() => setMod({ s: false })}
           />
           {/* Modal Container */}
-          <div
-            style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: '420px', zIndex: 10001 }}
-            className={`p-8 ${mod?.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)] relative`}
-          >
-            <h2 className="text-3xl font-black mb-4 text-white tracking-widest uppercase">{mod?.t}</h2>
-            <p className="mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed">"{mod?.m}"</p>
+          <div className={`modal-container p-8 ${mod?.ui} text-center relative`}>
+            <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
+            <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m}"</p>
             <div className="flex flex-col gap-3">
               {mod?.o?.map((o, i) => (
                 <button
