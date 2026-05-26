@@ -233,6 +233,7 @@ export const getInitialGameState = () => ({
   seenNotifications: [],
   activeNotification: null,
 
+  mhEmergencies: 0,
   pfwActive: false,
   activeEvent: null,
   isEventModalOpen: false,
@@ -397,6 +398,7 @@ export const GameProvider = ({ children }) => {
   const [seenNotifications, setSeenNotifications] = useState(init.seenNotifications);
   const [activeNotification, setActiveNotification] = useState(init.activeNotification);
 
+  const [mhEmergencies, setMhEmergencies] = useState(init.mhEmergencies);
   const [pfwActive, setPfwActive] = useState(init.pfwActive);
   const [activeEvent, setActiveEvent] = useState(init.activeEvent);
   const [isEventModalOpen, setIsEventModalOpen] = useState(init.isEventModalOpen);
@@ -446,7 +448,7 @@ export const GameProvider = ({ children }) => {
   const stateRef = React.useRef();
   stateRef.current = {
     ph, proSt, alias, diff, tab, selTier, swFatigue, hustleFatigue, karmaFlags,
-    seenNotifications,
+    seenNotifications, mhEmergencies,
     lastHustle, dropshipLock, vintageLock, smmPenalty, techSourceCost, smmClients,
     clientCrisis, vinCh, hustleClicks, techItem, techFlipsComplete, runnerCount,
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
@@ -607,6 +609,7 @@ export const GameProvider = ({ children }) => {
         if (d?.flex) setFlex(prev => ({ ...prev, ...d.flex }));
         if (d?.campaign) setCampaign(prev => ({ ...prev, ...d.campaign }));
         if (d?.seenNotifications) setSeenNotifications(d.seenNotifications);
+        if (d?.mhEmergencies !== undefined) setMhEmergencies(d.mhEmergencies);
         if (d?.passiveFrozen !== undefined) setPassiveFrozen(d.passiveFrozen);
         if (d?.pl) setPl(prev => ({ ...prev, ...d.pl }));
         if (d?.mkt !== undefined) setMkt(d.mkt);
@@ -775,6 +778,13 @@ export const GameProvider = ({ children }) => {
         setShakeActive(true);
         setGBusy(true);
         setTimeout(() => setShakeActive(false), 500);
+      }
+
+      if (pl.mentalHealth < 20 && !window.mhInCrisis) {
+        window.mhInCrisis = true;
+        setMhEmergencies(prev => prev + 1);
+      } else if (pl.mentalHealth >= 20) {
+        window.mhInCrisis = false;
       }
 
       // Notification Trigger Evaluator
@@ -2046,7 +2056,6 @@ export const GameProvider = ({ children }) => {
 
     // 1. Transaction Check
     if (pl.bag < ART_PRICE) {
-        console.log("Insufficient funds for elite art asset.");
         return;
     }
 
@@ -2860,6 +2869,37 @@ export const GameProvider = ({ children }) => {
     adv();
   };
 
+  const rSubmitToHallOfFame = async (playerName) => {
+    setAlias(playerName);
+
+    // Technical Logic: Gather session data metrics for serialization
+    const finalData = {
+      name: playerName,
+      worth: pl.bag,
+      title: isPresident ? "[PRESIDENT]" : pl.bag > 25000000 ? "[MUSEUM TYCOON]" : "[CORP RAIDER]",
+      age: `Age ${pl.age}, Month ${pl.month}`,
+      clout: pl.clout,
+      aura: pl.aura,
+      mhEmergencies: mhEmergencies,
+      efficiency: Math.floor(pl.bag / (((pl.age - 18) * 12) + pl.month + 1))
+    };
+
+    // ACTION B: INITIATE SCOREBOARD DATABASE PIPELINE
+    try {
+      console.log("BC_PIPELINE_INIT: Syncing with Vercel/KV Hall of Fame...", finalData);
+      // In production, this would be a fetch to /api/leaderboard
+      // We simulate the latency for player psychology
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (e) {
+      console.warn("Pipeline Latency Detected", e);
+    }
+
+    // ACTION B: CLEAR LOCAL SAVE GAME STATE COMPLETELY
+    localStorage.removeItem('bag-chaser-save-v1');
+
+    setPh('POST_MORTEM');
+  };
+
   const rCampaignAction = async (type) => {
     if (campaign.phase !== 'POLITICS') return;
 
@@ -3190,6 +3230,7 @@ export const GameProvider = ({ children }) => {
     setFranchiseCount(0);
     setUnionStrikeActive(false);
     setUnionStrikeIgnored(false);
+    setMhEmergencies(0);
     setPeProgress(0);
     setGuttedFirms(0);
     setSupplyChainDisruption(false);
@@ -3357,6 +3398,7 @@ export const GameProvider = ({ children }) => {
     setFranchiseCount(0);
     setGuttedFirms(0);
     setPeProgress(0);
+    setMhEmergencies(0);
     setPeCompoundingYield(1.0);
     setArtCollection([]);
     setArtMarketSentiment(0);
@@ -3466,6 +3508,7 @@ export const GameProvider = ({ children }) => {
       flex, rBuyFlex, rTriggerFlexPR, rFoundationSink,
       tickerAdvice, artBubbleMonths, supplyChainShockMonths, viralPopMonths,
     activeNotification, triggerNotification, closeNotification,
+      mhEmergencies, rSubmitToHallOfFame,
       generationCount, legacyMultiplier, rRetire, performHardReset,
       cap
     }}>

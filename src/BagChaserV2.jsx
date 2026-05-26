@@ -62,6 +62,8 @@ import ElectionWarRoomTab from './components/tabs/ElectionWarRoomTab.jsx';
 import VictorySpeechTab from './components/tabs/VictorySpeechTab.jsx';
 
 import { TierHub } from './components/views/TierHub.jsx';
+import { PostMortem } from './components/views/PostMortem.jsx';
+import { Leaderboard } from './components/views/Leaderboard.jsx';
 import { AutopsyReport } from './components/views/AutopsyReport.jsx';
 import { Prologue } from './components/views/Prologue.jsx';
 import { GameIntro } from './components/views/GameIntro.jsx';
@@ -114,7 +116,7 @@ const TAB_MAP = {
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl, prs, ass, mkt, tab, setTab, mod, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
+    pl, prs, ass, mkt, tab, setTab, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
     activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex
   } = game || {};
 
@@ -141,7 +143,7 @@ const GameInterface = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${game.isPresident ? 'bg-washington' : prs?.r ? 'bg-oval' : flex?.island?.owned ? 'bg-mansion' : flex?.penthouse?.owned ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${game.isPresident ? 'bg-washington' : prs?.r ? 'bg-oval' : flex?.island?.owned ? 'bg-mansion' : flex?.penthouse?.owned ? 'bg-penthouse' : 'bg-basement'} ${shakeActive ? 'animate-shake-hard' : ''} ${(pl?.aura || 0) < 20 ? 'aura-panic' : ''} relative`}>
 
 
       {isBreakdownActive && (
@@ -167,15 +169,6 @@ const GameInterface = () => {
         </div>
       )}
 
-      {mod?.s && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 animate-fadeIn">
-          <div className={`p-8 w-full max-w-sm ${mod?.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)]`}>
-            <h2 className="text-3xl font-black mb-4 text-white tracking-widest">{mod?.t}</h2>
-            <p className="mb-8 text-slate-300 drop-shadow-sm text-lg">{mod?.m}</p>
-            <div className="flex flex-col gap-3">{mod?.o?.map((o, i) => <button key={i} onClick={o.action} className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700 active:scale-95 transition-all duration-100">{o.label}</button>)}</div>
-          </div>
-        </div>
-      )}
 
       {isEventModalOpen && activeEvent && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[250] flex items-center justify-center p-4 animate-fadeIn">
@@ -251,11 +244,12 @@ const GameInterface = () => {
 
 const BagChaserInner = () => {
   const game = useGame();
-  const { ph, pl, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset } = game || {};
+  const { ph, pl, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset, mod, setMod } = game || {};
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
+
       {pl?.isPresident && game?.campaign?.phase === 'COMPLETED' && <div className="victory-flash" />}
       {activeNotification && <NotificationOverlay />}
       {fatalTragedyMessage && (
@@ -280,6 +274,37 @@ const BagChaserInner = () => {
       {!death      && ph === 'PROLOGUE' ? <Prologue /> : null}
       {!death      && ph === 'PROLOGUE_INTRO' ? <GameIntro /> : null}
       {!death      && ph === 'PLAYING'  ? <GameInterface /> : null}
+      {!death      && ph === 'POST_MORTEM' ? <PostMortem /> : null}
+      {!death      && ph === 'LEADERBOARD' ? <Leaderboard /> : null}
+
+      {mod?.s && (
+        <div className="animate-fadeIn">
+          {/* Backdrop Element */}
+          <div
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 10000 }}
+            onClick={() => setMod({ s: false })}
+          />
+          {/* Modal Container */}
+          <div
+            style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: '420px', zIndex: 10001 }}
+            className={`p-8 ${mod?.ui} text-center shadow-[0_0_50px_rgba(0,0,0,1)] relative`}
+          >
+            <h2 className="text-3xl font-black mb-4 text-white tracking-widest uppercase">{mod?.t}</h2>
+            <p className="mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed">"{mod?.m}"</p>
+            <div className="flex flex-col gap-3">
+              {mod?.o?.map((o, i) => (
+                <button
+                  key={i}
+                  onClick={o.action}
+                  className="p-4 bg-slate-800 border border-slate-600 text-white font-black tracking-widest rounded-xl hover:bg-slate-700 active:scale-95 transition-all duration-100 uppercase text-xs"
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
