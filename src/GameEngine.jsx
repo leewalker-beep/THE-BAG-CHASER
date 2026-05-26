@@ -2692,7 +2692,7 @@ export const GameProvider = ({ children }) => {
       bagReward = Math.floor(budget * 0.1);
       auraGain = -100;
       mhPen = 30;
-      uiType = "ui-crisis";
+      uiType = "ui-cyberpunk";
     } else if (roll < 85) { // HIT
       outcomeTitle = "BOX OFFICE HIT! 📈";
       outcomeText = "The film dominated the weekend charts and became a cultural moment.";
@@ -2859,7 +2859,7 @@ export const GameProvider = ({ children }) => {
 
     setMod({
       s: true,
-      t: "THE STAGE IS SET",
+      t: "THE SUMMIT CONCLUDED",
       m: "Wall Street is bought, the media is controlled, and the delegates are locked. You are officially primed to run for President of the United States.",
       o: [{ label: "PREPARE FOR CAMPAIGN", action: () => setMod({ s: false }) }],
       ui: "ui-modal"
