@@ -141,6 +141,7 @@ export const getInitialGameState = () => ({
   peCompoundingYield: 1.0,
   artMarketSentiment: 0,
   artCollection: [],
+  venueState: "THE VAULT",
 
   audioTracks: 0,
   sampleStrike: false,
@@ -326,6 +327,7 @@ export const GameProvider = ({ children }) => {
   const [peCompoundingYield, setPeCompoundingYield] = useState(init.peCompoundingYield);
   const [artMarketSentiment, setArtMarketSentiment] = useState(init.artMarketSentiment);
   const [artCollection, setArtCollection] = useState(init.artCollection);
+  const [venueState, setVenueState] = useState(init.venueState);
 
   const [audioTracks, setAudioTracks] = useState(init.audioTracks);
   const [sampleStrike, setSampleStrike] = useState(init.sampleStrike);
@@ -450,7 +452,7 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artCollection, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    artMarketSentiment, artCollection, venueState, audioTracks, sampleStrike, pmcSquads, intelLeak,
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, vintageBoostActive, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
@@ -539,6 +541,7 @@ export const GameProvider = ({ children }) => {
         if (d?.supplyChainDisruption !== undefined) setSupplyChainDisruption(d.supplyChainDisruption);
         if (d?.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
         if (d?.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
+        if (d?.venueState) setVenueState(d.venueState);
         if (d?.artCollection) {
           setArtCollection(d.artCollection);
         } else if (d?.artHoldings !== undefined) {
@@ -640,6 +643,16 @@ export const GameProvider = ({ children }) => {
     }, 10000);
     return () => clearInterval(window.autoSaveInterval);
   }, []);
+
+  // Global Macro Tick: Passive Yields
+  useEffect(() => {
+    const macroInterval = setInterval(() => {
+      if (ph === 'PLAYING') {
+        adv();
+      }
+    }, 15000);
+    return () => clearInterval(macroInterval);
+  }, [ph]);
 
   const getUpdatedCaps = (tier, currentFlex) => {
     const caps = [100, 250, 300, 5000, 5000, 999999999];
@@ -1980,8 +1993,6 @@ export const GameProvider = ({ children }) => {
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
-    setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
 
     // Click Catastrophe: SEC Pension Subpoena (2%)
     const risk = ass.legalTeam ? 0.01 : 0.02;
@@ -1990,20 +2001,33 @@ export const GameProvider = ({ children }) => {
       const auraPen = ass.legalTeam ? 75 : 150;
       setPl(p => ({ ...p, bag: p.bag - bagPen, aura: Math.max(0, p.aura - auraPen) }));
       setNews(prev => ["🚨 SEC SUBPOENA: Pension fund irregularities detected. -$10,000,000 and -150 Aura.", ...prev.slice(0, 15)]);
-      return undefined;
+      return -bagPen;
     }
 
-    setPeProgress(p => {
-      const next = p + 20;
-      if (next >= 100) {
-        setPl(prev => ({ ...prev, bag: prev.bag + 25000000 }));
-        setGuttedFirms(g => g + 1);
-        setNews(prev => ["💰 PE: Buyout complete! Awarded $25,000,000 liquid windfall.", ...prev.slice(0, 15)]);
-        return 0;
-      }
-      return next;
-    });
+    setHustleClicks(prev => ({ ...prev, pe: (prev.pe || 0) + 1 }));
+
+    const isComplete = peProgress + 20 >= 100;
+    let finalProfit = -25000000;
+
+    if (isComplete) {
+      // CORPORATE RAID SIDE-EFFECTS: +500 Clout, -30 Mental Health (extra)
+      setPl(p => ({
+        ...p,
+        bag: p.bag + 25000000,
+        clout: Math.min(p.maxClout, p.clout + 500),
+        mentalHealth: Math.max(0, p.mentalHealth - 30 - (40 * (1 - mhReduction)))
+      }));
+      setPeProgress(0);
+      setGuttedFirms(g => g + 1);
+      setNews(prev => ["💰 PE: Buyout complete! Awarded $25,000,000 liquid windfall. +500 Clout.", ...prev.slice(0, 15)]);
+      finalProfit = 25000000;
+    } else {
+      setPl(p => ({ ...p, bag: p.bag - 25000000, mentalHealth: p.mentalHealth - (40 * (1 - mhReduction)) }));
+      setPeProgress(prev => prev + 20);
+    }
+
     adv();
+    return finalProfit;
   };
 
   const rArtSpeculate = async () => {
@@ -2014,34 +2038,46 @@ export const GameProvider = ({ children }) => {
     setArtMarketSentiment(prev => Math.max(-1, Math.min(1, prev + shift)));
     setNews(prev => ["🎨 ART: Market speculation executed. Sentiment shifted.", ...prev.slice(0, 15)]);
     adv();
+    return 0;
   };
 
-  const rArtBuy = async () => {
-    const acquisitionCost = Math.floor(10000000 * (1 + artMarketSentiment * 0.5));
-    if (pl.bag < acquisitionCost || pl.mentalHealth < 35) return;
-    const isJetOwned = flex.jet.owned;
-    const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
-    const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    setPl(p => ({ ...p, bag: p.bag - acquisitionCost, mentalHealth: p.mentalHealth - (35 * (1 - mhReduction)) }));
-    setHustleClicks(prev => ({ ...prev, art: (prev.art || 0) + 1 }));
+  function handleArtPurchase() {
+    const ART_PRICE = 12400000; // $12.4M
 
-    // Click Catastrophe: Forgery Scandal (2%)
-    const risk = ass.legalTeam ? 0.01 : 0.02;
-    if (Math.random() < risk) {
-      const cloutPen = ass.legalTeam ? 100 : 200;
-      setPl(p => ({ ...p, clout: Math.max(0, p.clout - cloutPen) }));
-      setNews(prev => ["🚨 FORGERY SCANDAL: Masterpiece proven fake. Piece confiscated and -200 Clout.", ...prev.slice(0, 15)]);
-      return undefined;
+    // 1. Transaction Check
+    if (pl.bag < ART_PRICE) {
+        console.log("Insufficient funds for elite art asset.");
+        return;
     }
+
+    // 2. State Mutation
+    setPl(p => ({ ...p, bag: p.bag - ART_PRICE }));
+    const nextCount = artCollection.length + 1;
 
     setArtCollection(prev => [...prev, {
       id: `art-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: `Elite Masterpiece #${prev.length + 1}`,
-      baseValue: acquisitionCost,
+      baseValue: ART_PRICE,
       isDisplayed: true
     }]);
-    setNews(prev => ["🎨 ART: Collection expanded. Passive Clout increased.", ...prev.slice(0, 15)]);
+
+    // 3. Dynamic Milestone Evaluation
+    if (nextCount >= 50) {
+        setVenueState("THE GALLERY / MUSEUM");
+    } else if (nextCount >= 20) {
+        setVenueState("THE CURATED EXHIBIT");
+    } else {
+        setVenueState("THE VAULT");
+    }
+
+    // 4. Force UI updates / Re-render views -> Handled by React state
+    setNews(prev => ["🎨 ART: Elite masterpiece acquired. Collection expanded.", ...prev.slice(0, 15)]);
     adv();
+    return -ART_PRICE;
+  }
+
+  const rArtBuy = async () => {
+    return handleArtPurchase();
   };
 
   const rArtAuction = async () => {
@@ -2111,6 +2147,7 @@ export const GameProvider = ({ children }) => {
     setNews(prev => ["🎨 EXHIBIT: High-society event successfully concluded. Prestige increased.", ...prev.slice(0, 15)]);
     setGBusy(false);
     adv();
+    return gateRevenue;
   };
 
   const rAcceptPatronOffer = (pieceId, offerAmount) => {
@@ -2119,6 +2156,7 @@ export const GameProvider = ({ children }) => {
     setMod({ s: false });
     setNews(prev => [`🎨 PATRON: Piece sold to private collector for $${fMny(offerAmount)}.`, ...prev.slice(0, 15)]);
     adv();
+    return offerAmount;
   };
 
   const rFormConglom = async () => {
@@ -3403,8 +3441,8 @@ export const GameProvider = ({ children }) => {
       isBreakdownActive, shakeActive, rDischarge,
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
       rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
-      supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
-      artMarketSentiment, artCollection, rArtSpeculate,
+      supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms, rPeClick,
+      artMarketSentiment, artCollection, venueState, rArtSpeculate, handleArtPurchase,
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
