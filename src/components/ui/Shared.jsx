@@ -41,12 +41,13 @@ export const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', 
     const hr = cost !== undefined && pl.bag > 0 && cost >= pl.bag * 0.25;
 
     // UNIVERSAL RESET TIMER: Enforce state-clearing safety delay
+    const resetTime = hr ? 6000 : 3000;
     setTimeout(() => {
       setSt('idle');
       setIsFlashVisible(true);
       setIsFlashProcessing(false);
       setIsDisabled(false);
-    }, 2000);
+    }, resetTime);
 
     setIsFlashProcessing(true);
 
