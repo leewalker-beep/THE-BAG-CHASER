@@ -140,7 +140,7 @@ export const getInitialGameState = () => ({
   supplyChainDisruption: false,
   peCompoundingYield: 1.0,
   artMarketSentiment: 0,
-  artHoldings: 0,
+  artCollection: [],
 
   audioTracks: 0,
   sampleStrike: false,
@@ -325,7 +325,7 @@ export const GameProvider = ({ children }) => {
   const [supplyChainDisruption, setSupplyChainDisruption] = useState(init.supplyChainDisruption);
   const [peCompoundingYield, setPeCompoundingYield] = useState(init.peCompoundingYield);
   const [artMarketSentiment, setArtMarketSentiment] = useState(init.artMarketSentiment);
-  const [artHoldings, setArtHoldings] = useState(init.artHoldings);
+  const [artCollection, setArtCollection] = useState(init.artCollection);
 
   const [audioTracks, setAudioTracks] = useState(init.audioTracks);
   const [sampleStrike, setSampleStrike] = useState(init.sampleStrike);
@@ -450,7 +450,7 @@ export const GameProvider = ({ children }) => {
     runnerBurnout, saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients,
     apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive,
     unionStrikeIgnored, peProgress, guttedFirms, supplyChainDisruption, peCompoundingYield,
-    artMarketSentiment, artHoldings, audioTracks, sampleStrike, pmcSquads, intelLeak,
+    artMarketSentiment, artCollection, audioTracks, sampleStrike, pmcSquads, intelLeak,
     techInterns, bulkPalletsUnlocked, enterpriseContracts,
     audioUpgrades, talentScouters, holwoodSyncActive,
     collectiblePhase, vintageRevenueTracker, vintageBoostActive, sneakerBackdoorPlug, consignmentFeeActive, vaultHoldings,
@@ -539,7 +539,22 @@ export const GameProvider = ({ children }) => {
         if (d?.supplyChainDisruption !== undefined) setSupplyChainDisruption(d.supplyChainDisruption);
         if (d?.peCompoundingYield !== undefined) setPeCompoundingYield(d.peCompoundingYield);
         if (d?.artMarketSentiment !== undefined) setArtMarketSentiment(d.artMarketSentiment);
-        if (d?.artHoldings !== undefined) setArtHoldings(d.artHoldings);
+        if (d?.artCollection) {
+          setArtCollection(d.artCollection);
+        } else if (d?.artHoldings !== undefined) {
+          // Migration from artHoldings count to artCollection array
+          const legacyCount = d.artHoldings;
+          const migrated = [];
+          for (let i = 0; i < legacyCount; i++) {
+            migrated.push({
+              id: `migrated-${i}-${Math.random().toString(36).substr(2, 9)}`,
+              name: `Legacy Masterpiece #${i + 1}`,
+              baseValue: 10000000,
+              isDisplayed: true
+            });
+          }
+          setArtCollection(migrated);
+        }
         if (d?.audioTracks !== undefined) setAudioTracks(d.audioTracks);
         if (d?.sampleStrike !== undefined) setSampleStrike(d.sampleStrike);
         if (d?.pmcSquads !== undefined) setPmcSquads(d.pmcSquads);
@@ -808,7 +823,7 @@ export const GameProvider = ({ children }) => {
         // Tiny chance (5%) for a random event every 30 seconds
         if (Math.random() > 0.05) return;
 
-        const { conglomActive, ass, pl, saasUsers, artHoldings } = stateRef.current;
+        const { conglomActive, ass, pl, saasUsers, artCollection } = stateRef.current;
         const roll = Math.random();
 
         // 1. IRS Audit / Anti-Trust Sweep (Requires Conglomerate)
@@ -828,7 +843,7 @@ export const GameProvider = ({ children }) => {
           }
         }
         // 2. Viral Market Windfall
-        else if (roll < 0.66 && ((saasUsers || 0) > 0 || (artHoldings || 0) > 0)) {
+        else if (roll < 0.66 && ((saasUsers || 0) > 0 || (artCollection?.length || 0) > 0)) {
           const cloutBonus = Math.floor((pl?.clout || 0) / 10);
           if ((saasUsers || 0) > 0 && Math.random() > 0.5) {
             const gain = 500 + (cloutBonus * 100);
@@ -840,7 +855,7 @@ export const GameProvider = ({ children }) => {
               o: [{ label: "RIDE THE WAVE", action: () => setMod({ s: false }) }],
               ui: "ui-modal"
             });
-          } else if ((artHoldings || 0) > 0) {
+          } else if ((artCollection?.length || 0) > 0) {
             setArtMarketSentiment(prev => Math.min(1, (prev || 0) + 0.5));
             setMod({
               s: true,
@@ -851,7 +866,30 @@ export const GameProvider = ({ children }) => {
             });
           }
         }
-        // 3. Burnout Crisis
+        // 3. Patron Gallery Offer (States 3 & 4)
+        else if (artCollection.length >= 50 && roll < 0.15) {
+          const displayed = artCollection.filter(p => p.isDisplayed);
+          if (displayed.length > 0) {
+            const piece = displayed[Math.floor(Math.random() * displayed.length)];
+            const isState4 = artCollection.length >= 75 && flex?.archive?.owned;
+            const premiumMult = 1.5 + (Math.random() * 2.0); // 1.5 to 3.5
+            const offerAmt = Math.floor(piece.baseValue * premiumMult);
+
+            setMod({
+              s: true,
+              t: isState4 ? "SOVEREIGN PATRON OFFER" : "PRIVATE PATRON OFFER",
+              m: isState4
+                ? `A sovereign-tier buyer has requested "${piece.name}" for their national gallery. They offer $${fMny(offerAmt)} for the acquisition.`
+                : `An elite collector is enamored with "${piece.name}". They are offering $${fMny(offerAmt)} to acquire it for their private estate. Accepting will remove it from your museum.`,
+              o: [
+                { label: `ACCEPT OFFER ($${fMny(offerAmt)})`, action: () => rAcceptPatronOffer(piece.id, offerAmt) },
+                { label: "DECLINE", action: () => setMod({ s: false }) }
+              ],
+              ui: "ui-modal"
+            });
+          }
+        }
+        // 4. Burnout Crisis
         else if ((pl?.mentalHealth || 0) < 20) {
           setPassiveFrozen(true);
           setMod({
@@ -1110,7 +1148,19 @@ export const GameProvider = ({ children }) => {
       let peRev = supplyChainDisruption ? -500000 : (guttedFirms * 100000 * peCompoundingYield);
 
       const auraBleed = (unionStrikeIgnored ? 50 : 0) + (intelLeak ? 20 : 0);
-      const artClout = artHoldings * 20;
+
+      // Art Passive Scaling (States 3 & 4)
+      const { artCollection: curArt, flex: curFlex } = stateRef.current;
+      const totalArtCount = curArt?.length || 0;
+      const artClout = totalArtCount * 20;
+      let artPassiveRev = 0;
+      if (totalArtCount >= 50) {
+        const totalCollectionValue = curArt.reduce((acc, curr) => acc + curr.baseValue, 0);
+        const isIconic = totalArtCount >= 75 && curFlex?.archive?.owned;
+        const multiplier = isIconic ? 0.003 : 0.001; // 0.3% or 0.1% daily
+        artPassiveRev = Math.floor(totalCollectionValue * multiplier);
+      }
+
       const artDrift = (stateRef.current.flex.art.owned && stateRef.current.flex.art.prActive) ? 5 : 0;
 
       // Annual 12% Asset Appreciation for Vault Holdings
@@ -1132,7 +1182,7 @@ export const GameProvider = ({ children }) => {
       }
 
       const swfYield = !swfFrozen ? Math.floor(swfInvestment * 0.06 * geoStability) : 0;
-      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives) * legacyMultiplier);
+      let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives + artPassiveRev) * legacyMultiplier);
       if (passiveFrozen) basePassive = 0;
       const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
 
@@ -1984,28 +2034,95 @@ export const GameProvider = ({ children }) => {
       return undefined;
     }
 
-    setArtHoldings(a => a + 1);
+    setArtCollection(prev => [...prev, {
+      id: `art-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: `Elite Masterpiece #${prev.length + 1}`,
+      baseValue: acquisitionCost,
+      isDisplayed: true
+    }]);
     setNews(prev => ["🎨 ART: Collection expanded. Passive Clout increased.", ...prev.slice(0, 15)]);
     adv();
   };
 
   const rArtAuction = async () => {
-    if (artHoldings <= 0) return;
-    setArtHoldings(a => a - 1);
+    if (artCollection.length <= 0) return;
 
-    const roll = Math.random() - 0.5;
+    // Peek at the piece, don't remove yet for crash safety
+    const piece = artCollection[artCollection.length - 1];
+
+    setGBusy(true);
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Bidding War Logic
+    const bid1 = Math.floor(piece.baseValue * (0.8 + Math.random() * 0.4));
+    const bid2 = Math.floor(piece.baseValue * (1.2 + Math.random() * 0.4));
+    const bid3 = Math.floor(piece.baseValue * (1.6 + Math.random() * 0.4));
+
+    setMod({
+      s: true,
+      t: "SOTHEBY'S LIVE AUCTION",
+      m: `A intense bidding war has erupted over "${piece.name}".\n\n- Floor Bid: $${fMny(bid1)}\n- Anonymous Phone: $${fMny(bid2)}\n- Swiss Gallery Proxy: $${fMny(bid3)}\n\nThe hammer is approaching the block.`,
+      o: [{ label: "WATCH HAMMER FALL", action: () => finalizeAuction(piece) }],
+      ui: "ui-modal"
+    });
+    setGBusy(false);
+  };
+
+  const finalizeAuction = (piece) => {
+    const randomMult = 0.8 + (Math.random() * 1.7); // 0.8 to 2.5
     const bubbleMult = stateRef.current.artBubbleMonths > 0 ? 1.4 : 1.0;
-    let yieldAmt = Math.floor(15000000 * (1 + artMarketSentiment * 2 + roll) * legacyMultiplier * bubbleMult);
-    yieldAmt = Math.max(500000, yieldAmt);
+    const finalPayout = Math.floor(piece.baseValue * randomMult * legacyMultiplier * bubbleMult);
 
-    setPl(p => ({ ...p, bag: p.bag + yieldAmt }));
-    setNews(prev => [`🖼️ ART AUCTION: Piece sold for $${fMny(yieldAmt)}.`, ...prev.slice(0, 15)]);
-    triggerImpact('bag', yieldAmt);
+    setPl(p => ({ ...p, bag: p.bag + finalPayout }));
+    setArtCollection(prev => prev.filter(p => p.id !== piece.id));
+    setNews(prev => [`🖼️ AUCTION: ${piece.name} hammered for $${fMny(finalPayout)}.`, ...prev.slice(0, 15)]);
+    triggerImpact('bag', finalPayout);
+    setMod({ s: false });
+    adv();
+  };
+
+  const rArtHostExhibit = async () => {
+    if (artCollection.length < 20 || pl.mentalHealth < 40) return;
+
+    setGBusy(true);
+    setPl(p => ({ ...p, mentalHealth: Math.max(0, p.mentalHealth - 40) }));
+    await new Promise(r => setTimeout(r, 1500));
+
+    const displayedPieces = artCollection.filter(p => p.isDisplayed);
+    const totalDisplayValue = displayedPieces.reduce((acc, curr) => acc + curr.baseValue, 0);
+
+    const cloutGain = Math.floor(displayedPieces.length * 15);
+    const gateRevenue = Math.floor(totalDisplayValue * 0.05); // 5% of collection value as gate revenue
+
+    setPl(p => ({
+      ...p,
+      bag: p.bag + gateRevenue,
+      clout: Math.min(p.maxClout, p.clout + cloutGain)
+    }));
+
+    setMod({
+      s: true,
+      t: "PRIVATE EXHIBITION CONCLUDED",
+      m: `Your curated show was the talk of the elite circle. +${cloutGain} Clout and $${fMny(gateRevenue)} in private gate revenue secured.`,
+      o: [{ label: "MASTERFUL", action: () => setMod({ s: false }) }],
+      ui: "ui-modal"
+    });
+
+    setNews(prev => ["🎨 EXHIBIT: High-society event successfully concluded. Prestige increased.", ...prev.slice(0, 15)]);
+    setGBusy(false);
+    adv();
+  };
+
+  const rAcceptPatronOffer = (pieceId, offerAmount) => {
+    setArtCollection(prev => prev.filter(p => p.id !== pieceId));
+    setPl(p => ({ ...p, bag: p.bag + offerAmount }));
+    setMod({ s: false });
+    setNews(prev => [`🎨 PATRON: Piece sold to private collector for $${fMny(offerAmount)}.`, ...prev.slice(0, 15)]);
     adv();
   };
 
   const rFormConglom = async () => {
-    const hasAssets = saasUsers > 0 || corpClients > 0 || creOfficeCount > 0 || creRetailCount > 0 || franchiseCount > 0 || guttedFirms > 0 || artHoldings > 0 || tch.l || crp.l > 0 || tur.t > 1 || hf.c > 0;
+    const hasAssets = saasUsers > 0 || corpClients > 0 || creOfficeCount > 0 || creRetailCount > 0 || franchiseCount > 0 || guttedFirms > 0 || artCollection.length > 0 || tch.l || crp.l > 0 || tur.t > 1 || hf.c > 0;
     if (pl.bag < 250000000 || !hasAssets) return;
     setPl(p => ({ ...p, bag: p.bag - 250000000 }));
     setConglomActive(true);
@@ -3040,7 +3157,7 @@ export const GameProvider = ({ children }) => {
     setSupplyChainDisruption(false);
     setPeCompoundingYield(1.0);
     setArtMarketSentiment(0);
-    setArtHoldings(0);
+    setArtCollection([]);
     setAudioTracks(0);
     setSampleStrike(false);
     setPmcSquads(0);
@@ -3203,7 +3320,7 @@ export const GameProvider = ({ children }) => {
     setGuttedFirms(0);
     setPeProgress(0);
     setPeCompoundingYield(1.0);
-    setArtHoldings(0);
+    setArtCollection([]);
     setArtMarketSentiment(0);
     setAudioTracks(0);
     setSampleStrike(false);
@@ -3287,7 +3404,7 @@ export const GameProvider = ({ children }) => {
       saasUsers, saasPrice, saasChurn, saasPenaltyActive, corpClients, apiLockoutMonths, creOfficeCount, creRetailCount, franchiseCount, unionStrikeActive, unionStrikeIgnored,
       rSaasClick, rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
       supplyChainDisruption, peCompoundingYield, rResolveSupplyChain, peProgress, guttedFirms,
-      artMarketSentiment, artHoldings, rArtSpeculate,
+      artMarketSentiment, artCollection, rArtSpeculate,
       conglomActive, antitrustRisk, swfInvestment, geoStability, swfFrozen,
       passiveFrozen, setPassiveFrozen,
       rFormConglom, rLobbyRegulators, rSwfInvest, rSwfWithdraw,
