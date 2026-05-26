@@ -93,6 +93,7 @@ const SAVE_KEY = 'bag-chaser-save-v1';
 
 export const getInitialGameState = () => ({
   version: "1.1",
+  lastProcessedTimestamp: Date.now(),
   // Navigation & Core Frame
   ph: 'PROLOGUE',
   proSt: 0,
@@ -444,10 +445,13 @@ export const GameProvider = ({ children }) => {
   const [generationCount, setGenerationCount] = useState(init.generationCount);
   const legacyMultiplier = 1 + (generationCount * 0.25);
 
+  const [lastProcessedTimestamp, setLastProcessedTimestamp] = useState(init.lastProcessedTimestamp);
+
   // Persistent Save Engine Ref for Stable Background Saves
   const stateRef = React.useRef();
   stateRef.current = {
     ph, proSt, alias, diff, tab, selTier, swFatigue, hustleFatigue, karmaFlags,
+    lastProcessedTimestamp,
     seenNotifications, mhEmergencies,
     lastHustle, dropshipLock, vintageLock, smmPenalty, techSourceCost, smmClients,
     clientCrisis, vinCh, hustleClicks, techItem, techFlipsComplete, runnerCount,
@@ -515,6 +519,7 @@ export const GameProvider = ({ children }) => {
         if (d?.hustleFatigue) setHustleFatigue(prev => ({ ...prev, ...d.hustleFatigue }));
         if (d?.karmaFlags) setKarmaFlags(prev => ({ ...prev, ...d.karmaFlags }));
         if (d?.lastHustle) setLastHustle(d.lastHustle);
+        if (d?.lastProcessedTimestamp) setLastProcessedTimestamp(d.lastProcessedTimestamp);
         if (d?.dropshipLock !== undefined) setDropshipLock(d.dropshipLock);
         if (d?.vintageLock !== undefined) setVintageLock(d.vintageLock);
         if (d?.smmPenalty !== undefined) setSmmPenalty(d.smmPenalty);
@@ -642,6 +647,7 @@ export const GameProvider = ({ children }) => {
   useEffect(() => {
     window.autoSaveInterval = setInterval(() => {
       if (window.isResetting) return;
+      stateRef.current.lastProcessedTimestamp = Date.now();
       localStorage.setItem(SAVE_KEY, JSON.stringify(stateRef.current));
     }, 10000);
     return () => clearInterval(window.autoSaveInterval);
@@ -652,9 +658,41 @@ export const GameProvider = ({ children }) => {
     const macroInterval = setInterval(() => {
       if (ph === 'PLAYING') {
         adv();
+        const now = Date.now();
+        setLastProcessedTimestamp(now);
+        stateRef.current.lastProcessedTimestamp = now;
       }
     }, 15000);
     return () => clearInterval(macroInterval);
+  }, [ph]);
+
+  const catchUp = () => {
+    if (ph !== 'PLAYING') return;
+    const now = Date.now();
+    const elapsedMs = now - stateRef.current.lastProcessedTimestamp;
+    const intervalsElapsed = Math.floor(elapsedMs / 15000);
+    if (intervalsElapsed > 0) {
+      adv(intervalsElapsed);
+      setLastProcessedTimestamp(now);
+      stateRef.current.lastProcessedTimestamp = now;
+    }
+  };
+
+  useEffect(() => {
+    if (ph === 'PLAYING') {
+      catchUp();
+    }
+    const onFocus = () => catchUp();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') catchUp();
+    };
+
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [ph]);
 
   const getUpdatedCaps = (tier, currentFlex) => {
@@ -997,16 +1035,16 @@ export const GameProvider = ({ children }) => {
   };
 
   // Global Pulse Advance Logic
-  const adv = (months = 1) => {
+  const adv = (intervals = 1) => {
     if (fatalTragedyMessage) return;
-    setSwFatigue(prev => Math.max(0, prev - (0.25 * months)));
+    setSwFatigue(prev => Math.max(0, prev - (0.25 * intervals)));
     setHustleFatigue(prev => {
       const next = { ...prev };
-      Object.keys(next).forEach(k => { next[k] = Math.max(0, next[k] - 20); });
+      Object.keys(next).forEach(k => { next[k] = Math.max(0, next[k] - (20 * intervals)); });
       return next;
     });
-    setDropshipLock(prev => Math.max(0, prev - months));
-    setVintageLock(prev => Math.max(0, prev - months));
+    setDropshipLock(prev => Math.max(0, prev - intervals));
+    setVintageLock(prev => Math.max(0, prev - intervals));
 
     if (clientCrisis) {
       if (karmaFlags.ignoredSmmCrisis) {
@@ -1030,17 +1068,17 @@ export const GameProvider = ({ children }) => {
       setRunnerBurnout(false);
     }
 
-    if (apiLockoutMonths > 0) setApiLockoutMonths(m => m - 1);
+    if (apiLockoutMonths > 0) setApiLockoutMonths(m => Math.max(0, m - intervals));
     if (saasPenaltyActive) setSaasPenaltyActive(false);
 
     // Real World Monitor Ticker countdowns
-    if (artBubbleMonths > 0) setArtBubbleMonths(prev => Math.max(0, prev - months));
-    if (supplyChainShockMonths > 0) setSupplyChainShockMonths(prev => Math.max(0, prev - months));
-    if (viralPopMonths > 0) setViralPopMonths(prev => Math.max(0, prev - months));
+    if (artBubbleMonths > 0) setArtBubbleMonths(prev => Math.max(0, prev - intervals));
+    if (supplyChainShockMonths > 0) setSupplyChainShockMonths(prev => Math.max(0, prev - intervals));
+    if (viralPopMonths > 0) setViralPopMonths(prev => Math.max(0, prev - intervals));
 
-    if (artBubbleMonths === 1 && months === 1) setTickerAdvice("WALL STREET: Art Market bubble has burst. Margins normalized.");
-    if (supplyChainShockMonths === 1 && months === 1) setTickerAdvice("SUPPLY CHAIN: Component logistics restored. Tech Flipping costs normalized.");
-    if (viralPopMonths === 1 && months === 1) setTickerAdvice("TREND WATCH: Retro-synth viral wave fading. Audio Syndicate rates normalized.");
+    if (artBubbleMonths > 0 && artBubbleMonths <= intervals) setTickerAdvice("WALL STREET: Art Market bubble has burst. Margins normalized.");
+    if (supplyChainShockMonths > 0 && supplyChainShockMonths <= intervals) setTickerAdvice("SUPPLY CHAIN: Component logistics restored. Tech Flipping costs normalized.");
+    if (viralPopMonths > 0 && viralPopMonths <= intervals) setTickerAdvice("TREND WATCH: Retro-synth viral wave fading. Audio Syndicate rates normalized.");
 
     // Dynamic Micro-Event Engine (Real World Monitor)
     if (Math.random() < 0.10) {
@@ -1059,18 +1097,18 @@ export const GameProvider = ({ children }) => {
 
     // Indie Audio Syndicate: Talent Scouters passive signing
     if (stateRef.current.talentScouters > 0) {
-      setAudioTracks(prev => prev + (stateRef.current.talentScouters * months));
+      setAudioTracks(prev => prev + (stateRef.current.talentScouters * intervals));
     }
 
     // Politics Game Loop
     const currentLobbyists = stateRef.current.lobbyists;
     if (currentLobbyists > 0) {
-      setPl(p => ({ ...p, clout: Math.min(p.maxClout, p.clout + (currentLobbyists * 25)) }));
-      setApprovalRating(prev => Math.min(100, prev + (0.5 * currentLobbyists)));
+      setPl(p => ({ ...p, clout: Math.min(p.maxClout, p.clout + (currentLobbyists * 25 * intervals)) }));
+      setApprovalRating(prev => Math.min(100, prev + (0.5 * currentLobbyists * intervals)));
     }
 
     if (!stateRef.current.isPresident) {
-      setApprovalRating(prev => Math.max(0, prev - 2.5));
+      setApprovalRating(prev => Math.max(0, prev - (2.5 * intervals)));
     }
 
     // Political Syndicate passive generation
@@ -1082,7 +1120,7 @@ export const GameProvider = ({ children }) => {
           const isBlitzed = stateRef.current.flex.yacht.expiresAt > Date.now();
           gain *= (isBlitzed ? 2.0 : 1.5);
         }
-        let nextCapital = Math.min(100, prev.politicalCapital + (gain * months));
+        let nextCapital = Math.min(100, prev.politicalCapital + (gain * intervals));
         let nextStatus = nextCapital >= 100 ? 'CAMPAIGN_READY' : prev.status;
         return { ...prev, politicalCapital: nextCapital, status: nextStatus };
       });
@@ -1094,7 +1132,7 @@ export const GameProvider = ({ children }) => {
       if (corpClients > 0) {
         growth = corpClients * (10 + Math.floor(stateRef.current.pl.clout / 20));
       }
-      return Math.max(0, prev - churned + growth);
+      return Math.max(0, prev + (growth - churned) * intervals);
     });
 
     setGeoStability(prev => {
@@ -1188,10 +1226,14 @@ export const GameProvider = ({ children }) => {
 
       // Annual 12% Asset Appreciation for Vault Holdings
       if (stateRef.current.collectiblePhase === "VAULT" && stateRef.current.vaultHoldings.length > 0) {
-        if (prev.mo % 12 === 0 && months > 0) {
+        let appreciationCycles = 0;
+        for (let i = 1; i <= intervals; i++) {
+          if ((prev.mo + i) % 12 === 0) appreciationCycles++;
+        }
+        if (appreciationCycles > 0) {
           setVaultHoldings(prevHoldings => prevHoldings.map(h => ({
             ...h,
-            cost: Math.floor(h.cost * 1.12)
+            cost: Math.floor(h.cost * Math.pow(1.12, appreciationCycles))
           })));
         }
       }
@@ -1211,12 +1253,12 @@ export const GameProvider = ({ children }) => {
 
       return {
         ...prev,
-        mo: prev.mo + months,
-        bag: prev.bag - expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus,
-        aura: Math.min(prev.maxAura, Math.max(0, prev.aura - auraBleed + vaultAura + artDrift)),
-        clout: Math.min(prev.maxClout, prev.clout + artClout + audioClout),
-        heat: prev.heat + pmcHeatContribution,
-        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + (flex.penthouse.owned ? 30 : 15))
+        mo: prev.mo + intervals,
+        bag: prev.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus) * intervals,
+        aura: Math.min(prev.maxAura, Math.max(0, prev.aura + (-auraBleed + vaultAura + artDrift) * intervals)),
+        clout: Math.min(prev.maxClout, prev.clout + (artClout + audioClout) * intervals),
+        heat: prev.heat + (pmcHeatContribution * intervals),
+        mentalHealth: Math.min(prev.maxMentalHealth, prev.mentalHealth + ((flex.penthouse.owned ? 30 : 15) * intervals))
       };
     });
 
@@ -1226,7 +1268,7 @@ export const GameProvider = ({ children }) => {
     let heatAdded = 0;
 
     if (currentActiveContracts > 0) {
-      heatAdded = (10.0 * currentActiveContracts);
+      heatAdded = (10.0 * currentActiveContracts * intervals);
     }
 
     if (stateRef.current.isPresident) {
@@ -1258,7 +1300,7 @@ export const GameProvider = ({ children }) => {
     // Conglomerate Risk & Fines
     if (conglomActive) {
       setAntitrustRisk(prev => {
-        const next = prev + 3;
+        const next = prev + (3 * intervals);
         if (next > (Math.random() * 80 + 20)) {
           setPl(p => ({ ...p, bag: p.bag - 50000000 }));
           setNews(prevNews => ["🏛️ ANTI-TRUST: Monopoly investigation triggered a $50M regulatory fine.", ...prevNews.slice(0, 15)]);
@@ -1337,8 +1379,8 @@ export const GameProvider = ({ children }) => {
     // AI Engine Race Simulation
     if (ai.ig) {
       setAi(prev => {
-        const compGains = prev.c * (1.2 + Math.random() * 2);
-        const rivalGains = 1.8 + Math.random() * 2.5;
+        const compGains = prev.c * (1.2 + Math.random() * 2) * intervals;
+        const rivalGains = (1.8 + Math.random() * 2.5) * intervals;
         return {
           ...prev,
           p: Math.min(100, prev.p + compGains),
@@ -1350,7 +1392,7 @@ export const GameProvider = ({ children }) => {
     // Campaign Clock System
     if (prs.r) {
       setPrs(prev => {
-        const nextMonth = prev.m + 1;
+        const nextMonth = prev.m + intervals;
         if (nextMonth >= 12) {
           const winRst = prev.rst >= 51;
           const winSun = prev.sun >= 51;
