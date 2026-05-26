@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGame } from '../../GameEngine.jsx';
 
 const VictorySpeechTab = () => {
-  const { setTab, setMod } = useGame();
+  const { setTab, setMod, rSubmitToHallOfFame } = useGame();
   const [step, setStep] = useState(0);
 
   const speechSteps = [
@@ -24,8 +24,26 @@ const VictorySpeechTab = () => {
     if (step < speechSteps.length - 1) {
       setStep(step + 1);
     } else {
-      setMod({ s: false });
-      setTab('HUB');
+      setMod({
+        s: true,
+        t: "THE ULTIMATE FLEX",
+        m: "You have conquered the highest office in the land. The bag is secured, and the board is yours. How do you wish to proceed?",
+        o: [
+          {
+            label: "CONTINUE CAMPAIGN RUN",
+            action: () => { setMod({ s: false }); setTab('HUB'); }
+          },
+          {
+            label: "SUBMIT TO HALL OF FAME & RESET",
+            action: () => {
+              setMod({ s: false });
+              const name = prompt("ENTER YOUR NAME FOR THE ARCHIVES:") || "ANONYMOUS";
+              rSubmitToHallOfFame(name);
+            }
+          }
+        ],
+        ui: "ui-victory"
+      });
     }
   };
 
