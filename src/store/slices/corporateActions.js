@@ -77,6 +77,7 @@ export const createCorporateSlice = (set, get) => ({
   },
 
   rTechSource: async () => {
+    if (get().techItem) return;
     const { pl, bulkPalletsUnlocked, techSourceCost, updateFatigue, triggerChaos, karmaFlags } = get();
     const cost = bulkPalletsUnlocked ? Math.floor(techSourceCost * 0.6) : techSourceCost;
     if (pl.bag < cost) return; updateFatigue('tech');

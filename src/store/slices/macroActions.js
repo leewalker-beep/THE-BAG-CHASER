@@ -175,7 +175,7 @@ export const createMacroSlice = (set, get) => ({
     let title = "", text = "", bagR = 0, gAur = 0, gClt = 0, mhP = 0, ui = "ui-modal";
     if (roll < 40) { title = "BOX OFFICE FLOP 💀"; text = "Commercial disaster."; bagR = Math.floor(budget * 0.1); gAur = -100; mhP = 30; ui = "ui-cyberpunk"; }
     else if (roll < 85) { title = "BOX OFFICE HIT! 📈"; text = "Cultural moment."; bagR = budget * 2; gClt = 300; gAur = 100; }
-    else { title = "ACADEMY AWARD SWEEP 🏆"; text = "Cinematic perfection."; bagR = Math.floor(budget * 1.2); gClt = 500; gAur = 2500; }
+    else { title = "ACADEMY AWARD SWEEP 🏆"; text = "Cinematic perfection."; bagR = Math.floor(budget * 3.5); gClt = 500; gAur = 2500; }
     set(state => ({ pl: { ...state.pl, bag: state.pl.bag + bagR, aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + gAur)), clout: Math.min(state.pl.maxClout, state.pl.clout + gClt), mentalHealth: Math.max(0, state.pl.mentalHealth - mhP) }, mod: { s: true, t: title, m: text + ` Returns: $${fMny(bagR)}.`, o: [{ label: "ACCEPT LEGACY", action: () => set({ mod: { s: false } }) }], ui }, movieProject: { status: 'IDLE', budgetTier: 1, hypeLevel: 0 }, hl: { ...state.hl, mov: state.hl.mov + (bagR - budget) } }));
     if (flex.media.owned && gClt > 0) set(state => ({ politicalSyndicate: { ...state.politicalSyndicate, politicalCapital: Math.min(100, state.politicalSyndicate.politicalCapital + gClt * 0.1), status: (state.politicalSyndicate.politicalCapital + gClt * 0.1 >= 100) ? 'CAMPAIGN_READY' : state.politicalSyndicate.status } }));
     adv();
@@ -190,7 +190,7 @@ export const createMacroSlice = (set, get) => ({
     if (pl.mentalHealth < cMH || pl.clout < cClt || pl.aura < cAur || campaign.warchest < cBag) return;
     set(state => ({
       pl: { ...state.pl, mentalHealth: Math.max(0, state.pl.mentalHealth - cMH), clout: Math.max(0, Math.min(state.pl.maxClout, state.pl.clout - cClt - 10 + gClt)), aura: Math.max(0, Math.min(state.pl.maxAura, state.pl.aura - cAur - 5 + gAur)) },
-      campaign: { ...state.campaign, currentWeek: state.campaign.currentWeek + 1, warchest: state.campaign.warchest - cBag - 100000000 + gWch, regionalPolling: { ...state.campaign.regionalPolling, [gPol.r]: Math.min(100, state.campaign.regionalPolling[gPol.r] + (gPol.a || 0)) }, opponentPolling: { blueWall: Math.min(100, state.campaign.opponentPolling.blueWall + 0.5), rustBelt: Math.min(100, state.campaign.opponentPolling.rustBelt + 0.5), sunBelt: Math.min(100, state.campaign.opponentPolling.sunBelt + 0.5) } }
+      campaign: { ...state.campaign, currentWeek: state.campaign.currentWeek + 1, warchest: state.campaign.warchest - cBag - 100000000 + gWch, regionalPolling: { ...state.campaign.regionalPolling, [gPol.r]: Math.min(100, state.campaign.regionalPolling[gPol.r] + (gPol.a || 0)) } }
     }));
 
     const updatedWeek = get().campaign.currentWeek;

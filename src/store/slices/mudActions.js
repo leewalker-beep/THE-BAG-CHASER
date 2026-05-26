@@ -279,7 +279,7 @@ export const createMudSlice = (set, get) => ({
 
   rSmmPitch: async () => {
     const { pl, smmPenalty, smmRetainerActive, flex, updateFatigue, triggerChaos, triggerNotification, karmaFlags, adv } = get();
-    if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty || smmRetainerActive) return;
+    if (pl.clout < 15 || pl.mentalHealth < 20 || smmPenalty) return;
     updateFatigue('smm');
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();

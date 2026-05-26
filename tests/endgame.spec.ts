@@ -1,28 +1,31 @@
 import { test, expect } from '@playwright/test';
 
 test('endgame flow verification', async ({ page }) => {
-  await page.goto('http://localhost:5173');
-
-  await page.evaluate(() => {
+  await page.addInitScript(() => {
     localStorage.setItem('bag-chaser-save-v1', JSON.stringify({
-      version: "1.1",
-      ph: 'PLAYING',
-      tab: 'VICTORY_SPEECH',
-      isPresident: true,
-      alias: 'JULES_TEST',
-      pl: { bag: 1000000000, clout: 5000, aura: 2500, mo: 120, tier: 5, maxMentalHealth: 100, mentalHealth: 100, maxClout: 5000, maxAura: 2500 },
-      campaign: { phase: 'COMPLETED' },
-      flex: {
-        penthouse: { owned: false }, logistics: { owned: false }, jet: { owned: false },
-        watch: { owned: false }, car: { owned: false }, art: { owned: false },
-        yacht: { owned: false }, media: { owned: false }, foundation: { owned: false },
-        spt: { owned: false }, island: { owned: false }, archive: { owned: false }
-      }
+      state: {
+        version: 1.1,
+        ph: 'PLAYING',
+        proSt: 4,
+        tab: 'VICTORY_SPEECH',
+        isPresident: true,
+        alias: 'JULES_TEST',
+        pl: { bag: 1000000000, clout: 5000, aura: 2500, mo: 120, tier: 5, maxMentalHealth: 100, mentalHealth: 100, maxClout: 5000, maxAura: 2500 },
+        campaign: { phase: 'COMPLETED' },
+        flex: {
+          penthouse: { owned: false }, logistics: { owned: false }, jet: { owned: false },
+          watch: { owned: false }, car: { owned: false }, art: { owned: false },
+          yacht: { owned: false }, media: { owned: false }, foundation: { owned: false },
+          spt: { owned: false }, island: { owned: false }, archive: { owned: false }
+        }
+      },
+      version: 1.1
     }));
-    window.location.reload();
   });
 
-  await expect(page.locator('text=Inaugural Address')).toBeVisible();
+  await page.goto('http://localhost:5173');
+
+  await expect(page.locator('text=Inaugural Address')).toBeVisible({ timeout: 10000 });
 
   await page.click('button:has-text("WE LOCKED IN.")');
   await page.click('button:has-text("NO HANDOUTS.")');
