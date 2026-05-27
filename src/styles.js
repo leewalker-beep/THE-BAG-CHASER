@@ -31,7 +31,7 @@ export const styles = `
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 420px;
-    z-index: 10000;
+    z-index: 10001;
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
   }
 
