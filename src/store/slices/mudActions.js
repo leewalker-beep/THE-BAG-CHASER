@@ -312,12 +312,13 @@ export const createMudSlice = (set, get) => ({
   },
 
   rDelivery: async () => {
-    const { pl, flex, adv } = get(); if (pl.mentalHealth < 15) return;
+    const { pl, flex, adv, mkt } = get(); if (pl.mentalHealth < 15) return;
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    set(state => ({ pl: { ...state.pl, bag: state.pl.bag + 25, mentalHealth: state.pl.mentalHealth - (15 * (1 - mhReduction)) } }));
-    adv(); return 25;
+    const payout = mkt === 1 ? 50 : 25;
+    set(state => ({ pl: { ...state.pl, bag: state.pl.bag + payout, mentalHealth: state.pl.mentalHealth - (15 * (1 - mhReduction)) } }));
+    adv(); return payout;
   },
 
   rPlasma: async () => {
@@ -339,12 +340,13 @@ export const createMudSlice = (set, get) => ({
   },
 
   rLabor: async () => {
-    const { pl, flex, adv } = get(); if (pl.mentalHealth < 25) return;
+    const { pl, flex, adv, mkt } = get(); if (pl.mentalHealth < 25) return;
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    set(state => ({ pl: { ...state.pl, bag: state.pl.bag + 45, mentalHealth: state.pl.mentalHealth - (25 * (1 - mhReduction)) } }));
-    adv(); return 45;
+    const payout = mkt === 2 ? 22 : 45;
+    set(state => ({ pl: { ...state.pl, bag: state.pl.bag + payout, mentalHealth: state.pl.mentalHealth - (25 * (1 - mhReduction)) } }));
+    adv(); return payout;
   },
 
   rRunnerRecruit: async () => {
@@ -425,13 +427,101 @@ export const createMudSlice = (set, get) => ({
   },
 
   rDrp: async () => {
-    const { pl, dUp, drp, setDrp, triggerImpact, adv } = get();
+    const { pl, dUp, drp, setDrp, triggerImpact, adv, mkt } = get();
     const cost = 10000;
     if (pl.bag < cost) return;
     set(state => ({ pl: { ...state.pl, bag: state.pl.bag - cost } }));
     await new Promise(r => setTimeout(r, 1000));
-    const rev = Math.floor(cost * (1.5 + Math.random() * 2.0));
+    let rev = Math.floor(cost * (1.5 + Math.random() * 2.0));
+    if (mkt === 2 || mkt === 3) rev = Math.floor(rev * 0.4);
     set(state => ({ pl: { ...state.pl, bag: state.pl.bag + rev }, news: [`📦 DROPSHIP: Shipments delivered. Net: $${fMny(rev - cost)}.`, ...state.news.slice(0, 15)] }));
     triggerImpact('bag', rev - cost); adv();
+  },
+
+  rCc: async (type) => {
+    const { pl, cc, flex, triggerImpact, adv, generationCount } = get();
+    const legacyMultiplier = 1 + (generationCount * 0.25);
+    const reduction = flex.jet.owned && flex.jet.expiresAt > Date.now() ? 0.3 : (flex.jet.owned ? 0.15 : 0);
+
+    if (type === 'sol') {
+      if (pl.bag < 500 || pl.mentalHealth < 5) return;
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 500, mentalHealth: state.pl.mentalHealth - (5 * (1 - reduction)), clout: Math.min(state.pl.maxClout, state.pl.clout + 1) } }));
+      await new Promise(r => setTimeout(r, 600));
+      const rev = Math.floor(250 * (1 + Math.random()) * legacyMultiplier);
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag + rev }, news: ["📹 STREAM: Content live.", ...state.news.slice(0, 15)] }));
+      triggerImpact('bag', rev);
+    } else if (type === 'feu' || type === 'mch') {
+      if (pl.bag < 25000 || pl.mentalHealth < 15) return;
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 25000, mentalHealth: state.pl.mentalHealth - (15 * (1 - reduction)), clout: Math.min(state.pl.maxClout, state.pl.clout + 5) } }));
+      await new Promise(r => setTimeout(r, 800));
+      const rev = Math.floor(15000 * (1.2 + Math.random() * 1.5) * legacyMultiplier);
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag + rev }, news: [`📹 CREATOR: ${type.toUpperCase()} concluded.`, ...state.news.slice(0, 15)] }));
+      triggerImpact('bag', rev);
+    } else if (type === 'meg') {
+      if (pl.clout < 150) return;
+      if (pl.bag < 5000 || pl.mentalHealth < 25) return;
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 5000, mentalHealth: state.pl.mentalHealth - (25 * (1 - reduction)) } }));
+      await new Promise(r => setTimeout(r, 1200));
+      const windfall = Math.floor(75000 * (0.8 + Math.random() * 0.4) * legacyMultiplier);
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag + windfall, clout: Math.min(state.pl.maxClout, state.pl.clout + 25), aura: Math.min(state.pl.maxAura, state.pl.aura + 10) }, news: ["🌟 MEGA-DEAL: Contract signed!", ...state.news.slice(0, 15)] }));
+      triggerImpact('bag', windfall);
+    } else if (type === 'net') {
+      const rev = Math.floor(150000 * legacyMultiplier);
+      set(state => ({ pl: { ...state.pl, bag: state.pl.bag + rev }, news: ["📺 NETWORK: Monthly subs collected.", ...state.news.slice(0, 15)] }));
+      triggerImpact('bag', rev);
+    }
+    adv();
+  },
+
+  rBox: async () => {
+    const { pl, box, up, flex, adv, triggerImpact, legacyMultiplier } = get();
+    const venue = box.v; // 1: Warehouse, 2: Branded, 3: PPV
+    const costs = [0, 10000, 250000, 2000000];
+    const totalOut = (up.boxBrd ? 0 : box.b) + (up.boxLg ? 0 : costs[venue]);
+
+    let mhReq = 10, mhPen = 10;
+    if (venue === 2) { mhReq = 15; mhPen = 15; }
+    if (venue === 3) { mhReq = 35; mhPen = 35; }
+
+    if (pl.bag < totalOut || pl.mentalHealth < mhReq) return;
+
+    const reduction = flex.jet.owned && flex.jet.expiresAt > Date.now() ? 0.3 : (flex.jet.owned ? 0.15 : 0);
+    set(state => ({
+      pl: { ...state.pl, bag: state.pl.bag - totalOut, mentalHealth: state.pl.mentalHealth - (mhPen * (1 - reduction)), heat: state.pl.heat + (venue * 5) },
+      hustleClicks: { ...state.hustleClicks, box: state.hustleClicks.box + 1 },
+      tally: { ...state.tally, box: (state.tally.box || 0) + 1 }
+    }));
+
+    if (venue >= 2) {
+      set({ shakeActive: true, fightActive: true });
+      setTimeout(() => set({ shakeActive: false, fightActive: false }), 600);
+    }
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    let revenue = 0;
+    if (venue === 1) {
+      revenue = Math.floor(totalOut * (1.4 + Math.random() * 0.8) * legacyMultiplier);
+    } else if (venue === 2) {
+      revenue = Math.floor((50000 + (pl.clout * 600)) * legacyMultiplier);
+    } else {
+      const balancedPpv = Math.min(75000000, Math.pow(pl.clout, 1.3) * 150);
+      const balancedSponsor = Math.min(25000000, Math.pow(pl.aura, 1.2) * 100);
+      revenue = Math.floor((totalOut * 2.0 + balancedPpv + balancedSponsor) * legacyMultiplier);
+    }
+
+    set(state => ({
+      pl: {
+        ...state.pl,
+        bag: state.pl.bag + revenue,
+        clout: Math.min(state.pl.maxClout, state.pl.clout + (venue * 10)),
+        aura: Math.min(state.pl.maxAura, state.pl.aura + (venue * 5))
+      },
+      news: [`🥊 BOXING: ${venue === 1 ? 'Gym' : venue === 2 ? 'Undercard' : 'PPV Main Event'} conclude.`, ...state.news.slice(0, 15)],
+      hl: { ...state.hl, box: state.hl.box + revenue - totalOut }
+    }));
+
+    triggerImpact('bag', revenue - totalOut);
+    adv();
   },
 });

@@ -11,7 +11,7 @@ import { fMny } from "./config.js";
 export const TIERS = [
   { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG', 'DELIVERY', 'PLASMA', 'SURVEY', 'LABOR'] },
   { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
-  { id: 2, label: 'Corporate', req: { bag: 1000000,     clout: 150,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
+  { id: 2, label: 'Corporate', req: { bag: 10000000,    clout: 300,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
   { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
   { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV', 'SYNDICATE'] },
   { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },

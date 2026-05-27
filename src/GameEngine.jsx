@@ -121,7 +121,8 @@ export const GameProvider = ({ children }) => {
     let nextTier = pl.tier;
     for (let i = nextTier + 1; i < TIERS.length; i++) {
       const req = TIERS[i].req;
-      if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura) nextTier = i;
+      const meetsTime = i === 2 ? pl.mo >= 10 : true;
+      if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura && meetsTime) nextTier = i;
       else break;
     }
     if (nextTier !== pl.tier) {
@@ -129,7 +130,7 @@ export const GameProvider = ({ children }) => {
       if (nextTier >= 4) setPmcUnlocked(true);
       setNews(prev => [`🏆 TIER UP! You ascended to ${TIERS[nextTier].label}.`, ...prev.slice(0, 15)]);
     }
-  }, [peaks, ph, pl.tier, setPl, setPmcUnlocked, setNews]);
+  }, [peaks, ph, pl.tier, pl.mo, setPl, setPmcUnlocked, setNews]);
 
   useEffect(() => {
     if (ph !== 'PLAYING') return;
