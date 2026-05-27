@@ -23,9 +23,10 @@ export const getInitialGameState = () => ({
   peaks: { bag: 0, clout: 0, aura: 0, mh: 100 },
   hl: { sw: 0, drp: 0, tech: 0, vin: 0, smm: 0, gig: 0, pod: 0, box: 0, cryp: 0, tour: 0, mov: 0, hf: 0, ai: 0, prs: 0 },
   tally: { clicks: 0, events: 0, buyouts: 0 },
+  generationCount: 0,
   mod: { s: false, t: '', m: '', o: [], ui: 'ui-modal' },
   isEventModalOpen: false, pfwActive: false, passiveFrozen: false,
-  smmClients: 0, clientCrisis: false,
+  smmClients: 0, clientCrisis: false, smmPenalty: false,
   vinCh: { active: false, u: 0, q: 1, p: 0 }, vintageLock: 0,
   hustleClicks: { sw: 0, drp: 0, tech: 0, vintage: 0, smm: 0, gig: 0, pod: 0, box: 0, cryp: 0, tour: 0, mov: 0, hf: 0, ai: 0, prs: 0 },
   techItem: null, techFlipsComplete: 0,
@@ -34,6 +35,7 @@ export const getInitialGameState = () => ({
   corpClients: 0, apiLockoutMonths: 0,
   creOfficeCount: 0, creRetailCount: 0,
   franchiseCount: 0, peProgress: 0,
+  unionStrikeActive: false, unionStrikeIgnored: false,
   supplyChainDisruption: false,
   artCollection: [], artMarketSentiment: 0, artBubbleMonths: 0, venueState: 'THE VAULT',
   audioTracks: 0, sampleStrike: false, viralPopMonths: 0, audioHitActive: false,
@@ -45,10 +47,10 @@ export const getInitialGameState = () => ({
   collectiblePhase: 'VINTAGE', vintageRevenueTracker: 0, vintageBoostActive: false, sneakerBackdoorPlug: false, consignmentFeeActive: false, vaultHoldings: [],
   pmcUnlocked: false,
   superPacFunds: 0, approvalRating: 50, lobbyists: 0, lobbyistCost: 100000, mediaBlitzCost: 250000,
-  isPresident: false, residencyEligible: false,
+  isPresident: false, residencyEligible: false, tickerAdvice: '',
   politicalSyndicate: { status: 'IDLE', politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 } },
   campaign: { phase: 'CORPORATE_HQ', currentWeek: 1, currentMonth: 1, warchest: 1000000000, regionalPolling: { blueWall: 45, rustBelt: 42, sunBelt: 40 }, opponentPolling: { blueWall: 48, rustBelt: 46, sunBelt: 47 } },
   flex: { penthouse: { owned: false, expiresAt: 0, prActive: false }, logistics: { owned: false, expiresAt: 0, prActive: false }, jet: { owned: false, expiresAt: 0, prActive: false }, yacht: { owned: false, expiresAt: 0, prActive: false }, media: { owned: false, prActive: false }, foundation: { owned: false }, art: { owned: false, prActive: false }, watch: { owned: false, prActive: false }, car: { owned: false }, archive: { owned: false } },
   mhEmergencies: 0, isBreakdownActive: false, shakeActive: false, fightActive: false,
-  lastProcessedTimestamp: Date.now(), peCompoundingYield: 1.0, swfFrozen: false, swfInvestment: 0, geoStability: 1.0, conglomActive: false, antitrustRisk: 0, guttedFirms: 0
+  lastProcessedTimestamp: Date.now(), peCompoundingYield: 1.0, swfFrozen: false, swfInvestment: 0, geoStability: 1.0, conglomActive: false, antitrustRisk: 0, guttedFirms: 0, techSourceCost: 100
 });
