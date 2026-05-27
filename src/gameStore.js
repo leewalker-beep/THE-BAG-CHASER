@@ -198,7 +198,7 @@ export const useGameStore = create()(
       },
 
       adv: (intervals = 1) => {
-        const { fatalTragedyMessage, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks } = get();
+        const { fatalTragedyMessage, lobbyists, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks } = get();
 
         if (fatalTragedyMessage) return;
 
