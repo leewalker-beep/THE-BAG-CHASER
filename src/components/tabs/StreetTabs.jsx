@@ -87,8 +87,108 @@ export const BoxTab = () => {
   );
 };
 
+const VUMeter = ({ isActive }) => {
+  const [levels, setLevels] = React.useState([0, 0]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (isActive) {
+        setLevels([95 + Math.random() * 5, 95 + Math.random() * 5]);
+      } else {
+        setLevels(prev => [
+          Math.max(10, Math.min(70, prev[0] + (Math.random() - 0.5) * 20)),
+          Math.max(10, Math.min(70, prev[1] + (Math.random() - 0.5) * 20))
+        ]);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  return (
+    <div className="flex gap-1 h-full bg-black/40 p-1 rounded border border-zinc-800">
+      {[0, 1].map(i => (
+        <div key={i} className="relative w-1.5 h-full bg-zinc-900 rounded-full overflow-hidden">
+          <div
+            className={`absolute bottom-0 w-full transition-all duration-100 ${isActive ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-gradient-to-t from-green-500 via-yellow-500 to-red-500'}`}
+            style={{ height: `${levels[i]}%` }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CustomFader = ({ val, setVal, label, colorCls }) => {
+  const trackRef = React.useRef(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const updateVal = (clientY) => {
+    if (!trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height));
+    setVal(Math.round(pos * 100));
+  };
+
+  const onMouseDown = (e) => { setIsDragging(true); updateVal(e.clientY); };
+  const onTouchStart = (e) => { setIsDragging(true); updateVal(e.touches[0].clientY); };
+
+  React.useEffect(() => {
+    const onMouseMove = (e) => { if (isDragging) updateVal(e.clientY); };
+    const onTouchMove = (e) => { if (isDragging) updateVal(e.touches[0].clientY); };
+    const onEnd = () => setIsDragging(false);
+
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onEnd);
+    };
+  }, [isDragging]);
+
+  return (
+    <div className="flex flex-col items-center gap-2 select-none group/fader">
+      <div className="text-[8px] font-black text-zinc-500 uppercase">{label}</div>
+      <div
+        ref={trackRef}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        className="relative w-8 h-32 bg-zinc-950 rounded-md border border-zinc-800 shadow-inner cursor-pointer flex justify-center"
+      >
+        <div className="absolute w-1 h-28 bg-black rounded-full top-2 shadow-[inset_0_1px_3px_rgba(255,255,255,0.1)]" />
+
+        {/* Tooltip */}
+        <div
+          className={`absolute -top-8 bg-zinc-800 border border-zinc-700 text-[10px] px-2 py-1 rounded-md text-white font-black whitespace-nowrap z-50 transition-opacity duration-200 pointer-events-none ${isDragging ? 'opacity-100' : 'opacity-0 group-hover/fader:opacity-100'}`}
+        >
+          {val}% / {Math.floor((val/100) * 12)} dB
+        </div>
+
+        <div
+          className="absolute w-6 h-4 bg-zinc-400 rounded border-y border-zinc-500 shadow-lg z-10 flex flex-col items-center justify-center gap-0.5"
+          style={{ bottom: `calc(${val}% - 8px)`, transition: isDragging ? 'none' : 'bottom 0.1s ease-out' }}
+        >
+          <div className="w-4 h-[1px] bg-zinc-600" />
+          <div className="w-4 h-[1px] bg-zinc-600" />
+          <div className="w-4 h-[1px] bg-zinc-600" />
+        </div>
+        <div className="absolute inset-y-2 left-0 w-1 flex flex-col justify-between items-end pr-0.5 pointer-events-none">
+          {[...Array(6)].map((_, i) => <div key={i} className="w-1 h-[1px] bg-zinc-800" />)}
+        </div>
+      </div>
+      <div className={`text-[10px] font-mono ${colorCls}`}>{val}%</div>
+    </div>
+  );
+};
+
 export const AudioTab = () => {
-  const { pl, setPl, audioTracks, setAudioTracks, sampleStrike, rAudioRelease, rAudioSettle, setTab, audioUpgrades, setAudioUpgrades, talentScouters, setTalentScouters, holwoodSyncActive, setHollywoodSyncActive } = useGame();
+  const { pl, setPl, audioTracks, sampleStrike, rAudioRelease, rAudioSettle, setTab, audioUpgrades, setAudioUpgrades, talentScouters, setTalentScouters, holwoodSyncActive, setHollywoodSyncActive, audioPromo, setAudioPromo, audioStyle, setAudioStyle } = useGame();
+  const audioHitActive = useGameStore(state => state.audioHitActive);
   const locked = pl.bag < 100000 || pl.clout < 30;
 
   const buyUpgrade = (key, cost) => {
@@ -116,69 +216,110 @@ export const AudioTab = () => {
 
   return (
     <LabShell t="INDIE AUDIO SYNDICATE" c="orange" fontCls="font-hype" onHub={() => setTab('HUB')} tier={1}>
-      <div className={`bg-black/40 p-4 rounded-xl border text-center mb-4 ${sampleStrike ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
-        <div className="text-[10px] text-slate-300 drop-shadow-sm font-bold uppercase">Streaming Catalog</div>
-        <div className={`text-2xl font-black ${sampleStrike ? 'text-red-500' : 'text-orange-400'}`}>{audioTracks} TRACKS</div>
-        <div className="text-[9px] text-slate-300 drop-shadow-sm mt-1">
-          {sampleStrike ? "SAMPLE STRIKE: ROYALTIES FROZEN" : `Passive: +$${fMny(audioTracks * 400 * (holwoodSyncActive ? 2 : 1))}/mo | +${audioTracks * 2} Clout/mo`}
+      {/* Floating Notes Layer */}
+      {audioHitActive && (
+        <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-2xl animate-note"
+              style={{
+                left: `${10 + Math.random() * 80}%`,
+                bottom: '20%',
+                animationDelay: `${i * 0.1}s`
+              }}
+            >
+              {['🎵', '🎶', '✨', '🎸', '🎹'][i % 5]}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Catalog Display */}
+      <div className={`bg-black/60 p-4 rounded-xl border text-center mb-4 transition-all duration-500 ${sampleStrike ? 'border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)] animate-pulse' : 'border-zinc-800'}`}>
+        <div className="text-[10px] text-zinc-500 font-black uppercase tracking-tighter">Streaming Catalog</div>
+        <div className={`text-3xl font-black ${sampleStrike ? 'text-red-500' : 'text-orange-500'} font-mono`}>{audioTracks} TRACKS</div>
+        <div className="text-[9px] text-zinc-400 mt-1 font-bold">
+          {sampleStrike ? "COPYRIGHT FREEZE: 0% PAYOUT" : `Passive: +$${fMny(audioTracks * 400 * (holwoodSyncActive ? 2 : 1))}/mo`}
         </div>
       </div>
 
+      {/* Mixing Deck Grid */}
+      <div className="grid grid-cols-4 gap-2 bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-4 shadow-inner">
+        <CustomFader val={audioPromo} setVal={setAudioPromo} label="Promo" colorCls="text-orange-500" />
+        <CustomFader val={audioStyle} setVal={setAudioStyle} label="Style" colorCls="text-blue-500" />
+
+        {/* Channel 3 & 4: Knobs & Toggles */}
+        <div className="col-span-2 flex flex-col gap-2">
+          <div className="bg-black/40 p-2 rounded border border-zinc-800 flex justify-between items-center">
+            <div className="text-[8px] font-black text-zinc-500 uppercase">Scouters</div>
+            <div className="text-sm font-black text-white">{talentScouters}</div>
+          </div>
+          <div className={`bg-black/40 p-2 rounded border border-zinc-800 flex justify-between items-center ${holwoodSyncActive ? 'border-green-500/50' : ''}`}>
+            <div className="text-[8px] font-black text-zinc-500 uppercase">Sync</div>
+            <div className={`text-[8px] font-black ${holwoodSyncActive ? 'text-green-400' : 'text-zinc-600'}`}>{holwoodSyncActive ? 'ACTIVE' : 'OFF'}</div>
+          </div>
+
+          <div className="mt-auto grid grid-cols-1 gap-1">
+            {!audioUpgrades.mixingSuite && (
+              <button onClick={() => buyUpgrade('mixingSuite', 15000)} disabled={pl.bag < 15000} className="py-1 bg-zinc-800 text-[7px] font-black uppercase text-zinc-400 border border-zinc-700 rounded hover:bg-zinc-700 disabled:opacity-30 transition-all">Mix Suite $15k</button>
+            )}
+            {!audioUpgrades.analogConsole && audioUpgrades.mixingSuite && (
+              <button onClick={() => buyUpgrade('analogConsole', 25000)} disabled={pl.bag < 25000} className="py-1 bg-zinc-800 text-[7px] font-black uppercase text-zinc-400 border border-zinc-700 rounded hover:bg-zinc-700 disabled:opacity-30 transition-all">Analog $25k</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Logic Toggles & Scouter Hire */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
-          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Scouters</div>
-          <div className="text-lg font-black text-orange-400">{talentScouters}</div>
-        </div>
-        <div className="bg-black/40 p-3 rounded-xl border border-slate-800 text-center">
-          <div className="text-[8px] text-slate-300 drop-shadow-sm font-bold uppercase">Hollywood</div>
-          <div className={`text-lg font-black ${holwoodSyncActive ? 'text-green-400' : 'text-slate-500'}`}>{holwoodSyncActive ? 'ACTIVE' : 'OFF'}</div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 mb-4">
-        {!audioUpgrades.mixingSuite && (
-          <button onClick={() => buyUpgrade('mixingSuite', 15000)} disabled={pl.bag < 15000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
-            Buy AI Mixing Suite ($15k)
-          </button>
-        )}
-        {!audioUpgrades.analogConsole && audioUpgrades.mixingSuite && (
-          <button onClick={() => buyUpgrade('analogConsole', 25000)} disabled={pl.bag < 25000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
-            Analog Tube Console ($25k)
-          </button>
-        )}
-        <button onClick={hireScouter} disabled={pl.bag < 50000} className="w-full py-2 bg-slate-800 border border-orange-500/30 text-orange-400 text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-all">
-          Hire Talent Scouter ($50k)
+        <button onClick={hireScouter} disabled={pl.bag < 50000} className="py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 text-[9px] font-black uppercase rounded hover:bg-zinc-700 disabled:opacity-50 transition-all">
+          + Hire Scouter ($50k)
         </button>
         {!holwoodSyncActive && audioTracks >= 50 && (
-          <button onClick={toggleHollywood} disabled={pl.bag < 250000} className="w-full py-2 bg-orange-900/40 border border-orange-400 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-orange-800 disabled:opacity-50 transition-all">
-            Secure Hollywood Sync Deal ($250k)
+          <button onClick={toggleHollywood} disabled={pl.bag < 250000} className="py-2 bg-orange-900/20 border border-orange-500/50 text-orange-400 text-[9px] font-black uppercase rounded hover:bg-orange-800/40 disabled:opacity-50 transition-all">
+            Hollywood Sync ($250k)
           </button>
         )}
       </div>
 
       {sampleStrike && (
-        <div className="ui-crisis p-4 flex flex-col gap-2 mb-4">
-          <h4 className="text-red-500 font-black text-center text-xs uppercase">🚨 COPYRIGHT STRIKE!</h4>
-          <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic">Royalties are escrowed. Pay legal to settle.</p>
+        <div className="ui-crisis p-3 flex flex-col gap-2 mb-4 border-red-600 shadow-lg">
+          <h4 className="text-red-500 font-black text-center text-[10px] uppercase tracking-widest">🚨 COPYRIGHT STRIKE</h4>
           <FlashBtn
             onClick={rAudioSettle}
             dis={pl.bag < 5000}
-            label="SETTLE STRIKE ($5,000)"
-            color="red-600"
+            label="SETTLE $5,000"
+            color="red-700"
             txt="white"
           />
         </div>
       )}
 
-      <FlashBtn
-        onClick={rAudioRelease}
-        costStm={15}
-        dis={pl.bag < 1000}
-        label="RELEASE SINGLE ($1,000)"
-        color="orange-600"
-        txt="white"
-      />
-      <p className="text-[9px] text-slate-300 drop-shadow-sm text-center italic mt-2">"60% release success rate. High risk of sample clearance issues."</p>
+      {/* Master Section */}
+      <div className="flex gap-2 h-16 mb-2">
+        <div className="flex-1 relative">
+          <button
+            onClick={rAudioRelease}
+            disabled={pl.bag < (1000 + (1000 * (audioPromo/100))) || pl.mentalHealth < 15}
+            className={`w-full h-full rounded-xl font-black text-lg tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3
+              ${pl.bag < (1000 + (1000 * (audioPromo/100))) || pl.mentalHealth < 15
+                ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                : 'bg-red-900 border-2 border-red-600 text-red-100 shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:bg-red-800 rec-button-pulse'
+              }`}
+          >
+            <div className={`w-3 h-3 rounded-full ${pl.bag < (1000 + (1000 * (audioPromo/100))) || pl.mentalHealth < 15 ? 'bg-zinc-700' : 'bg-red-500 animate-pulse'}`} />
+            REC SINGLE
+          </button>
+        </div>
+        <div className="w-12">
+          <VUMeter isActive={audioHitActive} />
+        </div>
+      </div>
+
+      <p className="text-[8px] text-zinc-500 font-bold text-center mt-3 uppercase tracking-widest">
+        "Studio Session Cost: ${fMny(1000 + (1000 * (audioPromo/100)))} | 15 Energy"
+      </p>
     </LabShell>
   );
 };

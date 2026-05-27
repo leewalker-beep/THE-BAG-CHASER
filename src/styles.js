@@ -45,6 +45,7 @@ export const styles = `
   @keyframes floatUpStat { 0% { opacity: 1; transform: translateY(0) scale(0.9); } 100% { opacity: 0; transform: translateY(-60px) scale(1); } }
   .impact-aura { position: fixed; top: 70px; right: 16px; font-size: 1rem; font-weight: 900; z-index: 200; pointer-events: none; animation: floatUpStat 2s ease-out forwards; color: #fbbf24; text-shadow: 0 0 8px rgba(234,179,8,0.9); }
   .impact-clout { position: fixed; top: 96px; right: 16px; font-size: 1rem; font-weight: 900; z-index: 200; pointer-events: none; animation: floatUpStat 2s ease-out forwards; color: #f87171; text-shadow: 0 0 8px rgba(239,68,68,0.9); }
+
   @keyframes auraPanic { 0%, 100% { box-shadow: inset 0 0 80px rgba(180,0,0,0.35); } 50% { box-shadow: inset 0 0 140px rgba(220,0,0,0.6); } }
   .aura-panic { animation: auraPanic 1.2s ease-in-out infinite; }
   @keyframes fatigueBlink { 0%, 100% { border-color: #ef4444; box-shadow: 0 0 5px #ef4444; } 50% { border-color: #450a0a; box-shadow: none; } }
@@ -82,4 +83,16 @@ export const styles = `
   @keyframes fight-right { 0% { transform: translateX(100%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
   .animate-fight-left { animation: fight-left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
   .animate-fight-right { animation: fight-right 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+  /* Audio Syndicate Mixing Deck & Particles */
+  @keyframes rec-pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+  .rec-button-pulse { animation: rec-pulse 2s infinite; }
+
+  @keyframes note-float {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-150px) rotate(20deg); opacity: 0; }
+  }
+  .animate-note { animation: note-float 1s ease-out forwards; }
 `;

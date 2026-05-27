@@ -107,15 +107,92 @@ export const createMacroSlice = (set, get) => ({
   },
 
   rAudioRelease: async () => {
-    const { pl, flex, audioUpgrades, viralPopMonths, adv } = get(); if (pl.bag < 1000 || pl.mentalHealth < 15) return;
+    const { pl, flex, audioUpgrades, viralPopMonths, audioPromo, audioStyle, adv } = get();
+
+    // Scaling cost based on Promo budget (0-100% of base 1k)
+    const baseCost = 1000;
+    const sessionCost = Math.floor(baseCost + (baseCost * (audioPromo / 100)));
+
+    if (pl.bag < sessionCost || pl.mentalHealth < 15) return;
+
     const reduction = flex.jet.owned && flex.jet.expiresAt > Date.now() ? 0.3 : (flex.jet.owned ? 0.15 : 0);
-    set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 1000, mentalHealth: state.pl.mentalHealth - (15 * (1 - reduction)) } }));
+    set(state => ({ pl: { ...state.pl, bag: state.pl.bag - sessionCost, mentalHealth: state.pl.mentalHealth - (15 * (1 - reduction)) } }));
     await new Promise(r => setTimeout(r, 800));
-    let successChance = 0.6; if (audioUpgrades.mixingSuite) successChance = 0.8; if (audioUpgrades.analogConsole) successChance = 0.9; if (viralPopMonths > 0) successChance = 0.9;
-    if (Math.random() < successChance) set(state => ({ audioTracks: state.audioTracks + 1, news: ["<span class='news-bag'>🎵 AUDIO: New single trending.</span>", ...state.news.slice(0, 15)] }));
-    else set(state => ({ news: ["🎵 Single flopped.", ...state.news.slice(0, 15)] }));
+
+    const roll = Math.random();
+    let result = { bag: 1000, news: "🎵 AUDIO: Single flopped.", viral: false };
+
+    // Success Chance Scaling
+    // Promo increases hit chance (up to +20% base)
+    let successMod = 1.0 + (audioPromo / 500);
+    if (audioUpgrades.mixingSuite) successMod += 0.2;
+    if (audioUpgrades.analogConsole) successMod += 0.3;
+    if (viralPopMonths > 0) successMod += 0.5;
+
+    // Style determines the "flavor" of success
+    const isUnderground = audioStyle < 30;
+    const isCommercial = audioStyle > 70;
+    const isSellout = audioPromo > 70 && audioStyle < 30;
+    const isPurist = audioStyle > 70 && audioPromo < 30;
+
+    if (roll < 0.10 * successMod) {
+      let bagGain = 5000;
+      let cloutGain = isCommercial ? 150 : 100;
+      let auraGain = isUnderground ? 75 : 50;
+      let newsStr = "🔥 VIRAL HIT: Global charts topped!";
+
+      if (isSellout) {
+        bagGain *= 1.5; auraGain -= 40;
+        newsStr = "💰 SELLOUT SMASH: Pure commercial garbage. The bag is heavy, but the streets are talking.";
+      } else if (isPurist) {
+        bagGain *= 0.6; auraGain += 100; cloutGain += 50;
+        newsStr = "🎨 AVANT-GARDE TRIUMPH: A masterpiece for the ages. Zero radio play, infinite respect.";
+      } else if (isCommercial) {
+        newsStr = "🔥 CHART TOPPER: Manufactured perfection dominates the airwaves.";
+      } else if (isUnderground) {
+        newsStr = "🔥 CULT CLASSIC: The basement is shaking. A new era begins.";
+      }
+
+      result = { bag: bagGain, clout: cloutGain, aura: auraGain, news: `<span class='news-bag font-hype'>${newsStr}</span>`, viral: true };
+    } else if (roll < 0.60 * successMod) {
+      let bagGain = 2000;
+      let newsStr = `🎵 AUDIO: ${isUnderground ? 'Indie' : 'Radio'} success trending.`;
+
+      if (isSellout) {
+        bagGain *= 1.2;
+        newsStr = "📉 GENERIC DRIFT: Forgettable but profitable. Passive listeners are tuned in.";
+      } else if (isPurist) {
+        bagGain *= 0.8;
+        newsStr = "🧠 HIGH-ART NICHING: Critics love it. Your bank account is indifferent.";
+      }
+
+      result = { bag: bagGain, news: `<span class='news-bag'>${newsStr}</span>`, viral: false };
+    } else {
+      let newsStr = "🎵 Single flopped.";
+      if (audioPromo > 80) newsStr = "💸 PROMO BURN: Thousands spent on ads, zero organic interest. Embarrassing.";
+      else if (audioStyle > 80) newsStr = "🎻 OVER-PRODUCED: Too complex for the masses. It's a flop, but 'intellectual'.";
+      result = { bag: 1000, news: newsStr, viral: false };
+    }
+
+    set(state => ({
+      pl: {
+        ...state.pl,
+        bag: state.pl.bag + result.bag,
+        clout: Math.min(state.pl.maxClout, state.pl.clout + (result.clout || 0)),
+        aura: Math.min(state.pl.maxAura, state.pl.aura + (result.aura || 0))
+      },
+      audioTracks: state.audioTracks + (result.bag > 1000 ? 1 : 0),
+      news: [result.news, ...state.news.slice(0, 15)],
+      audioHitActive: result.viral
+    }));
+
+    if (result.viral) {
+      setTimeout(() => set({ audioHitActive: false }), 800);
+    }
+
     if (Math.random() < 0.02) set(state => ({ sampleStrike: true, news: ["🚨 Sample strike detected!", ...state.news.slice(0, 15)] }));
     adv();
+    return result.bag - 1000;
   },
 
   rAudioSettle: async () => {
