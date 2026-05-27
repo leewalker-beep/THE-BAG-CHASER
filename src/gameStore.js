@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { mudChaosPools } from "./data/chaosPools.js";
 import { getInitialGameState } from "./data/initialState.js";
 import { createMudSlice } from "./store/slices/mudActions.js";
@@ -21,16 +21,21 @@ export { mudChaosPools, getInitialGameState };
 
 const SAVE_KEY = 'bag-chaser-save-v1';
 
-const deepMerge = (target, source) => {
-  for (const key in source) {
-    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-      if (!target[key]) target[key] = {};
-      deepMerge(target[key], source[key]);
-    } else {
-      target[key] = source[key];
+const circuitBreakerStorage = {
+  getItem: (name) => {
+    try {
+      const raw = localStorage.getItem(name);
+      if (!raw) return null;
+      // Preliminary validation
+      JSON.parse(raw);
+      return raw;
+    } catch (e) {
+      localStorage.removeItem(name);
+      return null;
     }
-  }
-  return target;
+  },
+  setItem: (name, value) => localStorage.setItem(name, value),
+  removeItem: (name) => localStorage.removeItem(name),
 };
 
 export const useGameStore = create()(
@@ -405,6 +410,8 @@ export const useGameStore = create()(
     {
       name: SAVE_KEY,
       version: 1.1,
+      storage: createJSONStorage(() => circuitBreakerStorage),
+      merge: (persistedState, currentState) => ({ ...currentState, ...persistedState }),
       migrate: (persistedState, version) => {
         if (version === 1.0) {
           let d = persistedState;
@@ -429,7 +436,7 @@ export const useGameStore = create()(
             d.artCollection = migrated;
           }
 
-          return deepMerge(getInitialGameState(), d);
+          return { ...getInitialGameState(), ...d };
         }
         return persistedState;
       }
