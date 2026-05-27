@@ -1,8 +1,8 @@
 {
   "name": "vite-react-typescript-starter",
   "private": true,
-  "version": "0.0.1",
-  "description": "Critical fix for black screen boot crash and hydration loop",
+  "version": "0.0.2",
+  "description": "Critical patch for cold boot black screen exception and uninitialized state defensive hardening",
   "type": "module",
   "scripts": {
     "dev": "vite",

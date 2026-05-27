@@ -4,7 +4,7 @@ export const getInitialGameState = () => ({
   lastHustle: '', karmaFlags: { ignoredSmmCrisis: false, ignoredRunnerWelfare: false, unionStrikeIgnored: false },
   fatalTragedyMessage: '',
   pl: { bag: 0, clout: 0, aura: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100, mo: 0 },
-  mkt: 1, news: ['Welcome to the hustle.', 'Market Cycle: NORMAL.'],
+  mkt: 1, news: ['Welcome to the hustle.', 'Market Cycle: NORMAL.'], imp: [],
   up: { sw: 1, drp: 1, tech: 1, vin: 1, smm: 1, gig: 1, pod: 1, box: 1, tch: 1, crp: 1, tur: 1, hf: 1, mov: 1 },
   skl: { sw: 0, mkt: 0, tax: 0, lead: 0 },
   ass: { car: false, laptop: false, office: false, warehouse: false, legalTeam: false },

@@ -291,7 +291,7 @@ export const useGameStore = create()(
             nextState.approvalRating = Math.max(0, (nextState.approvalRating ?? state.approvalRating) - (2.5 * intervals));
           }
 
-          const psAssets = politicalSyndicate.assetLeasing;
+          const psAssets = politicalSyndicate?.assetLeasing || {};
           if (psAssets.governors > 0 || psAssets.senators > 0 || psAssets.networkAnchors > 0) {
             let gain = (psAssets.governors * 0.5) + (psAssets.senators * 1.5) + (psAssets.networkAnchors * 3.0);
             if (flex.yacht.owned) {
@@ -343,15 +343,15 @@ export const useGameStore = create()(
           const artClout = totalArtCount * 20;
           let artPassiveRev = 0;
           if (totalArtCount >= 50) {
-            const totalValue = state.artCollection.reduce((acc, curr) => acc + curr.baseValue, 0);
+            const totalValue = (state.artCollection || []).reduce((acc, curr) => acc + curr.baseValue, 0);
             artPassiveRev = Math.floor(totalValue * (totalArtCount >= 75 && flex.archive?.owned ? 0.003 : 0.001));
           }
           const artDrift = (flex.art.owned && flex.art.prActive) ? 5 : 0;
 
-          if (collectiblePhase === "VAULT" && state.vaultHoldings.length > 0) {
+          if (collectiblePhase === "VAULT" && (state.vaultHoldings || []).length > 0) {
             let cycles = 0;
             for (let i = 1; i <= intervals; i++) if ((state.pl.mo + i) % 12 === 0) cycles++;
-            if (cycles > 0) nextState.vaultHoldings = state.vaultHoldings.map(h => ({ ...h, cost: Math.floor(h.cost * Math.pow(1.12, cycles)) }));
+            if (cycles > 0) nextState.vaultHoldings = (state.vaultHoldings || []).map(h => ({ ...h, cost: Math.floor(h.cost * Math.pow(1.12, cycles)) }));
           }
 
           const currentPl = nextState.pl ?? state.pl;
@@ -364,7 +364,7 @@ export const useGameStore = create()(
             ...currentPl,
             mo: currentPl.mo + intervals,
             bag: currentPl.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus) * intervals,
-            aura: Math.min(currentPl.maxAura, Math.max(0, currentPl.aura + (-auraBleed + (collectiblePhase === "VAULT" ? (nextState.vaultHoldings ?? state.vaultHoldings).length * 50 : 0) + artDrift) * intervals)),
+            aura: Math.min(currentPl.maxAura, Math.max(0, currentPl.aura + (-auraBleed + (collectiblePhase === "VAULT" ? (nextState.vaultHoldings ?? state.vaultHoldings ?? []).length * 50 : 0) + artDrift) * intervals)),
             clout: Math.min(currentPl.maxClout, currentPl.clout + (artClout + (nextState.audioTracks ?? state.audioTracks) * 2) * intervals),
             heat: currentPl.heat + (state.pmcSquads * 2 * (isPresident ? 0.5 : 1) * intervals),
             mentalHealth: Math.min(currentPl.maxMentalHealth, currentPl.mentalHealth + ((flex.penthouse.owned ? 30 : 15) * intervals))
@@ -397,8 +397,8 @@ export const useGameStore = create()(
           if (ai.ig) nextState.ai = { ...ai, p: Math.min(100, ai.p + ai.c * (1.2 + Math.random() * 2) * intervals), r: Math.min(100, ai.r + (1.8 + Math.random() * 2.5) * intervals) };
           if (prs.r) nextState.prs = { ...prs, m: prs.m + intervals };
 
-          if (campaign.phase === 'POLITICS') {
-            const op = { ...campaign.opponentPolling };
+          if (campaign?.phase === 'POLITICS') {
+            const op = { ...(campaign?.opponentPolling || {}) };
             ['blueWall', 'rustBelt', 'sunBelt'].forEach(reg => { op[reg] = Math.min(100, op[reg] + 0.5 * intervals); });
             nextState.campaign = { ...campaign, opponentPolling: op };
           }

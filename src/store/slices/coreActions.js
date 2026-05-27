@@ -24,10 +24,10 @@ export const createCoreSlice = (set, get) => ({
   triggerImpact: (kind, amount) => {
     const id = Math.random();
     set(state => ({
-      imp: [...state.imp, { id, kind, a: amount, w: amount >= 0 }]
+      imp: [...(state.imp || []), { id, kind, a: amount, w: amount >= 0 }]
     }));
     setTimeout(() => set(state => ({
-      imp: state.imp.filter(i => i.id !== id)
+      imp: (state.imp || []).filter(i => i.id !== id)
     })), 1900);
   },
 
