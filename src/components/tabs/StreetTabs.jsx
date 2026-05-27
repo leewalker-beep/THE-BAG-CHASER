@@ -118,7 +118,7 @@ const VUMeter = ({ isActive }) => {
   );
 };
 
-const CustomFader = ({ val, setVal, label, colorCls }) => {
+const CustomFader = ({ val = 0, setVal, label, colorCls }) => {
   const trackRef = React.useRef(null);
   const [isDragging, setIsDragging] = React.useState(false);
 
@@ -166,12 +166,12 @@ const CustomFader = ({ val, setVal, label, colorCls }) => {
         <div
           className={`absolute -top-8 bg-zinc-800 border border-zinc-700 text-[10px] px-2 py-1 rounded-md text-white font-black whitespace-nowrap z-50 transition-opacity duration-200 pointer-events-none ${isDragging ? 'opacity-100' : 'opacity-0 group-hover/fader:opacity-100'}`}
         >
-          {val}% / {Math.floor((val/100) * 12)} dB
+          {(val || 0)}% / {Math.floor(((val || 0)/100) * 12)} dB
         </div>
 
         <div
           className="absolute w-6 h-4 bg-zinc-400 rounded border-y border-zinc-500 shadow-lg z-10 flex flex-col items-center justify-center gap-0.5"
-          style={{ bottom: `calc(${val}% - 8px)`, transition: isDragging ? 'none' : 'bottom 0.1s ease-out' }}
+          style={{ bottom: `calc(${(val || 0)}% - 8px)`, transition: isDragging ? 'none' : 'bottom 0.1s ease-out' }}
         >
           <div className="w-4 h-[1px] bg-zinc-600" />
           <div className="w-4 h-[1px] bg-zinc-600" />
@@ -181,7 +181,7 @@ const CustomFader = ({ val, setVal, label, colorCls }) => {
           {[...Array(6)].map((_, i) => <div key={i} className="w-1 h-[1px] bg-zinc-800" />)}
         </div>
       </div>
-      <div className={`text-[10px] font-mono ${colorCls}`}>{val}%</div>
+      <div className={`text-[10px] font-mono ${colorCls}`}>{(val || 0)}%</div>
     </div>
   );
 };

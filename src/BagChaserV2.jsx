@@ -116,8 +116,8 @@ const TAB_MAP = {
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl, prs, ass, mkt, tab, setTab, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
-    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex
+    pl = {}, prs = {}, ass = {}, mkt = 1, tab = 'HUB', setTab, cancelIntro, isTierUnlocked, selTier = '0', isBreakdownActive, shakeActive, rDischarge, performHardReset,
+    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex = {}
   } = game || {};
 
 

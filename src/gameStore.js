@@ -21,6 +21,18 @@ export { mudChaosPools, getInitialGameState };
 
 const SAVE_KEY = 'bag-chaser-save-v1';
 
+const deepMerge = (target, source) => {
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (!target[key]) target[key] = {};
+      deepMerge(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
+};
+
 export const useGameStore = create()(
   persist(
     (set, get) => ({
@@ -395,18 +407,6 @@ export const useGameStore = create()(
       version: 1.1,
       migrate: (persistedState, version) => {
         if (version === 1.0) {
-          const deepMerge = (target, source) => {
-            for (const key in source) {
-              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-                if (!target[key]) target[key] = {};
-                deepMerge(target[key], source[key]);
-              } else {
-                target[key] = source[key];
-              }
-            }
-            return target;
-          };
-
           let d = persistedState;
           if (d.blitzExpiry) {
             if (d.flex?.penthouse?.owned) {

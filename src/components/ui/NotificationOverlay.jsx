@@ -7,7 +7,7 @@ export const NotificationOverlay = () => {
   if (!activeNotification) return null;
 
   const { header, text, template } = activeNotification;
-  const shareText = template.replace('[PlayerName]', alias || 'ANON');
+  const shareText = template?.replace('[PlayerName]', alias || 'ANON') || '';
 
   const handleShare = () => {
     alert(`RECEIPT EXPORTED:\n\n"${shareText}"\n\n(Copied to clipboard in your head)`);
@@ -22,7 +22,7 @@ export const NotificationOverlay = () => {
         </h2>
         <div className="h-0.5 w-full bg-blue-500/30 my-6"></div>
         <p className="text-white text-lg font-bold leading-relaxed mb-8 italic">
-          "{text}"
+          "{text?.replace('[PlayerName]', alias || 'The Chaser')}"
         </p>
 
         <div className="flex flex-col gap-4">
