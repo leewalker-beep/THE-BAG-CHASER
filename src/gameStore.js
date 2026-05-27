@@ -38,6 +38,19 @@ const circuitBreakerStorage = {
   removeItem: (name) => localStorage.removeItem(name),
 };
 
+const deepMerge = (target, source, depth = 0) => {
+  if (depth > 10) return target; // Safety circuit-breaker
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (!target[key]) target[key] = {};
+      deepMerge(target[key], source[key], depth + 1);
+    } else if (source[key] !== undefined && source[key] !== null) {
+      target[key] = source[key];
+    }
+  }
+  return target;
+};
+
 export const useGameStore = create()(
   persist(
     (set, get) => ({
@@ -251,7 +264,7 @@ export const useGameStore = create()(
           if (runnerBurnout) {
             if (karmaFlags.ignoredRunnerWelfare) {
               nextState.pl = { ...state.pl, bag: state.pl.bag - 500, clout: Math.max(0, state.pl.clout - 10) };
-              newsUpdate.push("📉 GIG: A disgruntled runner stole a premium package. -00, -10 Clout.");
+              newsUpdate.push("📉 GIG: A disgruntled runner stole a premium package. -500, -10 Clout.");
             } else {
               nextState.runnerCount = Math.max(0, state.runnerCount - 1);
               newsUpdate.push("📉 GIG: Runner mutinied and stole inventory due to burnout.");
@@ -411,7 +424,9 @@ export const useGameStore = create()(
       name: SAVE_KEY,
       version: 1.1,
       storage: createJSONStorage(() => circuitBreakerStorage),
-      merge: (persistedState, currentState) => ({ ...currentState, ...persistedState }),
+      merge: (persistedState, currentState) => {
+        return deepMerge(currentState, persistedState || {});
+      },
       migrate: (persistedState, version) => {
         if (version === 1.0) {
           let d = persistedState;
@@ -436,7 +451,7 @@ export const useGameStore = create()(
             d.artCollection = migrated;
           }
 
-          return { ...getInitialGameState(), ...d };
+          return deepMerge(getInitialGameState(), d);
         }
         return persistedState;
       }
