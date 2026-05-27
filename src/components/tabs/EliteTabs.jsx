@@ -77,7 +77,7 @@ export const PeTab = () => {
 };
 
 export const ArtTab = () => {
-  const { pl, artCollection, artMarketSentiment, handleArtPurchase, venueState, rArtAuction, rArtSpeculate, rArtHostExhibit, flex, setTab } = useGame();
+  const { pl, artCollection, artMarketSentiment, rArtBuy, venueState, rArtAuction, rArtSpeculate, rArtHostExhibit, flex, setTab } = useGame();
   const locked = pl.bag < 10000000;
 
   if (locked) return <LockedTierScreen section={3} />;
@@ -132,7 +132,7 @@ export const ArtTab = () => {
           txt="pink-400"
         />
         <FlashBtn
-          onClick={handleArtPurchase}
+          onClick={rArtBuy}
           costStm={35}
           dis={pl.bag < ART_PRICE}
           label={`PURCHASE ART Piece (${fMny(ART_PRICE)})`}

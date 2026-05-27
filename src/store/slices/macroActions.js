@@ -2,7 +2,11 @@ import { fMny } from '../../config.js';
 
 export const createMacroSlice = (set, get) => ({
   rPeClick: async () => {
-    const { pl, flex, ass, adv, peProgress } = get(); if (pl.bag < 25000000 || pl.mentalHealth < 40) return;
+    const state = get();
+    const { pl, flex, ass, adv } = state;
+    const macro = { peProgress: state.peProgress, guttedFirms: state.guttedFirms };
+
+    if (pl.bag < 25000000 || pl.mentalHealth < 40) return;
     if (Math.random() < (ass.legalTeam ? 0.01 : 0.02)) {
       const bagPen = ass.legalTeam ? 5000000 : 10000000; const auraPen = ass.legalTeam ? 75 : 150;
       set(state => ({ pl: { ...state.pl, bag: state.pl.bag - bagPen, aura: Math.max(0, state.pl.aura - auraPen) }, news: ["🚨 SEC SUBPOENA!", ...state.news.slice(0, 15)] }));
@@ -11,10 +15,10 @@ export const createMacroSlice = (set, get) => ({
     set(state => ({ hustleClicks: { ...state.hustleClicks, pe: (state.hustleClicks.pe || 0) + 1 } }));
     const reduction = flex.jet.owned && flex.jet.expiresAt > Date.now() ? 0.3 : (flex.jet.owned ? 0.15 : 0);
     let profit = -25000000;
-    if (peProgress + 20 >= 100) {
+    if (macro.peProgress + 20 >= 100) {
       set(state => ({ pl: { ...state.pl, bag: state.pl.bag + 25000000, clout: Math.min(state.pl.maxClout, state.pl.clout + 500), mentalHealth: Math.max(0, state.pl.mentalHealth - 30 - (40 * (1 - reduction))) }, peProgress: 0, guttedFirms: state.guttedFirms + 1, news: ["💰 PE: Buyout complete!", ...state.news.slice(0, 15)] }));
       profit = 25000000;
-    } else set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 25000000, mentalHealth: state.pl.mentalHealth - (40 * (1 - reduction)) }, peProgress: state.peProgress + 20 }));
+    } else set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 25000000, mentalHealth: state.pl.mentalHealth - (40 * (1 - reduction)) }, peProgress: (state.peProgress || 0) + 20 }));
     adv(); return profit;
   },
 
@@ -24,7 +28,7 @@ export const createMacroSlice = (set, get) => ({
     adv(); return 0;
   },
 
-  handleArtPurchase: () => {
+  rArtBuy: async () => {
     const { pl, artCollection, adv } = get(); const ART_PRICE = 12400000;
     if (pl.bag < ART_PRICE) return;
     const nextCount = artCollection.length + 1;
@@ -36,8 +40,6 @@ export const createMacroSlice = (set, get) => ({
     }));
     adv(); return -ART_PRICE;
   },
-
-  rArtBuy: async () => get().handleArtPurchase(),
 
   finalizeAuction: (piece) => {
     const { legacyMultiplier, artBubbleMonths, adv, triggerImpact } = get();
@@ -74,6 +76,12 @@ export const createMacroSlice = (set, get) => ({
       gBusy: false
     }));
     adv(); return gateRev;
+  },
+
+  rAcceptPatronOffer: (pieceId, offerAmount) => {
+    const { adv } = get();
+    set(state => ({ artCollection: state.artCollection.filter(p => p.id !== pieceId), pl: { ...state.pl, bag: state.pl.bag + offerAmount }, mod: { s: false }, news: [`🎨 PATRON: Piece sold for $${fMny(offerAmount)}.`, ...state.news.slice(0, 15)] }));
+    adv(); return offerAmount;
   },
 
   rFormConglom: async () => {

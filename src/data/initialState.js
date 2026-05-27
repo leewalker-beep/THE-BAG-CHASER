@@ -33,7 +33,7 @@ export const getInitialGameState = () => ({
   saasUsers: 0, saasChurn: 0.05, saasPrice: 20, saasPenaltyActive: false,
   corpClients: 0, apiLockoutMonths: 0,
   creOfficeCount: 0, creRetailCount: 0,
-  franchiseCount: 0,
+  franchiseCount: 0, peProgress: 0,
   supplyChainDisruption: false,
   artCollection: [], artMarketSentiment: 0, artBubbleMonths: 0, venueState: 'THE VAULT',
   audioTracks: 0, sampleStrike: false, viralPopMonths: 0,
