@@ -166,7 +166,7 @@ const CustomFader = ({ val, setVal, label, colorCls }) => {
         <div
           className={`absolute -top-8 bg-zinc-800 border border-zinc-700 text-[10px] px-2 py-1 rounded-md text-white font-black whitespace-nowrap z-50 transition-opacity duration-200 pointer-events-none ${isDragging ? 'opacity-100' : 'opacity-0 group-hover/fader:opacity-100'}`}
         >
-          {val}% / {Math.floor((val/100) * 12)} dB
+          {val}% / {Math.floor((val || 0) * 12)} dB
         </div>
 
         <div
