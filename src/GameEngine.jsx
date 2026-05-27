@@ -11,8 +11,7 @@ export const useGame = () => useContext(GameContext);
 const SAVE_KEY = 'bag-chaser-save-v1';
 
 export const GameProvider = ({ children }) => {
-  const store = useGameStore();
-
+  const storeData = useGameStore();
   const {
     ph = 'PROLOGUE', setPh, proSt = 0, setProSt, alias = '', setAlias, diff = 1, setDiff, tab = 'HUB', setTab, selTier = '0', setSelTier,
     death = null, setDeath, cancelIntro = false, gBusy = false, setGBusy, rain = false, swFatigue = 0, setSwFatigue, hustleFatigue = {}, setHustleFatigue,
@@ -60,7 +59,7 @@ export const GameProvider = ({ children }) => {
     rPmcDeployContract, rPmcBribe, rAcquirePoliticalAsset, rDeployNarrativeOp,
     rHostPolicySummit, rSubmitToHallOfFame, rCampaignAction, rResumeCampaign,
     rRetire, performHardReset
-  } = store || {};
+  } = storeData || {};
 
   const displayBag = pl.bag;
   const age = 18 + Math.floor(pl.mo / 12);
@@ -136,7 +135,7 @@ export const GameProvider = ({ children }) => {
     if (ph !== 'PLAYING') return;
     const interval = setInterval(() => {
       if (Math.random() > 0.05) return;
-      const { conglomActive, ass, pl: curPl, saasUsers, artCollection } = store;
+      const { conglomActive, ass, pl: curPl, saasUsers, artCollection } = storeData || {};
       const roll = Math.random();
       if (roll < 0.33 && conglomActive) {
         if (ass.legalTeam) setNews(prev => ["⚖️ LEGAL defense blocked IRS audit.", ...prev.slice(0, 15)]);
@@ -144,15 +143,15 @@ export const GameProvider = ({ children }) => {
           const pen = Math.floor(curPl.bag * 0.1); setPl(prev => ({ ...prev, bag: prev.bag - pen }));
           setMod({ s: true, t: "IRS ANTI-TRUST SWEEP", m: `Regulators seized $${pen.toLocaleString()}.`, o: [{ label: "COMPLY", action: () => setMod({ s: false }) }], ui: "ui-crisis" });
         }
-      } else if (roll < 0.66 && (saasUsers > 0 || artCollection.length > 0)) {
+      } else if (roll < 0.66 && (saasUsers > 0 || (artCollection?.length || 0) > 0)) {
         if (saasUsers > 0 && Math.random() > 0.5) {
           const gain = 500 + (Math.floor(curPl.clout / 10) * 100); setSaasUsers(p => p + gain);
           setMod({ s: true, t: "VIRAL PRODUCT", m: `Gained ${gain} users.`, o: [{ label: "RIDE THE WAVE", action: () => setMod({ s: false }) }], ui: "ui-modal" });
-        } else if (artCollection.length > 0) {
+        } else if ((artCollection?.length || 0) > 0) {
           setArtMarketSentiment(p => Math.min(1, p + 0.5));
           setMod({ s: true, t: "ART MANIA", m: "Valuation skyrocketing.", o: [{ label: "EXCELLENT", action: () => setMod({ s: false }) }], ui: "ui-modal" });
         }
-      } else if (artCollection.length >= 50 && roll < 0.15) {
+      } else if ((artCollection?.length || 0) >= 50 && roll < 0.15) {
         const disp = artCollection.filter(p => p.isDisplayed);
         if (disp.length > 0) {
           const p = disp[Math.floor(Math.random() * disp.length)];
@@ -165,7 +164,7 @@ export const GameProvider = ({ children }) => {
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [ph, store, setPl, setNews, setMod, setSaasUsers, setArtMarketSentiment, setPassiveFrozen, rAcceptPatronOffer]);
+  }, [ph, storeData, setPl, setNews, setMod, setSaasUsers, setArtMarketSentiment, setPassiveFrozen, rAcceptPatronOffer]);
 
   const isTierUnlocked = useMemo(() => (idx) => pl.tier >= idx, [pl.tier]);
   const cap = useMemo(() => pl.maxClout || 100, [pl.maxClout]);
@@ -195,7 +194,7 @@ export const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{
-      ...store,
+      ...storeData,
       displayBag, age, legacyMultiplier, isTierUnlocked, cap,
       rCampaignAction: rCampaignActionProxy,
     }}>
