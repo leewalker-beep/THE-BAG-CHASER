@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGame } from '../../GameEngine.jsx';
+import { useGameStore } from '../../gameStore.js';
 import { fMny } from '../../config.js';
 import { LabShell, FlashBtn, UpgBtn, Toggles, Stepper, LockedTierScreen } from '../ui/Shared.jsx';
 
@@ -50,16 +51,29 @@ export const PodTab = () => {
 };
 
 export const BoxTab = () => {
-  const { pl, up, box, setBox, dUp, rBox, setTab, fightActive } = useGame();
+  const { pl, up, box, setBox, dUp, rBox, setTab } = useGame();
+  const fightActive = useGameStore(state => state.fightActive);
   const fightCost = React.useMemo(() => (up.boxBrd ? 0 : box.b) + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000)), [up.boxBrd, box.b, up.boxLg, box.v]);
   return (
     <LabShell t="FIGHT PROMOTER" c="orange" onHub={() => setTab('HUB')} tier={1}>
-      {fightActive && (
-        <div className="fixed inset-0 z-[10002] bg-red-600/30 backdrop-blur-sm flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 text-8xl md:text-9xl animate-fight-left">🥊</div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 text-8xl md:text-9xl animate-fight-right scale-x-[-1]">🥊</div>
-        </div>
-      )}
+      <div
+        className={`fixed inset-0 z-[10002] bg-red-600/30 backdrop-blur-sm flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${fightActive ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <div
+          className="absolute left-0 top-1/2 text-8xl md:text-9xl transition-all duration-300 ease-out"
+          style={{
+            transform: fightActive ? 'translate(20vw, -50%)' : 'translate(-100%, -50%)',
+            opacity: fightActive ? 1 : 0
+          }}
+        >🥊</div>
+        <div
+          className="absolute right-0 top-1/2 text-8xl md:text-9xl transition-all duration-300 ease-out"
+          style={{
+            transform: fightActive ? 'translate(-20vw, -50%) scaleX(-1)' : 'translate(100%, -50%) scaleX(-1)',
+            opacity: fightActive ? 1 : 0
+          }}
+        >🥊</div>
+      </div>
       {!up.boxLg
         ? <UpgBtn onClk={() => dUp('boxLg', 2000000, 'League Founded. 🥊')} cost={2000000} title="FOUND LEAGUE" pB={pl.bag} />
         : <UpgBtn onClk={() => dUp('boxBrd', 15000000, 'Network Deal! 📺')} cost={15000000} title="BROADCAST DEAL" unl={up.boxBrd} reqC={125} pB={pl.bag} pC={pl.clout} />
