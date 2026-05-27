@@ -10,9 +10,9 @@ export const getInitialGameState = () => ({
   ass: { car: false, laptop: false, office: false, warehouse: false, legalTeam: false },
   sw: { units: 0, price: 100, qual: 1, brand: 0, hype: 0 },
   drp: { active: false, units: 0, cost: 50, price: 120, brand: 0 }, dropshipLock: 0,
-  cc: { cardCount: 0, active: false },
+  cc: { cardCount: 0, active: false, m: 'solo', v: 'Drama', n: 'Brainrot' },
   pod: { active: false, subs: 0, sponsors: 0, quality: 1 },
-  box: { active: false, reputation: 0, wins: 0, purse: 0 },
+  box: { active: false, reputation: 0, wins: 0, purse: 0, v: 1, t: 1, b: 50000, p: 'Respectful' },
   tur: { active: false, t: 1, u: 0, p: 0, q: 1 },
   tch: { active: false, l: false, u: 0, srv: 1, pw: false },
   crp: { l: 0, c: 0, p: 0, q: 1 },
@@ -48,6 +48,6 @@ export const getInitialGameState = () => ({
   politicalSyndicate: { status: 'IDLE', politicalCapital: 0, assetLeasing: { governors: 0, senators: 0, networkAnchors: 0 } },
   campaign: { phase: 'CORPORATE_HQ', currentWeek: 1, currentMonth: 1, warchest: 1000000000, regionalPolling: { blueWall: 45, rustBelt: 42, sunBelt: 40 }, opponentPolling: { blueWall: 48, rustBelt: 46, sunBelt: 47 } },
   flex: { penthouse: { owned: false, expiresAt: 0, prActive: false }, logistics: { owned: false, expiresAt: 0, prActive: false }, jet: { owned: false, expiresAt: 0, prActive: false }, yacht: { owned: false, expiresAt: 0, prActive: false }, media: { owned: false, prActive: false }, foundation: { owned: false }, art: { owned: false, prActive: false }, watch: { owned: false, prActive: false }, car: { owned: false }, archive: { owned: false } },
-  mhEmergencies: 0, isBreakdownActive: false, shakeActive: false,
+  mhEmergencies: 0, isBreakdownActive: false, shakeActive: false, fightActive: false,
   lastProcessedTimestamp: Date.now(), peCompoundingYield: 1.0, swfFrozen: false, swfInvestment: 0, geoStability: 1.0, conglomActive: false, antitrustRisk: 0, guttedFirms: 0
 });

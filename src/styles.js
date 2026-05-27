@@ -77,4 +77,9 @@ export const styles = `
 
   @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   .animate-bounce-short { animation: bounce-short 0.5s ease-in-out infinite; }
+
+  @keyframes fight-left { 0% { transform: translateX(-100%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+  @keyframes fight-right { 0% { transform: translateX(100%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+  .animate-fight-left { animation: fight-left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  .animate-fight-right { animation: fight-right 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 `;
