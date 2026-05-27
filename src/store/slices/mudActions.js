@@ -494,7 +494,7 @@ export const createMudSlice = (set, get) => ({
 
     if (venue >= 2) {
       set({ shakeActive: true, fightActive: true });
-      setTimeout(() => set({ shakeActive: false, fightActive: false }), 600);
+      // setTimeout(() => set({ shakeActive: false, fightActive: false }), 600);
     }
 
     await new Promise(r => setTimeout(r, 1000));
