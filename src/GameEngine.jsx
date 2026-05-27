@@ -54,7 +54,7 @@ export const GameProvider = ({ children }) => {
     rDelivery, rPlasma, rSurvey, rLabor, rRest, rTechSource, rTechFixA, rTechFixB,
     rProcessBulkPallet, rTechMicroSolder, rRunnerRecruit, rRunnerFix, rSaasClick,
     rAiAgencyClick, rCreBuyOffice, rCreBuyRetail, rFranchiseClick, rResolveUnionStrike,
-    rResolveSupplyChain, rPeClick, rArtSpeculate, handleArtPurchase, finalizeAuction,
+    rResolveSupplyChain, rPeClick, rArtSpeculate, rArtBuy, finalizeAuction,
     rArtHostExhibit, rAcceptPatronOffer, rFormConglom, rLobbyRegulators, rSwfInvest,
     rSwfWithdraw, rAudioRelease, rAudioSettle, rPmcDeploy, rPmcSettle, rPmcHire,
     rPmcDeployContract, rPmcBribe, rAcquirePoliticalAsset, rDeployNarrativeOp,

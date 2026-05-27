@@ -143,39 +143,4 @@ export const createCorporateSlice = (set, get) => ({
     set(state => ({ pl: { ...state.pl, bag: state.pl.bag - 250000 }, smmEmpireActive: true, news: ["🌍 SMM: Global Media Empire established.", ...state.news.slice(0, 15)] }));
   },
 
-  rArtAuction: async () => {
-    const { artCollection, finalizeAuction } = get(); if (artCollection.length <= 0) return;
-    const piece = artCollection[artCollection.length - 1];
-    set({ gBusy: true }); await new Promise(r => setTimeout(r, 1000));
-    const bid1 = Math.floor(piece.baseValue * (0.8 + Math.random() * 0.4));
-    const bid2 = Math.floor(piece.baseValue * (1.2 + Math.random() * 0.4));
-    const bid3 = Math.floor(piece.baseValue * (1.6 + Math.random() * 0.4));
-    set({
-      mod: { s: true, t: "SOTHEBY'S LIVE AUCTION", m: `Intense bidding war for \\"${piece.name}\\".\n\n- Floor: $${fMny(bid1)}\n- Phone: $${fMny(bid2)}\n- Proxy: $${fMny(bid3)}`, o: [{ label: "WATCH HAMMER FALL", action: () => finalizeAuction(piece) }], ui: "ui-modal" },
-      gBusy: false
-    });
-  },
-
-  rArtHostExhibit: async () => {
-    const { artCollection, pl, adv } = get(); if (artCollection.length < 20 || pl.mentalHealth < 40) return;
-    set({ gBusy: true }); set(state => ({ pl: { ...state.pl, mentalHealth: Math.max(0, state.pl.mentalHealth - 40) } }));
-    await new Promise(r => setTimeout(r, 1500));
-    const displayed = artCollection.filter(p => p.isDisplayed);
-    const totalVal = displayed.reduce((acc, curr) => acc + curr.baseValue, 0);
-    const cloutGain = Math.floor(displayed.length * 15);
-    const gateRev = Math.floor(totalVal * 0.05);
-    set(state => ({
-      pl: { ...state.pl, bag: state.pl.bag + gateRev, clout: Math.min(state.pl.maxClout, state.pl.clout + cloutGain) },
-      mod: { s: true, t: "PRIVATE EXHIBITION CONCLUDED", m: `Returns: $${fMny(gateRev)}.`, o: [{ label: "MASTERFUL", action: () => set({ mod: { s: false } }) }], ui: "ui-modal" },
-      news: ["🎨 EXHIBIT: Conclusion.", ...state.news.slice(0, 15)],
-      gBusy: false
-    }));
-    adv(); return gateRev;
-  },
-
-  rAcceptPatronOffer: (pieceId, offerAmount) => {
-    const { adv } = get();
-    set(state => ({ artCollection: state.artCollection.filter(p => p.id !== pieceId), pl: { ...state.pl, bag: state.pl.bag + offerAmount }, mod: { s: false }, news: [`🎨 PATRON: Piece sold for $${fMny(offerAmount)}.`, ...state.news.slice(0, 15)] }));
-    adv(); return offerAmount;
-  },
 });
