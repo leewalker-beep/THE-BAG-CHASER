@@ -280,7 +280,7 @@ const BagChaserInner = () => {
             onClick={() => setMod({ s: false })}
           />
           {/* Modal Container */}
-          <div className={`modal-container p-8 ${mod?.ui} text-center relative max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,2rem)]`}>
+          <div className={`modal-container p-8 pb-10 ${mod?.ui} text-center relative max-h-[75vh] overflow-y-auto`}>
             <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
             <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m}"</p>
             <div className="flex flex-col gap-3">
