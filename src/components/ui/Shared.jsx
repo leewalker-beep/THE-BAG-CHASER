@@ -25,7 +25,7 @@ export const Toggles = ({ opts, active, setVal, color }) => {
 
 export const FlashBtn = ({ onClick, dis, label, color = 'white', txt = 'black', cost, costStm = 0 }) => {
   const { gBusy, imp, pl } = useGame();
-  const busy = gBusy || (imp || []).some(i => !i.w);
+  const busy = gBusy || imp.some(i => !i.w);
   const [st, setSt] = useState('idle');
   const [amt, setAmt] = useState(0);
 

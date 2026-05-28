@@ -116,8 +116,8 @@ const TAB_MAP = {
 const GameInterface = () => {
   const game = useGame();
   const {
-    pl = {}, prs = {}, ass = {}, mkt = 1, tab = 'HUB', setTab, cancelIntro, isTierUnlocked, selTier = '0', isBreakdownActive, shakeActive, rDischarge, performHardReset,
-    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex = {}
+    pl, prs, ass, mkt, tab, setTab, cancelIntro, isTierUnlocked, selTier, isBreakdownActive, shakeActive, rDischarge, performHardReset,
+    activeEvent, isEventModalOpen, setIsEventModalOpen, isPresident, flex
   } = game || {};
 
 
@@ -193,7 +193,7 @@ const GameInterface = () => {
         </div>
       )}
 
-      {isPresident && tab !== 'VICTORY_SPEECH' && (
+      {isPresident && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[150] w-full max-w-md animate-fadeIn px-4">
           <div className="bg-gradient-to-r from-amber-600/30 via-yellow-400/50 to-amber-600/30 backdrop-blur-xl border-2 border-yellow-400/60 rounded-3xl p-4 text-center shadow-[0_0_50px_rgba(245,158,11,0.5)] washington-theme relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
@@ -276,11 +276,11 @@ const BagChaserInner = () => {
         <div className="animate-fadeIn">
           {/* Backdrop Element */}
           <div
-            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 10000 }}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 9999 }}
             onClick={() => setMod({ s: false })}
           />
           {/* Modal Container */}
-          <div className={`modal-container p-8 ${mod?.ui} text-center`}>
+          <div className={`modal-container p-8 ${mod?.ui} text-center relative`}>
             <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
             <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m}"</p>
             <div className="flex flex-col gap-3">
