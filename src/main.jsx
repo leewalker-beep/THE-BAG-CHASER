@@ -15,25 +15,74 @@ class RootErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      const stack = this.state.error?.stack || "";
+      // Basic regex to try and find the first file:line:column pattern
+      const match = stack.match(/\((.*?):(\d+):(\d+)\)/) || stack.match(/at (.*?):(\d+):(\d+)/);
+      const fileName = match ? match[1] : "Unknown File";
+      const lineNumber = match ? match[2] : "Unknown Line";
+
       return (
-        <div className="fixed inset-0 bg-slate-900 text-red-400 p-8 font-mono overflow-auto z-[9999] selection:bg-red-500 selection:text-white">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-black mb-4 text-white uppercase tracking-tighter">FATAL BOOT EXCEPTION</h1>
-            <div className="bg-black/50 border-2 border-red-500/50 p-6 rounded-2xl shadow-2xl mb-8">
-              <p className="text-xl font-bold mb-4">Error: {this.state.error?.toString()}</p>
-              <div className="h-px bg-red-500/20 mb-4" />
-              <p className="text-xs text-slate-400 mb-2 uppercase tracking-widest">Component Stack Trace:</p>
-              <pre className="text-[10px] leading-tight whitespace-pre-wrap text-red-300/80 italic">
-                {this.state.errorInfo?.componentStack}
-              </pre>
-            </div>
-            <button
-              onClick={() => { localStorage.clear(); window.location.reload(); }}
-              className="px-6 py-3 bg-red-600 text-white font-black rounded-xl hover:bg-red-500 transition-all active:scale-95"
-            >
-              WIPE STORAGE & REBOOT
-            </button>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#0f172a',
+          color: '#f87171',
+          padding: '32px',
+          fontFamily: 'monospace',
+          zIndex: 99999,
+          overflow: 'auto',
+          boxSizing: 'border-box'
+        }}>
+          <h1 style={{ color: '#ffffff', margin: '0 0 16px 0', textTransform: 'uppercase' }}>Fatal Runtime Exception</h1>
+          <div style={{
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            border: '2px solid rgba(248,113,113,0.5)',
+            padding: '24px',
+            borderRadius: '16px',
+            marginBottom: '32px'
+          }}>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 12px 0' }}>
+              Error: {this.state.error?.message || this.state.error?.toString()}
+            </p>
+            <p style={{ fontSize: '14px', margin: '0 0 8px 0' }}>
+              <b>File:</b> {fileName}
+            </p>
+            <p style={{ fontSize: '14px', margin: '0 0 16px 0' }}>
+              <b>Line:</b> {lineNumber}
+            </p>
+            <hr style={{ border: 'none', borderTop: '1px solid rgba(248,113,113,0.2)', marginBottom: '16px' }} />
+            <p style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
+              Component Stack:
+            </p>
+            <pre style={{
+              fontSize: '10px',
+              lineHeight: '1.4',
+              whiteSpace: 'pre-wrap',
+              color: 'rgba(252,165,165,0.8)',
+              fontStyle: 'italic',
+              margin: 0
+            }}>
+              {this.state.errorInfo?.componentStack}
+            </pre>
           </div>
+          <button
+            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            style={{
+              backgroundColor: '#dc2626',
+              color: '#ffffff',
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '12px',
+              fontWeight: '900',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            WIPE STORAGE & REBOOT
+          </button>
         </div>
       );
     }
