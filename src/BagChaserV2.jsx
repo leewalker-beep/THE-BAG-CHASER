@@ -273,16 +273,19 @@ const BagChaserInner = () => {
       {!death      && ph === 'LEADERBOARD' ? <Leaderboard /> : null}
 
       {mod?.s && (
-        <div className="animate-fadeIn">
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="animate-fadeIn">
           {/* Backdrop Element */}
           <div
-            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)', zIndex: 9999 }}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(6px)' }}
             onClick={() => setMod({ s: false })}
           />
           {/* Modal Container */}
-          <div className={`modal-container p-8 pb-10 ${mod?.ui} text-center relative max-h-[75vh] overflow-y-auto`}>
-            <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
-            <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m}"</p>
+          <div
+            className={`modal-container p-6 pb-8 ${mod?.ui} text-center relative max-h-[70vh] overflow-y-auto`}
+            style={{ position: 'relative', top: 'auto', left: 'auto', transform: 'none', margin: 'auto', width: '100%', maxWidth: '420px' }}
+          >
+            <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-2xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
+            <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-6 text-slate-300 drop-shadow-sm text-base italic leading-relaxed"}>"{mod?.m}"</p>
             <div className="flex flex-col gap-3">
               {mod?.o?.map((o, i) => (
                 <button
