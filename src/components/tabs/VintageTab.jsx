@@ -191,7 +191,7 @@ export const VintageTab = () => {
 
             <div className="grid grid-cols-1 gap-3">
               {vaultAssetsData.map((asset, i) => {
-                const owned = vaultHoldings.some(h => h.name === asset.name);
+                const owned = (vaultHoldings || []).some(h => h.name === asset.name);
                 return (
                   <button
                     key={i}
