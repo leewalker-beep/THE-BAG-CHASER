@@ -25,5 +25,5 @@ test('fresh game starts correctly without black screen', async ({ page }) => {
   await expect(page.locator('text=CLOUT')).toBeVisible();
 
   // Verify Hub is visible by checking for a hustle
-  await expect(page.locator('text=STREETWEAR')).toBeVisible();
+  await expect(page.getByTestId('hustle-btn-SW')).toBeVisible();
 });

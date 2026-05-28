@@ -2,97 +2,49 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import BagChaserV2 from './BagChaserV2.jsx'
 
-class ErrorBoundary extends React.Component {
+class RootErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    this.setState({ hasError: true, error, errorInfo });
+    console.error("CRITICAL UI CRASH:", error, errorInfo);
   }
-
-  handleReset = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
 
   render() {
     if (this.state.hasError) {
-      const error = this.state.error;
-      const stack = error?.stack || "";
-
-      // Attempt to extract location info from stack trace
-      const lines = stack.split('\n');
-      const locationLine = lines.find(l => l.includes('.jsx') || l.includes('.js')) || "";
-
       return (
-        <div style={{
-          backgroundColor: '#000',
-          color: '#ff0000',
-          padding: '2rem',
-          fontFamily: 'monospace',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem'
-        }}>
-          <h1 style={{ borderBottom: '2px solid #ff0000', paddingBottom: '0.5rem' }}>RUNTIME EXCEPTION DETECTED</h1>
-          <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-            MESSAGE: {error?.message}
-          </div>
-          {locationLine && (
-            <div style={{ color: '#ffffff' }}>
-              LOCATION: {locationLine.trim()}
+        <div className="fixed inset-0 bg-slate-900 text-red-400 p-8 font-mono overflow-auto z-[9999] selection:bg-red-500 selection:text-white">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl font-black mb-4 text-white uppercase tracking-tighter">FATAL BOOT EXCEPTION</h1>
+            <div className="bg-black/50 border-2 border-red-500/50 p-6 rounded-2xl shadow-2xl mb-8">
+              <p className="text-xl font-bold mb-4">Error: {this.state.error?.toString()}</p>
+              <div className="h-px bg-red-500/20 mb-4" />
+              <p className="text-xs text-slate-400 mb-2 uppercase tracking-widest">Component Stack Trace:</p>
+              <pre className="text-[10px] leading-tight whitespace-pre-wrap text-red-300/80 italic">
+                {this.state.errorInfo?.componentStack}
+              </pre>
             </div>
-          )}
-          <details style={{ marginTop: '1rem' }}>
-            <summary style={{ cursor: 'pointer', color: '#888' }}>Full Stack Trace</summary>
-            <pre style={{
-              backgroundColor: '#111',
-              padding: '1rem',
-              overflow: 'auto',
-              fontSize: '0.8rem',
-              color: '#aaa',
-              border: '1px solid #333'
-            }}>
-              {stack}
-            </pre>
-          </details>
-          <div style={{ marginTop: '2rem' }}>
             <button
-              onClick={this.handleReset}
-              style={{
-                backgroundColor: '#ff0000',
-                color: '#fff',
-                border: 'none',
-                padding: '1rem 2rem',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                borderRadius: '4px',
-                textTransform: 'uppercase'
-              }}
+              onClick={() => { localStorage.clear(); window.location.reload(); }}
+              className="px-6 py-3 bg-red-600 text-white font-black rounded-xl hover:bg-red-500 transition-all active:scale-95"
             >
-              Wipe Storage & Reboot
+              WIPE STORAGE & REBOOT
             </button>
           </div>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <RootErrorBoundary>
       <BagChaserV2 />
-    </ErrorBoundary>
+    </RootErrorBoundary>
   </React.StrictMode>,
 )
