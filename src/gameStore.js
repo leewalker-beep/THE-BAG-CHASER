@@ -410,10 +410,10 @@ export const useGameStore = create()(
           if (ai.ig) nextState.ai = { ...ai, p: Math.min(100, ai.p + ai.c * (1.2 + Math.random() * 2) * intervals), r: Math.min(100, ai.r + (1.8 + Math.random() * 2.5) * intervals) };
           if (prs.r) nextState.prs = { ...prs, m: prs.m + intervals };
 
-          if (campaign?.phase === 'POLITICS') {
-            const op = { ...(campaign?.opponentPolling || {}) };
+          if (state.campaign?.phase === 'POLITICS') {
+            const op = { ...(state.campaign?.opponentPolling || {}) };
             ['blueWall', 'rustBelt', 'sunBelt'].forEach(reg => { op[reg] = Math.min(100, op[reg] + 0.5 * intervals); });
-            nextState.campaign = { ...campaign, opponentPolling: op };
+            nextState.campaign = { ...state.campaign, opponentPolling: op };
           }
 
           return { ...nextState, lastProcessedTimestamp: now, news: [...newsUpdate, ...state.news.slice(0, 15 - newsUpdate.length)] };
