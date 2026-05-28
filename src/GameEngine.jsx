@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { NOTIFICATION_DATABASE } from './data/notifications.js';
-import { fMny } from './config.js';
+import { fMny, MARKETS } from './config.js';
 
 const mudChaosPools = {
   VINTAGE: [
@@ -1668,9 +1668,13 @@ export const GameProvider = ({ children }) => {
     const isJetOwned = flex.jet.owned;
     const isJetBlitzed = isJetOwned && flex.jet.expiresAt > Date.now();
     const mhReduction = isJetBlitzed ? 0.30 : (isJetOwned ? 0.15 : 0);
-    setPl(p => ({ ...p, bag: p.bag + 25, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
+
+    let payout = 25;
+    if (MARKETS[mkt]?.n === 'BULL MARKET') payout *= 2;
+
+    setPl(p => ({ ...p, bag: p.bag + payout, mentalHealth: p.mentalHealth - (15 * (1 - mhReduction)) }));
     adv();
-    return 25;
+    return payout;
   };
 
   const rPlasma = async () => {
@@ -2444,7 +2448,10 @@ export const GameProvider = ({ children }) => {
     await new Promise(r => setTimeout(r, 800));
 
     const modifier = up.drpFac ? 1.5 : 1.1;
-    const revenue = Math.floor((drp.u * drp.p) * (Math.random() * modifier) * legacyMultiplier);
+    let revenue = Math.floor((drp.u * drp.p) * (Math.random() * modifier) * legacyMultiplier);
+
+    if (MARKETS[mkt]?.n === 'RECESSION') revenue = Math.floor(revenue * 0.4);
+
     const profit = revenue - costBasis;
 
     setPl(p => ({ ...p, bag: p.bag + revenue, clout: Math.min(p.maxClout, p.clout + 3) }));
