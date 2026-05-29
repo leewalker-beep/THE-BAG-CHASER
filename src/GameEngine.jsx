@@ -42,6 +42,7 @@ export const GameProvider = ({ children }) => {
     flex = {}, setFlex, campaign = {}, setCampaign, seenNotifications = [], setSeenNotifications,
     activeNotification = null, mhEmergencies = 0, setMhEmergencies, pfwActive = false, setPfwActive,
     activeEvent = null, isEventModalOpen = false, setIsEventModalOpen, isBreakdownActive = false, shakeActive = false,
+    fightIntensity = 0, boxingFatigue = 0,
     passiveFrozen = false, setPassiveFrozen, pl = {}, setPl, mkt = 1, setMkt, news = [], setNews, imp = [], mod = {}, setMod,
     up = {}, setUp, skl = {}, setSkl, ass = {}, setAss, sw = {}, setSw, drp = {}, setDrp, cc = {}, setCc, pod = {}, setPod,
     box = {}, setBox, tur = {}, setTur, tch = {}, setTch, crp = {}, setCrp, mov = {}, setMov, hf = {}, setHf, ai = {}, setAi,

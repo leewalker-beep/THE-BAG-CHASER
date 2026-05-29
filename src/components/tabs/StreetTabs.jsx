@@ -51,11 +51,14 @@ export const PodTab = () => {
 };
 
 export const BoxTab = () => {
-  const { pl, up, box, setBox, dUp, rBox, setTab } = useGame();
+  const { pl, up, box, setBox, dUp, rBox, setTab, fightIntensity, boxingFatigue, isBreakdownActive } = useGame();
   const fightActive = useGameStore(state => state.fightActive);
   const fightCost = React.useMemo(() => (up.boxBrd ? 0 : box.b) + (up.boxLg ? 0 : (box.v === 1 ? 10000 : box.v === 2 ? 250000 : 2000000)), [up.boxBrd, box.b, up.boxLg, box.v]);
   return (
     <LabShell t="FIGHT PROMOTER" c="orange" onHub={() => setTab('HUB')} tier={1}>
+      {fightIntensity > 70 && (
+        <div className="fixed inset-0 pointer-events-none z-[10003] bg-red-600/40 animate-pulse" />
+      )}
       <div
         className={`fixed inset-0 z-[10002] bg-red-600/30 backdrop-blur-sm flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${fightActive ? 'opacity-100' : 'opacity-0'}`}
       >
@@ -82,7 +85,11 @@ export const BoxTab = () => {
       <Toggles opts={up.boxLg ? ['Scrap', 'MMAvYT', 'Pro', 'Super'] : ['Scrap', 'MMAvYT', 'Pro']} active={box.t} setVal={v => setBox(s => ({ ...s, t: v }))} color="orange-600" />
       {!up.boxBrd && <Stepper val={box.b} setVal={v => setBox(s => ({ ...s, b: v }))} min={box.t === 4 ? 10000000 : 50004} max={box.t === 4 ? 50000000 : 5000000} step={50000} label="Promo Budget" />}
       <Toggles opts={['Respectful', 'Script Brawl']} active={box.p} setVal={v => setBox(s => ({ ...s, p: v }))} color="orange-600" />
-      <FlashBtn onClick={rBox} dis={pl.bag < fightCost} label={up.boxBrd ? 'HOST NETWORK FIGHT ($0)' : `HOST - $${fMny(fightCost)}`} />
+      <div className="relative flex items-center justify-center gap-4">
+        <span className="text-4xl transition-transform duration-200" style={{ transform: `scale(${1 + fightIntensity / 100})` }}>🥊</span>
+        <FlashBtn onClick={rBox} dis={pl.bag < fightCost} label={up.boxBrd ? 'HOST NETWORK FIGHT ($0)' : `HOST - $${fMny(fightCost)}`} />
+        <span className="text-4xl transition-transform duration-200" style={{ transform: `scale(${1 + fightIntensity / 100})` }}>🥊</span>
+      </div>
     </LabShell>
   );
 };

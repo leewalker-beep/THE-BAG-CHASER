@@ -52,5 +52,6 @@ export const getInitialGameState = () => ({
   campaign: { phase: 'CORPORATE_HQ', currentWeek: 1, currentMonth: 1, warchest: 1000000000, regionalPolling: { blueWall: 45, rustBelt: 42, sunBelt: 40 }, opponentPolling: { blueWall: 48, rustBelt: 46, sunBelt: 47 } },
   flex: { penthouse: { owned: false, expiresAt: 0, prActive: false }, logistics: { owned: false, expiresAt: 0, prActive: false }, jet: { owned: false, expiresAt: 0, prActive: false }, yacht: { owned: false, expiresAt: 0, prActive: false }, media: { owned: false, prActive: false }, foundation: { owned: false }, art: { owned: false, prActive: false }, watch: { owned: false, prActive: false }, car: { owned: false }, archive: { owned: false } },
   mhEmergencies: 0, isBreakdownActive: false, shakeActive: false, fightActive: false,
+  fightIntensity: 0, boxingFatigue: 0,
   lastProcessedTimestamp: Date.now(), peCompoundingYield: 1.0, swfFrozen: false, swfInvestment: 0, geoStability: 1.0, conglomActive: false, antitrustRisk: 0, guttedFirms: 0, techSourceCost: 100
 });
