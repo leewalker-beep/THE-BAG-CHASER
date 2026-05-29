@@ -13,10 +13,12 @@ export const createCoreSlice = (set, get) => ({
     else plUpdate = { bag: 1000, clout: 5, aura: 5, mo: 0, tier: 0, mentalHealth: 100, maxMentalHealth: 100, heat: 0, maxClout: 100, maxAura: 100 };
 
     const initialState = getInitialGameState();
+    const nextGen = (get().generationCount || 0) + 1;
     set({
       ...initialState,
       pl: { ...initialState.pl, ...plUpdate },
-      generationCount: get().generationCount + 1,
+      generationCount: nextGen,
+      legacyMultiplier: 1 + (nextGen * 0.25),
       news: ['Your legacy continues...', 'Market Cycle: NORMAL.']
     });
   },

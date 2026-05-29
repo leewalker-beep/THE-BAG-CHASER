@@ -228,9 +228,11 @@ export const useGameStore = create()(
       },
 
       adv: (intervals = 1) => {
-        const { fatalTragedyMessage, lobbyists, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks } = get();
+        const { fatalTragedyMessage, lobbyists, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks, campaign, generationCount } = get();
 
         if (fatalTragedyMessage) return;
+
+        const effectiveLegacyMult = legacyMultiplier || (1 + (generationCount || 0) * 0.25);
 
         set(state => {
           const now = Date.now();
@@ -368,7 +370,7 @@ export const useGameStore = create()(
           }
 
           const currentPl = nextState.pl ?? state.pl;
-          let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives + artPassiveRev) * legacyMultiplier);
+          let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives + artPassiveRev) * effectiveLegacyMult);
           if (passiveFrozen) basePassive = 0;
           const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
           const swfYield = !state.swfFrozen ? Math.floor(state.swfInvestment * 0.06 * state.geoStability) : 0;
@@ -376,7 +378,7 @@ export const useGameStore = create()(
           nextState.pl = {
             ...currentPl,
             mo: currentPl.mo + intervals,
-            bag: currentPl.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus) * intervals,
+            bag: currentPl.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * effectiveLegacyMult) + conglomBonus) * intervals,
             aura: Math.min(currentPl.maxAura, Math.max(0, currentPl.aura + (-auraBleed + (collectiblePhase === "VAULT" ? (nextState.vaultHoldings ?? state.vaultHoldings ?? []).length * 50 : 0) + artDrift) * intervals)),
             clout: Math.min(currentPl.maxClout, currentPl.clout + (artClout + (nextState.audioTracks ?? state.audioTracks) * 2) * intervals),
             heat: currentPl.heat + (state.pmcSquads * 2 * (isPresident ? 0.5 : 1) * intervals),
@@ -410,10 +412,10 @@ export const useGameStore = create()(
           if (ai.ig) nextState.ai = { ...ai, p: Math.min(100, ai.p + ai.c * (1.2 + Math.random() * 2) * intervals), r: Math.min(100, ai.r + (1.8 + Math.random() * 2.5) * intervals) };
           if (prs.r) nextState.prs = { ...prs, m: prs.m + intervals };
 
-          if (campaign?.phase === 'POLITICS') {
-            const op = { ...(campaign?.opponentPolling || {}) };
+          if (state.campaign?.phase === 'POLITICS') {
+            const op = { ...(state.campaign?.opponentPolling || {}) };
             ['blueWall', 'rustBelt', 'sunBelt'].forEach(reg => { op[reg] = Math.min(100, op[reg] + 0.5 * intervals); });
-            nextState.campaign = { ...campaign, opponentPolling: op };
+            nextState.campaign = { ...state.campaign, opponentPolling: op };
           }
 
           return { ...nextState, lastProcessedTimestamp: now, news: [...newsUpdate, ...state.news.slice(0, 15 - newsUpdate.length)] };

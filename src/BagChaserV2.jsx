@@ -245,7 +245,7 @@ const BagChaserInner = () => {
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-      {pl?.isPresident && game?.campaign?.phase === 'COMPLETED' && <div className="victory-flash" />}
+      {(pl?.isPresident || false) && (game?.campaign?.phase === 'COMPLETED') && <div className="victory-flash" />}
       {activeNotification && <NotificationOverlay />}
       {fatalTragedyMessage && (
         <div className="fixed inset-0 bg-black z-[300] flex items-center justify-center p-4 animate-fadeIn">
@@ -281,8 +281,8 @@ const BagChaserInner = () => {
           />
           {/* Modal Container */}
           <div className={`modal-container p-8 ${mod?.ui} text-center`}>
-            <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t}</h2>
-            <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m}"</p>
+            <h2 className={mod?.ui === 'ui-cyberpunk' ? '' : "text-3xl font-black mb-4 text-white tracking-widest uppercase"}>{mod?.t || ''}</h2>
+            <p className={mod?.ui === 'ui-cyberpunk' ? '' : "mb-8 text-slate-300 drop-shadow-sm text-lg italic leading-relaxed"}>"{mod?.m || ''}"</p>
             <div className="flex flex-col gap-3">
               {mod?.o?.map((o, i) => (
                 <button
