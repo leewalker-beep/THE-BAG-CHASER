@@ -62,9 +62,9 @@ export const GameProvider = ({ children }) => {
     rRetire, performHardReset
   } = storeData || {};
 
-  const displayBag = pl.bag;
-  const age = 18 + Math.floor(pl.mo / 12);
-  const legacyMultiplier = 1 + (generationCount * 0.25);
+  const displayBag = pl?.bag || 0;
+  const age = 18 + Math.floor((pl?.mo || 0) / 12);
+  const legacyMultiplier = 1 + ((generationCount || 0) * 0.25);
 
   // Global Side Effects
   useEffect(() => {
@@ -95,9 +95,9 @@ export const GameProvider = ({ children }) => {
   }, [ph]);
 
   useEffect(() => {
-    if (ph !== 'PLAYING') return;
+    if (ph !== 'PLAYING' || !pl) return;
     const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl?.tier || 0, flex || {});
-    if (pl.maxClout !== cloutCap || pl.maxAura !== auraCap || pl.maxMentalHealth !== mhCap) {
+    if ((pl?.maxClout || 0) !== cloutCap || (pl?.maxAura || 0) !== auraCap || (pl?.maxMentalHealth || 0) !== mhCap) {
       setPl(prev => ({ ...prev, maxClout: cloutCap, maxAura: auraCap, maxMentalHealth: mhCap, clout: Math.min(cloutCap, prev.clout), aura: Math.min(auraCap, prev.aura), mentalHealth: Math.min(mhCap, prev.mentalHealth) }));
     }
   }, [pl?.tier, ph, flex, getUpdatedCaps, setPl]);
