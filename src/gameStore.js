@@ -9,12 +9,12 @@ import { createCoreSlice } from "./store/slices/coreActions.js";
 import { fMny } from "./config.js";
 
 export const TIERS = [
-  { id: 0, label: 'Mud',       monthsRequired: 0,  req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG', 'DELIVERY', 'PLASMA', 'SURVEY', 'LABOR'] },
-  { id: 1, label: 'Street',    monthsRequired: 0,  req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
-  { id: 2, label: 'Corporate', monthsRequired: 10, req: { bag: 10000000,    clout: 300,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
-  { id: 3, label: 'Elite',     monthsRequired: 10, req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
-  { id: 4, label: 'Mogul',     monthsRequired: 0,  req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV', 'SYNDICATE'] },
-  { id: 5, label: 'President', monthsRequired: 0,  req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
+  { id: 0, label: 'Mud',       req: { bag: 0,           clout: 0,    aura: 0   }, hustles: ['SW', 'DROP', 'TECH_FLIP', 'VINTAGE', 'SMM', 'GIG', 'DELIVERY', 'PLASMA', 'SURVEY', 'LABOR'] },
+  { id: 1, label: 'Street',    req: { bag: 100000,      clout: 30,   aura: 0   }, hustles: ['CC', 'POD', 'BOX', 'AUDIO'] },
+  { id: 2, label: 'Corporate', req: { bag: 10000000,    clout: 300,  aura: 50  }, hustles: ['TECH', 'AI_AGENCY', 'CRE_FLIP', 'FRANCHISE'] },
+  { id: 3, label: 'Elite',     req: { bag: 25000000,    clout: 500,  aura: 0   }, hustles: ['CRYP', 'TOUR', 'PE_ROLLUP', 'ART_SPEC'] },
+  { id: 4, label: 'Mogul',     req: { bag: 250000000,   clout: 1500, aura: 500 }, hustles: ['HF', 'CONGLOMERATE', 'PMC', 'SOVEREIGN', 'MOV', 'SYNDICATE'] },
+  { id: 5, label: 'President', req: { bag: 1000000000,  clout: 5000, aura: 2500 }, hustles: ['PAC', 'BLITZ', 'SMEAR', 'ELECTION'] },
 ];
 
 export { mudChaosPools, getInitialGameState };
@@ -228,11 +228,9 @@ export const useGameStore = create()(
       },
 
       adv: (intervals = 1) => {
-        const { fatalTragedyMessage, lobbyists, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks, campaign, generationCount } = get();
+        const { fatalTragedyMessage, lobbyists, clientCrisis, karmaFlags, runnerBurnout, apiLockoutMonths, saasPenaltyActive, artBubbleMonths, supplyChainShockMonths, viralPopMonths, talentScouters, isPresident, politicalSyndicate, flex, saasChurn, corpClients, saasPrice, mkt, ass, skl, tch, smmEmpireActive, smmClients, aiSmmFactory, smmRetainerActive, runnerCount, audioTracks, sampleStrike, pmcSquads, pmcActiveContracts, techInterns, enterpriseContracts, vintageBoostActive, collectiblePhase, peCompoundingYield, swfFrozen, swfInvestment, geoStability, conglomActive, antitrustRisk, ai, prs, legacyMultiplier, pmcHeatLevel, passiveFrozen, hustleClicks } = get();
 
         if (fatalTragedyMessage) return;
-
-        const effectiveLegacyMult = legacyMultiplier || (1 + (generationCount || 0) * 0.25);
 
         set(state => {
           const now = Date.now();
@@ -248,10 +246,7 @@ export const useGameStore = create()(
             saasPenaltyActive: false,
             artBubbleMonths: Math.max(0, state.artBubbleMonths - intervals),
             supplyChainShockMonths: Math.max(0, state.supplyChainShockMonths - intervals),
-            viralPopMonths: Math.max(0, state.viralPopMonths - intervals),
-            fightIntensity: Math.max(0, (state.fightIntensity || 0) - (10 * intervals)),
-            boxingFatigue: Math.max(0, (state.boxingFatigue || 0) - (5 * intervals)),
-            isBreakdownActive: state.boxingFatigue > 90
+            viralPopMonths: Math.max(0, state.viralPopMonths - intervals)
           };
 
           let newsUpdate = [];
@@ -373,7 +368,7 @@ export const useGameStore = create()(
           }
 
           const currentPl = nextState.pl ?? state.pl;
-          let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives + artPassiveRev) * effectiveLegacyMult);
+          let basePassive = Math.floor((passiveSrv + smmRev + runnerRev + audioYield + pmcYield + (saasRev - saasOverhead) + aiRev + creNet + franchiseRev + peRev + techInternRev + enterpriseRev + consignmentRev + vintagePassives + artPassiveRev) * legacyMultiplier);
           if (passiveFrozen) basePassive = 0;
           const conglomBonus = conglomActive ? Math.floor(basePassive * 0.25) : 0;
           const swfYield = !state.swfFrozen ? Math.floor(state.swfInvestment * 0.06 * state.geoStability) : 0;
@@ -381,7 +376,7 @@ export const useGameStore = create()(
           nextState.pl = {
             ...currentPl,
             mo: currentPl.mo + intervals,
-            bag: currentPl.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * effectiveLegacyMult) + conglomBonus) * intervals,
+            bag: currentPl.bag + (-expenseBurn + yieldIncome + basePassive + (swfYield * legacyMultiplier) + conglomBonus) * intervals,
             aura: Math.min(currentPl.maxAura, Math.max(0, currentPl.aura + (-auraBleed + (collectiblePhase === "VAULT" ? (nextState.vaultHoldings ?? state.vaultHoldings ?? []).length * 50 : 0) + artDrift) * intervals)),
             clout: Math.min(currentPl.maxClout, currentPl.clout + (artClout + (nextState.audioTracks ?? state.audioTracks) * 2) * intervals),
             heat: currentPl.heat + (state.pmcSquads * 2 * (isPresident ? 0.5 : 1) * intervals),
@@ -415,10 +410,10 @@ export const useGameStore = create()(
           if (ai.ig) nextState.ai = { ...ai, p: Math.min(100, ai.p + ai.c * (1.2 + Math.random() * 2) * intervals), r: Math.min(100, ai.r + (1.8 + Math.random() * 2.5) * intervals) };
           if (prs.r) nextState.prs = { ...prs, m: prs.m + intervals };
 
-          if (state.campaign?.phase === 'POLITICS') {
-            const op = { ...(state.campaign?.opponentPolling || {}) };
+          if (campaign?.phase === 'POLITICS') {
+            const op = { ...(campaign?.opponentPolling || {}) };
             ['blueWall', 'rustBelt', 'sunBelt'].forEach(reg => { op[reg] = Math.min(100, op[reg] + 0.5 * intervals); });
-            nextState.campaign = { ...state.campaign, opponentPolling: op };
+            nextState.campaign = { ...campaign, opponentPolling: op };
           }
 
           return { ...nextState, lastProcessedTimestamp: now, news: [...newsUpdate, ...state.news.slice(0, 15 - newsUpdate.length)] };
@@ -427,15 +422,14 @@ export const useGameStore = create()(
     }),
     {
       name: SAVE_KEY,
-      version: 1.2,
+      version: 1.1,
       storage: createJSONStorage(() => circuitBreakerStorage),
       merge: (persistedState, currentState) => {
         return deepMerge(currentState, persistedState || {});
       },
       migrate: (persistedState, version) => {
-        let d = persistedState;
-
-        if (version < 1.1) {
+        if (version === 1.0) {
+          let d = persistedState;
           if (d.blitzExpiry) {
             if (d.flex?.penthouse?.owned) {
               d.flex.penthouse.expiresAt = d.blitzExpiry;
@@ -456,33 +450,10 @@ export const useGameStore = create()(
             }
             d.artCollection = migrated;
           }
-        }
 
-        if (version < 1.2) {
-          // Migrate Streetwear & Drop Ship long keys to short keys
-          if (d.streetwear && d.streetwear.units !== undefined) {
-            d.streetwear.u = d.streetwear.units;
-            d.streetwear.p = d.streetwear.price;
-            d.streetwear.i = d.streetwear.income;
-            d.streetwear.a = d.streetwear.auto;
-            delete d.streetwear.units;
-            delete d.streetwear.price;
-            delete d.streetwear.income;
-            delete d.streetwear.auto;
-          }
-          if (d.dropship && d.dropship.units !== undefined) {
-            d.dropship.u = d.dropship.units;
-            d.dropship.p = d.dropship.price;
-            d.dropship.i = d.dropship.income;
-            d.dropship.a = d.dropship.auto;
-            delete d.dropship.units;
-            delete d.dropship.price;
-            delete d.dropship.income;
-            delete d.dropship.auto;
-          }
+          return deepMerge(getInitialGameState(), d);
         }
-
-        return deepMerge(getInitialGameState(), d);
+        return persistedState;
       }
     }
   )

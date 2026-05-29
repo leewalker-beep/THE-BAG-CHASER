@@ -27,11 +27,8 @@ export const SwTab = () => {
   };
 
   const dropCost = React.useMemo(() => {
-    const sU = Number(sw?.u) || 0;
-    const sI = Number(sw?.i) || 1;
-    const sA = Number(sw?.a) || 0;
-    return (sU * (sI === 1 ? 15 : sI === 2 ? 40 : 90)) + (up.swFlg ? 0 : sA);
-  }, [sw?.u, sw?.i, up.swFlg, sw?.a]);
+    return (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
+  }, [sw.u, sw.i, up.swFlg, sw.a]);
 
   const handleGlobalSupply = async () => {
     await new Promise(r => setTimeout(r, 2000));
@@ -123,7 +120,7 @@ export const SwTab = () => {
 
 export const DropTab = () => {
   const { pl, up, drp, setDrp, dUp, rDrp, setTab, karmaFlags, setKarmaFlags } = useGame();
-  const adCost = React.useMemo(() => (Number(drp?.u || 0) * 10) + Number(drp?.a || 0), [drp?.u, drp?.a]);
+  const adCost = React.useMemo(() => (drp.u * 10) + drp.a, [drp.u, drp.a]);
   return (
     <LabShell hustleKey="dropship" t="DROPSHIPPING" c="blue" fontCls="font-hype" onHub={() => setTab('HUB')} tier={0}>
       <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800 mb-4">
@@ -141,9 +138,9 @@ export const DropTab = () => {
       </div>
       <UpgBtn onClk={() => dUp('drpFac', 250000, 'Factory Secured. 🏭')} cost={250000} title="PRIVATE LABEL FACTORY" unl={up.drpFac} pB={pl.bag} />
       <Toggles opts={['LEDs', 'Fake Pods', 'Supps']} active={drp.i} setVal={v => setDrp(s => ({ ...s, i: v }))} color="blue-600" />
-      <Stepper val={drp?.u} setVal={v => setDrp(s => ({ ...s, u: v }))} min={50} max={2000} step={250} label="Units" isCurr={false} />
-      <Stepper val={drp?.p} setVal={v => setDrp(s => ({ ...s, p: v }))} min={15} max={up.drpFac ? 250 : 150} step={5} label="Price" />
-      <Stepper val={drp?.a} setVal={v => setDrp(s => ({ ...s, a: v }))} min={0} max={500000} step={5000} label="Ad Budget" />
+      <Stepper val={drp.u} setVal={v => setDrp(s => ({ ...s, u: v }))} min={50} max={2000} step={250} label="Units" isCurr={false} />
+      <Stepper val={drp.p} setVal={v => setDrp(s => ({ ...s, p: v }))} min={15} max={up.drpFac ? 250 : 150} step={5} label="Price" />
+      <Stepper val={drp.a} setVal={v => setDrp(s => ({ ...s, a: v }))} min={0} max={500000} step={5000} label="Ad Budget" />
       <FlashBtn onClick={rDrp} costStm={10} dis={pl.bag < adCost} label={`LAUNCH AD - ${fMny(adCost)}`} />
     </LabShell>
   );
