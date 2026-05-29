@@ -121,7 +121,7 @@ export const GameProvider = ({ children }) => {
     let nextTier = pl.tier;
     for (let i = nextTier + 1; i < TIERS.length; i++) {
       const req = TIERS[i].req;
-      const meetsTime = i === 2 ? pl.mo >= 10 : true;
+      const meetsTime = pl.mo >= (TIERS[i].monthsRequired || 0);
       if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura && meetsTime) nextTier = i;
       else break;
     }
