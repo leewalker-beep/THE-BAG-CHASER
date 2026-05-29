@@ -20,7 +20,7 @@ export const getInitialGameState = () => ({
   hf: { active: false, c: 0, a: 0, p: 0, q: 1 },
   ai: { active: false, c: 0, p: 0, r: 0, ig: false },
   prs: { active: false, m: 0, r: 0, rst: 0, sun: 0, sub: 0, sunActive: false, subActive: false, rstActive: false, sunCost: 0, subCost: 0, rstCost: 0, p1tt: false, p1op: false, p1et: false, sh: false, ot: false, vu: false, du: false },
-  peaks: { bag: 0, clout: 0, aura: 0, mh: 100 },
+  peaks: { peakB: 0, peakC: 0, peakA: 0, mh: 100 },
   hl: { sw: 0, drp: 0, tech: 0, vin: 0, smm: 0, gig: 0, pod: 0, box: 0, cryp: 0, tour: 0, mov: 0, hf: 0, ai: 0, prs: 0 },
   tally: { clicks: 0, events: 0, buyouts: 0 },
   generationCount: 0, legacyMultiplier: 1.0,
