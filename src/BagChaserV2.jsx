@@ -239,13 +239,13 @@ const GameInterface = () => {
 
 const BagChaserInner = () => {
   const game = useGame();
-  const { ph, pl, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset, mod, setMod } = game || {};
+  const { ph, pl, death, cancelIntro, fatalTragedyMessage, activeNotification, performHardReset, mod, setMod, campaign } = game || {};
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-      {pl?.isPresident && game?.campaign?.phase === 'COMPLETED' && <div className="victory-flash" />}
+      {pl?.isPresident && campaign?.phase === 'COMPLETED' && <div className="victory-flash" />}
       {activeNotification && <NotificationOverlay />}
       {fatalTragedyMessage && (
         <div className="fixed inset-0 bg-black z-[300] flex items-center justify-center p-4 animate-fadeIn">
