@@ -42,7 +42,6 @@ export const GameProvider = ({ children }) => {
     flex = {}, setFlex, campaign = {}, setCampaign, seenNotifications = [], setSeenNotifications,
     activeNotification = null, mhEmergencies = 0, setMhEmergencies, pfwActive = false, setPfwActive,
     activeEvent = null, isEventModalOpen = false, setIsEventModalOpen, isBreakdownActive = false, shakeActive = false,
-    fightIntensity = 0, boxingFatigue = 0,
     passiveFrozen = false, setPassiveFrozen, pl = {}, setPl, mkt = 1, setMkt, news = [], setNews, imp = [], mod = {}, setMod,
     up = {}, setUp, skl = {}, setSkl, ass = {}, setAss, sw = {}, setSw, drp = {}, setDrp, cc = {}, setCc, pod = {}, setPod,
     box = {}, setBox, tur = {}, setTur, tch = {}, setTch, crp = {}, setCrp, mov = {}, setMov, hf = {}, setHf, ai = {}, setAi,
@@ -64,7 +63,7 @@ export const GameProvider = ({ children }) => {
 
   const displayBag = pl?.bag || 0;
   const age = 18 + Math.floor((pl?.mo || 0) / 12);
-  const legacyMultiplier = 1 + ((generationCount || 0) * 0.25);
+  const legacyMultiplier = 1 + (generationCount * 0.25);
 
   // Global Side Effects
   useEffect(() => {
@@ -95,10 +94,10 @@ export const GameProvider = ({ children }) => {
   }, [ph]);
 
   useEffect(() => {
-    if (ph !== 'PLAYING' || !pl) return;
+    if (ph !== 'PLAYING') return;
     const { auraCap, cloutCap, mhCap } = getUpdatedCaps(pl?.tier || 0, flex || {});
-    if ((pl?.maxClout || 0) !== cloutCap || (pl?.maxAura || 0) !== auraCap || (pl?.maxMentalHealth || 0) !== mhCap) {
-      setPl(prev => ({ ...prev, maxClout: cloutCap, maxAura: auraCap, maxMentalHealth: mhCap, clout: Math.min(cloutCap, prev.clout), aura: Math.min(auraCap, prev.aura), mentalHealth: Math.min(mhCap, prev.mentalHealth) }));
+    if (pl?.maxClout !== cloutCap || pl?.maxAura !== auraCap || pl?.maxMentalHealth !== mhCap) {
+      setPl(prev => ({ ...prev, maxClout: cloutCap, maxAura: auraCap, maxMentalHealth: mhCap, clout: Math.min(cloutCap, prev.clout || 0), aura: Math.min(auraCap, prev.aura || 0), mentalHealth: Math.min(mhCap, prev.mentalHealth || 0) }));
     }
   }, [pl?.tier, ph, flex, getUpdatedCaps, setPl]);
 
@@ -121,7 +120,7 @@ export const GameProvider = ({ children }) => {
     let nextTier = pl.tier;
     for (let i = nextTier + 1; i < TIERS.length; i++) {
       const req = TIERS[i].req;
-      const meetsTime = pl.mo >= (TIERS[i].monthsRequired || 0);
+      const meetsTime = i === 2 ? pl.mo >= 10 : true;
       if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura && meetsTime) nextTier = i;
       else break;
     }
