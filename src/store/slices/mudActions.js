@@ -143,7 +143,11 @@ export const createMudSlice = (set, get) => ({
 
   rSw: async () => {
     const { pl, sw, up, flex, swFatigue, updateFatigue, triggerChaos, triggerNotification, ass, karmaFlags, triggerImpact, adv, mkt, legacyMultiplier } = get();
-    const totalOut = (sw.u * (sw.i === 1 ? 15 : sw.i === 2 ? 40 : 90)) + (up.swFlg ? 0 : sw.a);
+    const sU = Number(sw?.u) || 0;
+    const sI = Number(sw?.i) || 1;
+    const sA = Number(sw?.a) || 0;
+    const sP = Number(sw?.p) || 0;
+    const totalOut = (sU * (sI === 1 ? 15 : sI === 2 ? 40 : 90)) + (up.swFlg ? 0 : sA);
     if (pl.mentalHealth < 15) return;
     updateFatigue('streetwear');
     const isJetOwned = flex.jet.owned;
@@ -180,29 +184,29 @@ export const createMudSlice = (set, get) => ({
 
     await new Promise(r => setTimeout(r, 1000));
 
-    const baseValue = sw.i === 1 ? 50 : sw.i === 2 ? 125 : 300;
-    let hype = (pl.aura * 0.5) + (pl.clout * 0.3) + (sw.a / 2500);
+    const baseValue = sI === 1 ? 50 : sI === 2 ? 125 : 300;
+    let hype = (pl.aura * 0.5) + (pl.clout * 0.3) + (sA / 2500);
     if (mkt === 1) hype *= 1.6;
 
-    if (sw.p > baseValue) {
-      hype *= Math.max(0, 1 - ((sw.p - baseValue) * 0.04));
+    if (sP > baseValue) {
+      hype *= Math.max(0, 1 - ((sP - baseValue) * 0.04));
     }
 
     hype *= Math.max(0, 1 - (swFatigue * 0.15));
 
-    let unitsSold = Math.floor(Math.min(sw.u, Math.max(0, hype * (5 + Math.random() * 5))));
+    let unitsSold = Math.floor(Math.min(sU, Math.max(0, hype * (5 + Math.random() * 5))));
     unitsSold = Math.max(0, unitsSold);
 
-    const revenue = Math.floor(unitsSold * sw.p * legacyMultiplier);
+    const revenue = Math.floor(unitsSold * sP * legacyMultiplier);
     const profit = revenue - totalOut;
 
-    set(state => ({ swFatigue: state.swFatigue + (sw.u / 1000) }));
+    set(state => ({ swFatigue: state.swFatigue + (sU / 1000) }));
 
     let auraGain = 0;
     let cloutGain = 0;
     let newsMsg = "";
 
-    if (unitsSold >= sw.u * 0.8) {
+    if (unitsSold >= sU * 0.8) {
       const { pl: currentPl } = get();
       const financialPhase = currentPl.bag < 10000 ? 1 : currentPl.bag < 100000 ? 2 : currentPl.bag < 500000 ? 3 : 0;
       if (currentPl.bag < 500000 && financialPhase === 3) triggerNotification('BAG_WIN_01');
@@ -210,7 +214,7 @@ export const createMudSlice = (set, get) => ({
       auraGain = 10;
       cloutGain = 5;
       newsMsg = "👟 VIRAL SELLOUT! Cleared all inventory.";
-    } else if (unitsSold < sw.u * 0.2) {
+    } else if (unitsSold < sU * 0.2) {
       auraGain = -15;
       newsMsg = "👟 Bricked. Heavy boxes sitting in the warehouse.";
     } else {
@@ -428,7 +432,9 @@ export const createMudSlice = (set, get) => ({
 
   rDrp: async () => {
     const { pl, dUp, drp, setDrp, triggerImpact, adv, mkt } = get();
-    const cost = 10000;
+    const dU = Number(drp?.u) || 0;
+    const dA = Number(drp?.a) || 0;
+    const cost = (dU * 10) + dA;
     if (pl.bag < cost) return;
     set(state => ({ pl: { ...state.pl, bag: state.pl.bag - cost } }));
     await new Promise(r => setTimeout(r, 1000));
@@ -489,12 +495,15 @@ export const createMudSlice = (set, get) => ({
     set(state => ({
       pl: { ...state.pl, bag: state.pl.bag - totalOut, mentalHealth: state.pl.mentalHealth - (mhPen * (1 - reduction)), heat: state.pl.heat + (venue * 5) },
       hustleClicks: { ...state.hustleClicks, box: state.hustleClicks.box + 1 },
-      tally: { ...state.tally, box: (state.tally.box || 0) + 1 }
+      tally: { ...state.tally, box: (state.tally.box || 0) + 1 },
+      fightIntensity: Math.min(100, (state.fightIntensity || 0) + 20),
+      boxingFatigue: Math.min(100, (state.boxingFatigue || 0) + 15),
+      isBreakdownActive: ((state.boxingFatigue || 0) + 15) > 90
     }));
 
     if (venue >= 2) {
       set({ shakeActive: true, fightActive: true });
-      // setTimeout(() => set({ shakeActive: false, fightActive: false }), 600);
+      setTimeout(() => set({ shakeActive: false, fightActive: false }), 600);
     }
 
     await new Promise(r => setTimeout(r, 1000));

@@ -59,6 +59,9 @@ export const BoxTab = () => {
       {fightIntensity > 70 && (
         <div className="fixed inset-0 pointer-events-none z-[10003] bg-red-600/40 animate-pulse" />
       )}
+      {isBreakdownActive && (
+        <div className="fixed inset-0 pointer-events-none z-[10004] backdrop-grayscale backdrop-blur-[2px] bg-black/20" />
+      )}
       <div
         className={`fixed inset-0 z-[10002] bg-red-600/30 backdrop-blur-sm flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${fightActive ? 'opacity-100' : 'opacity-0'}`}
       >
