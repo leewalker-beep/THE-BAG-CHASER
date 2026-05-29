@@ -1,12 +1,14 @@
+import { getInitialGameState } from "../../data/initialState.js";
+
 export const createCoreSlice = (set, get) => ({
   performHardReset: () => {
     if (window.autoSaveInterval) clearInterval(window.autoSaveInterval);
-    localStorage.clear(); sessionStorage.clear(); set(get().getInitialGameState());
+    localStorage.clear(); sessionStorage.clear(); set(getInitialGameState());
     setTimeout(() => window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now(), 150);
   },
 
   rRetire: () => {
-    const { diff, getInitialGameState } = get();
+    const { diff } = get();
     let plUpdate;
     if (diff === 1) plUpdate = { bag: 25000, aura: 30, clout: 30, mo: 0, tier: 0, mentalHealth: 300, maxMentalHealth: 300, heat: 0, maxClout: 100, maxAura: 100 };
     else if (diff === 2) plUpdate = { bag: 5000, clout: 15, aura: 15, mo: 0, tier: 0, mentalHealth: 150, maxMentalHealth: 150, heat: 0, maxClout: 100, maxAura: 100 };
