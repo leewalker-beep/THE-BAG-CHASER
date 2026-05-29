@@ -248,7 +248,10 @@ export const useGameStore = create()(
             saasPenaltyActive: false,
             artBubbleMonths: Math.max(0, state.artBubbleMonths - intervals),
             supplyChainShockMonths: Math.max(0, state.supplyChainShockMonths - intervals),
-            viralPopMonths: Math.max(0, state.viralPopMonths - intervals)
+            viralPopMonths: Math.max(0, state.viralPopMonths - intervals),
+            fightIntensity: Math.max(0, (state.fightIntensity || 0) - (10 * intervals)),
+            boxingFatigue: Math.max(0, (state.boxingFatigue || 0) - (5 * intervals)),
+            isBreakdownActive: state.boxingFatigue > 90
           };
 
           let newsUpdate = [];
@@ -424,14 +427,15 @@ export const useGameStore = create()(
     }),
     {
       name: SAVE_KEY,
-      version: 1.1,
+      version: 1.2,
       storage: createJSONStorage(() => circuitBreakerStorage),
       merge: (persistedState, currentState) => {
         return deepMerge(currentState, persistedState || {});
       },
       migrate: (persistedState, version) => {
-        if (version === 1.0) {
-          let d = persistedState;
+        let d = persistedState;
+
+        if (version < 1.1) {
           if (d.blitzExpiry) {
             if (d.flex?.penthouse?.owned) {
               d.flex.penthouse.expiresAt = d.blitzExpiry;
@@ -452,10 +456,33 @@ export const useGameStore = create()(
             }
             d.artCollection = migrated;
           }
-
-          return deepMerge(getInitialGameState(), d);
         }
-        return persistedState;
+
+        if (version < 1.2) {
+          // Migrate Streetwear & Drop Ship long keys to short keys
+          if (d.streetwear && d.streetwear.units !== undefined) {
+            d.streetwear.u = d.streetwear.units;
+            d.streetwear.p = d.streetwear.price;
+            d.streetwear.i = d.streetwear.income;
+            d.streetwear.a = d.streetwear.auto;
+            delete d.streetwear.units;
+            delete d.streetwear.price;
+            delete d.streetwear.income;
+            delete d.streetwear.auto;
+          }
+          if (d.dropship && d.dropship.units !== undefined) {
+            d.dropship.u = d.dropship.units;
+            d.dropship.p = d.dropship.price;
+            d.dropship.i = d.dropship.income;
+            d.dropship.a = d.dropship.auto;
+            delete d.dropship.units;
+            delete d.dropship.price;
+            delete d.dropship.income;
+            delete d.dropship.auto;
+          }
+        }
+
+        return deepMerge(getInitialGameState(), d);
       }
     }
   )
