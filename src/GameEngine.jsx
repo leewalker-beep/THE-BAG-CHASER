@@ -119,9 +119,11 @@ export const GameProvider = ({ children }) => {
     if (ph !== 'PLAYING' || !pl) return;
     let nextTier = pl.tier;
     for (let i = nextTier + 1; i < TIERS.length; i++) {
-      const req = TIERS[i].req;
-      const meetsTime = i === 2 ? pl.mo >= 10 : true;
-      if (peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura && meetsTime) nextTier = i;
+      const tier = TIERS[i];
+      const req = tier.req;
+      const metricsPassed = peaks.peakB >= req.bag && peaks.peakC >= req.clout && peaks.peakA >= req.aura;
+      const timePassed = tier.monthsRequired ? (pl.mo >= tier.monthsRequired) : true;
+      if (metricsPassed && timePassed) nextTier = i;
       else break;
     }
     if (nextTier !== pl.tier) {
