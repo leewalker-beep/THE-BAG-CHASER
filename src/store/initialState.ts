@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud'> => {
   const allHustles: HustleID[] = [
     'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop'
   ];
@@ -51,6 +51,13 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       tier: 0,
       hustleFatigue: initialFatigue,
       plasmaUsedThisMonth: false,
+      techInventory: { raw: 0, refined: 0 },
+      vintageInventoryValue: 0,
+      runnerCount: 0,
+      clientCount: 0,
+      clientCrisis: false,
+      runnerBurnout: false,
+      swCooldownTurns: 0,
     },
     modifiers: {
       expenseBurnMultiplier: 1.0,

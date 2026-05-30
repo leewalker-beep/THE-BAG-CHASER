@@ -25,6 +25,13 @@ export interface PlayerStats {
   tier: number;
   hustleFatigue: Record<HustleID, number>;
   plasmaUsedThisMonth: boolean;
+  techInventory: { raw: number; refined: number };
+  vintageInventoryValue: number;
+  runnerCount: number;
+  clientCount: number;
+  clientCrisis: boolean;
+  runnerBurnout: boolean;
+  swCooldownTurns: number;
 }
 
 export interface GlobalModifiers {
@@ -62,4 +69,15 @@ export interface GameState {
   rGig: () => void;
   rSw: () => void;
   rDrop: () => void;
+
+  // Advanced Hustle Actions
+  sourceTechPallet: () => void;
+  repairTech: () => void;
+  sellTech: () => void;
+  buyVintageStock: () => void;
+  recruitRunner: () => void;
+  payRunnerBonus: () => void;
+  signSmmClient: () => void;
+  resolveClientCrisis: () => void;
+  escapeTheMud: () => void;
 }
