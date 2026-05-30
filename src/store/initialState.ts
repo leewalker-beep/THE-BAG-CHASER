@@ -2,8 +2,9 @@ import type { GameState, HustleID } from './types';
 
 export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop'> => {
   const allHustles: string[] = [
-    'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop',
-    'cc', 'pod', 'music', 'drip', 'promo', 'meme',
+    'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap',
+    'cc', 'pod', 'music', 'drop', 'vintage', 'promo',
+    'techFlip', 'smm', 'gig', 'sw', 'drip', 'meme',
     'saas_mvp', 'agency_scale', 'ecom_brand'
   ];
 
@@ -29,7 +30,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
   let startingTier = 0;
 
   if (diff === 1) {
-    // Level 1: Trust Fund - ALL 10 mud tier hustles unlocked immediately
+    // Level 1: Trust Fund
     startingBag = 25000;
     startingClout = 30;
     startingAura = 30;
@@ -39,9 +40,9 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     startingBag = 5000;
     startingClout = 15;
     startingAura = 15;
-    ['labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage'].forEach(h => initialUnlocked[h as HustleID] = true);
+    ['r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap', 'drop', 'vintage'].forEach(h => initialUnlocked[h as HustleID] = true);
   } else { // Grinder (diff 3)
-    ['labor', 'delivery', 'survey', 'plasma'].forEach(h => initialUnlocked[h as HustleID] = true);
+    ['r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap'].forEach(h => initialUnlocked[h as HustleID] = true);
   }
 
   return {

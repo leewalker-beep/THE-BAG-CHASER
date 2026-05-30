@@ -78,12 +78,12 @@ export const useGameStore = create<GameState>()(
           }
 
           // Special check for Plasma
-          if (hustleId === 'plasma' && state.pl.plasmaUsedThisMonth) {
+          if (hustleId === 'r_plasma' && state.pl.plasmaUsedThisMonth) {
              return { news: ["MEDICAL LIMIT: You can only sell plasma once per month.", ...state.news] };
           }
 
-          // Special check for Cooldowns (SW/Drop)
-          if ((hustleId === 'sw' || hustleId === 'drop') && state.pl.swCooldownTurns > 0) {
+          // Special check for Cooldowns (SW/Drop/Vintage)
+          if ((hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') && state.pl.swCooldownTurns > 0) {
             return { news: ["COOLDOWN: You need to wait for the hype to rebuild before another drop.", ...state.news] };
           }
 
@@ -136,8 +136,8 @@ export const useGameStore = create<GameState>()(
           if (hustleId === 'agency_scale') nextStartup.agencyStaff += 1;
           if (hustleId === 'ecom_brand') nextStartup.ecomOrders += 200;
 
-          if (hustleId === 'plasma') nextPl.plasmaUsedThisMonth = true;
-          if (hustleId === 'sw' || hustleId === 'drop') nextPl.swCooldownTurns = 3;
+          if (hustleId === 'r_plasma') nextPl.plasmaUsedThisMonth = true;
+          if (hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') nextPl.swCooldownTurns = 3;
 
           nextPl.streetStats = nextStreet;
           nextPl.startupStats = nextStartup;

@@ -129,14 +129,17 @@ export const createMudSlice = (_set: (fn: (state: GameState) => Partial<GameStat
       },
       unlockedHustles: {
         ...state.unlockedHustles,
-        labor: false,
-        delivery: false,
+        r_labor: false,
+        r_delivery: false,
+        r_survey: false,
+        r_plasma: false,
+        r_scrap: false,
         cc: true,
         pod: true,
         music: true,
-        drip: true,
-        promo: true,
-        meme: true
+        drop: true,
+        vintage: true,
+        promo: true
       },
       news: ["GRADUATION: You've moved out of the basement and into a real HQ. The manual grind is behind you.", ...state.news]
     };
