@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'performUpgrade' | 'buyFlexItem'> => {
   const allHustles: HustleID[] = [
     'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop'
   ];
@@ -36,7 +36,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
 
   return {
     ph: 'PLAYING',
-    tab: 'STREET',
+    tab: 'MUD',
     activeTab: 'MUD',
     activeHustleView: null,
     alias: '',
@@ -61,6 +61,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       clientCrisis: false,
       runnerBurnout: false,
       swCooldownTurns: 0,
+      ownedFlexIds: [],
     },
     modifiers: {
       expenseBurnMultiplier: 1.0,

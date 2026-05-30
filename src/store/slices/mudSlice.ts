@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { applyAdvancement } from '../engine';
+import { PROGRESSION_MATRIX } from '../../engine/progressionMatrix';
 
 export const createMudSlice = (set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   rLabor: () =>
@@ -273,26 +274,38 @@ export const createMudSlice = (set: (fn: (state: GameState) => Partial<GameState
     };
   }),
 
-  escapeTheMud: () => set((state) => {
-    const minBag = 5000;
-    const minClout = 20;
-    const minAura = 20;
-    const leaseDeposit = 3000;
+  performUpgrade: () => set((state) => {
+    const milestone = PROGRESSION_MATRIX[state.pl.tier];
+    if (!milestone) return {};
 
-    if (state.pl.bag < minBag || state.pl.clout < minClout || state.pl.aura < minAura) return {};
+    if (
+      state.pl.bag < milestone.cashCost ||
+      state.pl.clout < milestone.cloutReq ||
+      state.pl.aura < milestone.auraReq
+    ) {
+      return {};
+    }
+
+    const nextTier = state.pl.tier + 1;
+    let unlockedHustles = { ...state.unlockedHustles };
+
+    // Legacy logic for MUD -> STREET transition
+    if (state.pl.tier === 0) {
+      unlockedHustles = {
+        ...unlockedHustles,
+        labor: false,
+        delivery: false
+      };
+    }
 
     return {
       pl: {
         ...state.pl,
-        bag: state.pl.bag - leaseDeposit,
-        tier: 1
+        bag: state.pl.bag - milestone.cashCost,
+        tier: nextTier
       },
-      unlockedHustles: {
-        ...state.unlockedHustles,
-        labor: false,
-        delivery: false
-      },
-      news: ["GRADUATION: You've moved out of the basement and into a real HQ. The manual grind is behind you.", ...state.news]
+      unlockedHustles,
+      news: [`GRADUATION: ${milestone.actionLabel} complete. Welcome to the ${milestone.toTier} tier.`, ...state.news]
     };
   }),
 });

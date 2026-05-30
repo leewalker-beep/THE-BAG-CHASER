@@ -1,5 +1,7 @@
 import type { GameState, HustleID, MarketType } from './types';
 import { MARKET_CONFIGS } from '../engine/worldMarkets';
+import { PROGRESSION_MATRIX } from '../engine/progressionMatrix';
+import { FLEX_ITEMS_REGISTRY } from '../engine/flexRegistry';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
   const currentPl = { ...state.pl };
@@ -19,9 +21,26 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     currentPl.hustleFatigue = newFatigue;
 
     // 2. Apply Baseline Expenses
-    const baseExpense = currentPl.tier === 0 ? 500 : 1200;
+    let baseExpense = 500;
+    if (currentPl.tier > 0) {
+      const milestone = PROGRESSION_MATRIX[currentPl.tier - 1];
+      if (milestone) {
+        baseExpense = milestone.newExpenses;
+      } else {
+        // Fallback for tiers beyond what's currently in the matrix
+        baseExpense = 10000 + (currentPl.tier * 5000);
+      }
+    }
     const marketMultiplier = MARKET_CONFIGS[currentMarket].expenseMultiplier;
     currentPl.bag -= (baseExpense * marketMultiplier);
+
+    // 2a. Flex Upkeep
+    currentPl.ownedFlexIds.forEach(id => {
+      const item = FLEX_ITEMS_REGISTRY.find(f => f.id === id);
+      if (item) {
+        currentPl.bag -= item.monthlyUpkeep;
+      }
+    });
 
     // 2b. Passive Income & Risks
     // Vintage Liquidation

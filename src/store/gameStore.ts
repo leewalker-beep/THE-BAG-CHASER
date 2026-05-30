@@ -4,6 +4,7 @@ import type { GameState } from './types';
 import { getInitialGameState } from './initialState';
 import { createMudSlice } from './slices/mudSlice';
 import { applyAdvancement } from './engine';
+import { FLEX_ITEMS_REGISTRY } from '../engine/flexRegistry';
 
 const SAVE_KEY = 'bag-chaser-state';
 
@@ -22,6 +23,22 @@ export const useGameStore = create<GameState>()(
       setActiveHustleView: (activeHustleView) => set({ activeHustleView }),
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
+
+      buyFlexItem: (itemId) => set((state) => {
+        const item = FLEX_ITEMS_REGISTRY.find(f => f.id === itemId);
+        if (!item) return {};
+        if (state.pl.ownedFlexIds.includes(itemId)) return {};
+        if (state.pl.bag < item.cost) return {};
+
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - item.cost,
+            ownedFlexIds: [...state.pl.ownedFlexIds, itemId]
+          },
+          news: [`PURCHASE: Acquired ${item.name}. Status increased.`, ...state.news]
+        };
+      }),
 
       ...createMudSlice(set),
     }),
