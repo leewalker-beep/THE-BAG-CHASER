@@ -128,34 +128,37 @@ function App() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab).map(h => {
-                let displayYield = 'SPECIAL';
-                if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
-                else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
-                else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
+              {(() => {
+                const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
+                return currentTabHustles.map(h => {
+                  let displayYield = 'SPECIAL';
+                  if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
+                  else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
+                  else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
 
-                let displayCost = 'FREE';
-                if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
-                else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
-                else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
-                else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
-                else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
+                  let displayCost = 'FREE';
+                  if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
+                  else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
+                  else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
+                  else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
+                  else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
 
-                return (
-                  <HustleCard
-                    key={h.id}
-                    title={h.name}
-                    yield={displayYield}
-                    cost={displayCost}
-                    locked={tier < TAB_TIER_MAPPING[h.tier]}
-                    lockText={`Requires ${h.tier} Tier`}
-                    disabled={h.id === 'plasma' && plasmaUsedThisMonth}
-                    onClick={() => setActiveHustleView(h.id)}
-                    variant={h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default'}
-                    icon={h.icon ? <path d={h.icon} /> : undefined}
-                  />
-                );
-              })}
+                  return (
+                    <HustleCard
+                      key={h.id}
+                      title={h.name}
+                      yield={displayYield}
+                      cost={displayCost}
+                      locked={tier < TAB_TIER_MAPPING[h.tier]}
+                      lockText={`LOCKED: Requires ${activeTab} Tier`}
+                      disabled={h.id === 'plasma' && plasmaUsedThisMonth}
+                      onClick={() => setActiveHustleView(h.id)}
+                      variant={h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default'}
+                      icon={h.icon ? <path d={h.icon} /> : undefined}
+                    />
+                  );
+                });
+              })()}
             </div>
           </>
         ) : (
@@ -232,23 +235,27 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText
   const disabledClass = (disabled || locked) ? 'cursor-not-allowed' : 'cursor-pointer';
 
   return (
-    <button onClick={locked ? undefined : onClick} disabled={disabled} className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''}`}>
-      <div className={`relative z-10 ${locked ? 'blur-[2px] opacity-30' : ''}`}>
+    <button
+      onClick={locked ? undefined : onClick}
+      disabled={disabled}
+      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${locked ? 'pointer-events-none' : ''}`}
+    >
+      <div className={`relative z-10 ${locked ? 'opacity-40 blur-[1px]' : ''}`}>
         <div className="text-[10px] font-black uppercase tracking-tight text-slate-400 mb-1 group-hover:text-white transition-colors">{title}</div>
         <div className="flex justify-between items-end">
           <div className="text-sm font-black text-emerald-400">{y}</div>
           <div className="text-[9px] font-bold text-slate-600 uppercase">{cost}</div>
         </div>
+        {icon && (
+          <div className="absolute top-1 right-1 opacity-5 group-hover:opacity-10 transition-opacity">
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">{icon}</svg>
+          </div>
+        )}
       </div>
-      {icon && (
-        <div className="absolute top-1 right-1 opacity-5 group-hover:opacity-10 transition-opacity">
-          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">{icon}</svg>
-        </div>
-      )}
       {locked && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
-          <div className="bg-slate-950/80 border border-slate-700 px-2 py-1 rounded text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-            <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 116 0v2H7V7z"></path></svg>
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
+          <div className="bg-slate-950/80 border border-slate-700 px-2 py-1 rounded text-[8px] font-black text-slate-200 uppercase tracking-widest flex items-center gap-1 shadow-2xl">
+            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 116 0v2H7V7z"></path></svg>
             {lockText || 'Locked'}
           </div>
         </div>
