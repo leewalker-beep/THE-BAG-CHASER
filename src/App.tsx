@@ -3,6 +3,7 @@ import { useGameStore } from './store/gameStore';
 import { getInitialGameState } from './store/initialState';
 import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
+import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 
 function App() {
   const state = useGameStore();
@@ -127,132 +128,34 @@ function App() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {activeTab === 'MUD' && (
-                <>
-                  <HustleCard
-                    title="Manual Labor"
-                    yield="+$750"
-                    cost="40 FATG"
-                    locked={tier < 0}
-                    lockText="Requires Mud Tier"
-                    onClick={() => setActiveHustleView('labor')}
-                    icon={<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V2h-2v7z"/>}
-                  />
+              {MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab).map(h => {
+                let displayYield = 'SPECIAL';
+                if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
+                else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
+                else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
 
-                  <HustleCard
-                    title="Delivery Gig"
-                    yield="+$600-700"
-                    cost="25 FATG"
-                    locked={tier < 0}
-                    lockText="Requires Mud Tier"
-                    onClick={() => setActiveHustleView('delivery')}
-                  />
+                let displayCost = 'FREE';
+                if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
+                else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
+                else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
+                else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
+                else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
 
+                return (
                   <HustleCard
-                    title="Surveys"
-                    yield="+$520"
-                    cost="0 FATG"
-                    locked={tier < 0}
-                    lockText="Requires Mud Tier"
-                    onClick={() => setActiveHustleView('survey')}
+                    key={h.id}
+                    title={h.name}
+                    yield={displayYield}
+                    cost={displayCost}
+                    locked={tier < TAB_TIER_MAPPING[h.tier]}
+                    lockText={`Requires ${h.tier} Tier`}
+                    disabled={h.id === 'plasma' && plasmaUsedThisMonth}
+                    onClick={() => setActiveHustleView(h.id)}
+                    variant={h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default'}
+                    icon={h.icon ? <path d={h.icon} /> : undefined}
                   />
-
-                  <HustleCard
-                    title="Sell Plasma"
-                    yield="+$900"
-                    cost="-25 SAN"
-                    locked={tier < 0}
-                    lockText="Requires Mud Tier"
-                    disabled={plasmaUsedThisMonth}
-                    onClick={() => setActiveHustleView('plasma')}
-                    variant="danger"
-                  />
-                </>
-              )}
-
-              {activeTab === 'STREET' && (
-                <>
-                  <HustleCard
-                    title="Creator Content"
-                    yield="+1K SUBS"
-                    cost="$400"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('cc')}
-                  />
-                  <HustleCard
-                    title="Podcast Syndicate"
-                    yield="+$1.5K"
-                    cost="$200"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('pod')}
-                  />
-                  <HustleCard
-                    title="Music Syndicate"
-                    yield="ROYALTY"
-                    cost="$1K"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('music')}
-                  />
-                  <HustleCard
-                    title="Drip Label"
-                    yield="+$4K"
-                    cost="$1.5K"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('drip')}
-                  />
-                  <HustleCard
-                    title="Night Promo"
-                    yield="CASH BURST"
-                    cost="HIGH RISK"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('promo')}
-                    variant="danger"
-                  />
-                  <HustleCard
-                    title="Meme Dev"
-                    yield="MULTIPLIER"
-                    cost="$2K"
-                    locked={tier < 1}
-                    lockText="Requires Street Tier"
-                    onClick={() => setActiveHustleView('meme')}
-                    variant="special"
-                  />
-                </>
-              )}
-
-              {activeTab === 'STARTUP' && (
-                <>
-                  <HustleCard
-                    title="SaaS MVP"
-                    yield="+500 USERS"
-                    cost="$5K"
-                    locked={tier < 2}
-                    lockText="Requires Startup Tier"
-                    onClick={() => setActiveHustleView('saas_mvp')}
-                  />
-                  <HustleCard
-                    title="Agency Scale"
-                    yield="+$6.5K"
-                    cost="40 CLT"
-                    locked={tier < 2}
-                    lockText="Requires Startup Tier"
-                    onClick={() => setActiveHustleView('agency_scale')}
-                  />
-                  <HustleCard
-                    title="Ecom Brand"
-                    yield="+$9K"
-                    cost="$2.5K"
-                    locked={tier < 2}
-                    lockText="Requires Startup Tier"
-                    onClick={() => setActiveHustleView('ecom_brand')}
-                  />
-                </>
-              )}
+                );
+              })}
             </div>
           </>
         ) : (
@@ -355,30 +258,7 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText
 }
 
 function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: () => void, state: GameState }) {
-  const getHustleTitle = (id: string) => {
-    const titles: Record<string, string> = {
-      labor: 'Manual Labor',
-      delivery: 'Delivery Gig',
-      survey: 'Surveys',
-      plasma: 'Sell Plasma',
-      techFlip: 'Tech Flip',
-      vintage: 'Vintage Stock',
-      gig: 'Gig Fleet',
-      smm: 'SMM Agency',
-      sw: 'Streetwear Drop',
-      drop: 'Flash Drop',
-      cc: 'Creator Content',
-      pod: 'Podcast Syndicate',
-      music: 'Music Syndicate',
-      drip: 'Drip Label',
-      promo: 'Night Promo',
-      meme: 'Meme Dev',
-      saas_mvp: 'SaaS MVP',
-      agency_scale: 'Agency Scale',
-      ecom_brand: 'Ecom Brand'
-    };
-    return titles[id] || id.toUpperCase();
-  };
+  const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
 
   const getHustleMetrics = (id: string) => {
     const { streetStats, startupStats } = state.pl;
@@ -396,39 +276,13 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   };
 
   const runHustle = () => {
-    const actions: Record<string, () => void> = {
-      labor: state.rLabor,
-      delivery: state.rDelivery,
-      survey: state.rSurvey,
-      plasma: state.rPlasma,
-      techFlip: state.rTechFlip,
-      vintage: state.rVintage,
-      gig: state.rGig,
-      smm: state.rSmm,
-      sw: state.rSw,
-      drop: state.rDrop,
-      cc: state.runCreatorContent,
-      pod: state.runPodcastSyndicate,
-      music: state.runMusicSyndicate,
-      drip: state.runDripLabel,
-      promo: state.runNightPromo,
-      meme: state.runMemeDev,
-      saas_mvp: state.runSaasMvp,
-      agency_scale: state.runAgencyScale,
-      ecom_brand: state.runEcomBrand,
-    };
-    if (actions[hustleId]) {
-      actions[hustleId]();
-      // Placeholder actions don't advance time internally, so we do it here.
-      // Mud-tier manual actions and drops already call applyAdvancement(1).
-      if (['techFlip', 'vintage', 'gig', 'smm'].includes(hustleId)) {
-        state.adv(1);
-      }
-    }
+    state.runHustle(hustleId);
   };
 
+  if (!config) return <div className="text-red-500">Hustle Config Not Found</div>;
+
   const metrics = getHustleMetrics(hustleId);
-  const isStartupHustle = ['saas_mvp', 'agency_scale', 'ecom_brand'].includes(hustleId);
+  const isStartupHustle = config.tier === 'STARTUP';
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
@@ -443,8 +297,8 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       </div>
 
       <div>
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{getHustleTitle(hustleId)}</h2>
-        <p className="text-xs text-slate-500 mt-1">Management and execution of {getHustleTitle(hustleId)} operations.</p>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+        <p className="text-xs text-slate-500 mt-1">{config.description}</p>
       </div>
 
       {metrics && (
@@ -477,7 +331,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         onClick={runHustle}
         className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
       >
-        Execute {getHustleTitle(hustleId)} for the Month
+        Execute {config.name} for the Month
       </button>
     </div>
   );

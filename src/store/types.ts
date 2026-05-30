@@ -1,25 +1,6 @@
 export type MarketType = 'NORMAL' | 'RECESSION' | 'BULL_MARKET' | 'CRACKDOWN';
 
-export type HustleID =
-  | 'labor'
-  | 'delivery'
-  | 'survey'
-  | 'plasma'
-  | 'techFlip'
-  | 'vintage'
-  | 'smm'
-  | 'gig'
-  | 'sw'
-  | 'drop'
-  | 'cc'
-  | 'pod'
-  | 'music'
-  | 'drip'
-  | 'promo'
-  | 'meme'
-  | 'saas_mvp'
-  | 'agency_scale'
-  | 'ecom_brand';
+export type HustleID = string;
 
 export interface PlayerStats {
   bag: number;
@@ -88,7 +69,7 @@ export interface GameState {
   modifiers: GlobalModifiers;
   news: string[];
   lastProcessedTimestamp: number;
-  unlockedHustles: Record<HustleID, boolean>;
+  unlockedHustles: Record<string, boolean>;
   marketType: MarketType;
   fatalCause: string | null;
 
@@ -98,31 +79,7 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
-
-  // Mud Tier Hustles
-  rLabor: () => void;
-  rDelivery: () => void;
-  rSurvey: () => void;
-  rPlasma: () => void;
-  rTechFlip: () => void;
-  rVintage: () => void;
-  rSmm: () => void;
-  rGig: () => void;
-  rSw: () => void;
-  rDrop: () => void;
-
-  // Street Tier Hustles
-  runCreatorContent: () => void;
-  runPodcastSyndicate: () => void;
-  runMusicSyndicate: () => void;
-  runDripLabel: () => void;
-  runNightPromo: () => void;
-  runMemeDev: () => void;
-
-  // Startup Tier Hustles
-  runSaasMvp: () => void;
-  runAgencyScale: () => void;
-  runEcomBrand: () => void;
+  runHustle: (hustleId: string) => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;
