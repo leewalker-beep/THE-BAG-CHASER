@@ -1,134 +1,164 @@
 import type { GameState } from '../types';
+import { applyAdvancement } from '../engine';
 
 export const createMudSlice = (set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
-  rLabor: () => set((state) => {
-    if (!state.unlockedHustles.labor) return {};
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + 50,
-        hustleFatigue: {
-          ...state.pl.hustleFatigue,
-          labor: state.pl.hustleFatigue.labor + 15
-        }
-      }
-    };
-  }),
+  rLabor: () =>
+    set((state) => {
+      if (!state.unlockedHustles.labor) return {};
+      const next = {
+        ...state,
+        pl: {
+          ...state.pl,
+          bag: state.pl.bag + 750,
+          hustleFatigue: {
+            ...state.pl.hustleFatigue,
+            labor: state.pl.hustleFatigue.labor + 40,
+          },
+        },
+      };
+      return applyAdvancement(next, 1);
+    }),
 
-  rDelivery: () => set((state) => {
-    if (!state.unlockedHustles.delivery) return {};
-    const reward = Math.floor(Math.random() * (45 - 25 + 1)) + 25;
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + reward,
-        hustleFatigue: {
-          ...state.pl.hustleFatigue,
-          delivery: state.pl.hustleFatigue.delivery + 10
-        }
-      }
-    };
-  }),
+  rDelivery: () =>
+    set((state) => {
+      if (!state.unlockedHustles.delivery) return {};
+      const reward = Math.floor(Math.random() * (700 - 600 + 1)) + 600;
+      const next = {
+        ...state,
+        pl: {
+          ...state.pl,
+          bag: state.pl.bag + reward,
+          hustleFatigue: {
+            ...state.pl.hustleFatigue,
+            delivery: state.pl.hustleFatigue.delivery + 25,
+          },
+        },
+      };
+      return applyAdvancement(next, 1);
+    }),
 
-  rSurvey: () => set((state) => {
-    if (!state.unlockedHustles.survey) return {};
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + 5
-      }
-    };
-  }),
+  rSurvey: () =>
+    set((state) => {
+      if (!state.unlockedHustles.survey) return {};
+      const next = {
+        ...state,
+        pl: {
+          ...state.pl,
+          bag: state.pl.bag + 520,
+        },
+      };
+      return applyAdvancement(next, 1);
+    }),
 
-  rPlasma: () => set((state) => {
-    if (!state.unlockedHustles.plasma || state.pl.plasmaUsedThisMonth) return {};
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + 300,
-        mentalHealth: state.pl.mentalHealth - 25,
-        aura: state.pl.aura - 15,
-        plasmaUsedThisMonth: true
-      }
-    };
-  }),
+  rPlasma: () =>
+    set((state) => {
+      if (!state.unlockedHustles.plasma || state.pl.plasmaUsedThisMonth) return {};
+      const next = {
+        ...state,
+        pl: {
+          ...state.pl,
+          bag: state.pl.bag + 900,
+          mentalHealth: state.pl.mentalHealth - 25,
+          aura: state.pl.aura - 15,
+          plasmaUsedThisMonth: true,
+        },
+      };
+      return applyAdvancement(next, 1);
+    }),
 
-  rTechFlip: () => set((state) => {
-    // Placeholder for common tech flip logic if needed,
-    // but the sub-actions handle the state mutations.
-    return {};
-  }),
+  rTechFlip: () =>
+    set(() => {
+      // Placeholder for common tech flip logic if needed,
+      // but the sub-actions handle the state mutations.
+      return {};
+    }),
 
   rVintage: () => set(() => ({})),
   rSmm: () => set(() => ({})),
   rGig: () => set(() => ({})),
 
-  rSw: () => set((state) => {
-    if (state.pl.swCooldownTurns > 0) return {};
+  rSw: () =>
+    set((state) => {
+      if (state.pl.swCooldownTurns > 0) return {};
 
-    const isRecession = state.marketType === 'RECESSION';
-    const lowAura = state.pl.aura < 30;
+      const isRecession = state.marketType === 'RECESSION';
+      const lowAura = state.pl.aura < 30;
 
-    if (isRecession || lowAura) {
-      // Failure
-      return {
-        pl: {
-          ...state.pl,
-          bag: state.pl.bag - 400,
-          clout: Math.max(0, state.pl.clout - 15),
-          swCooldownTurns: 3
-        },
-        news: [`FLASH DROP FAILED: ${isRecession ? 'Market recession killed the hype.' : 'Your aura is too low to carry the drop.'}`, ...state.news]
-      };
-    }
+      let next: GameState;
+      if (isRecession || lowAura) {
+        // Failure
+        next = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - 400,
+            clout: Math.max(0, state.pl.clout - 15),
+            swCooldownTurns: 3,
+          },
+          news: [
+            `FLASH DROP FAILED: ${isRecession ? 'Market recession killed the hype.' : 'Your aura is too low to carry the drop.'}`,
+            ...state.news,
+          ],
+        };
+      } else {
+        // Success
+        const yieldAmount = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
+        next = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag + yieldAmount,
+            clout: Math.min(state.pl.maxClout, state.pl.clout + 10),
+            aura: Math.min(state.pl.maxAura, state.pl.aura + 15),
+            swCooldownTurns: 3,
+          },
+          news: [`FLASH DROP SUCCESS: Bagged $${yieldAmount} and major cultural clout.`, ...state.news],
+        };
+      }
+      return applyAdvancement(next, 1);
+    }),
 
-    // Success
-    const yieldAmount = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + yieldAmount,
-        clout: Math.min(state.pl.maxClout, state.pl.clout + 10),
-        aura: Math.min(state.pl.maxAura, state.pl.aura + 15),
-        swCooldownTurns: 3
-      },
-      news: [`FLASH DROP SUCCESS: Bagged $${yieldAmount} and major cultural clout.`, ...state.news]
-    };
-  }),
+  rDrop: () =>
+    set((state) => {
+      // Shared cooldown with Streetwear drops as per plan
+      if (state.pl.swCooldownTurns > 0) return {};
 
-  rDrop: () => set((state) => {
-    // Shared cooldown with Streetwear drops as per plan
-    if (state.pl.swCooldownTurns > 0) return {};
+      const isRecession = state.marketType === 'RECESSION';
+      const lowAura = state.pl.aura < 30;
 
-    const isRecession = state.marketType === 'RECESSION';
-    const lowAura = state.pl.aura < 30;
-
-    if (isRecession || lowAura) {
-      // Failure
-      return {
-        pl: {
-          ...state.pl,
-          bag: state.pl.bag - 400,
-          clout: Math.max(0, state.pl.clout - 15),
-          swCooldownTurns: 3
-        },
-        news: [`DROPSHIP CAMPAIGN FAILED: ${isRecession ? 'Consumer spending is at zero.' : 'Your personal brand lacks the aura for conversion.'}`, ...state.news]
-      };
-    }
-
-    // Success
-    const yieldAmount = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
-    return {
-      pl: {
-        ...state.pl,
-        bag: state.pl.bag + yieldAmount,
-        clout: Math.min(state.pl.maxClout, state.pl.clout + 10),
-        aura: Math.min(state.pl.maxAura, state.pl.aura + 15),
-        swCooldownTurns: 3
-      },
-      news: [`DROPSHIP CAMPAIGN SUCCESS: Viral product move! +$${yieldAmount}`, ...state.news]
-    };
-  }),
+      let next: GameState;
+      if (isRecession || lowAura) {
+        // Failure
+        next = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - 400,
+            clout: Math.max(0, state.pl.clout - 15),
+            swCooldownTurns: 3,
+          },
+          news: [
+            `DROPSHIP CAMPAIGN FAILED: ${isRecession ? 'Consumer spending is at zero.' : 'Your personal brand lacks the aura for conversion.'}`,
+            ...state.news,
+          ],
+        };
+      } else {
+        // Success
+        const yieldAmount = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
+        next = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag + yieldAmount,
+            clout: Math.min(state.pl.maxClout, state.pl.clout + 10),
+            aura: Math.min(state.pl.maxAura, state.pl.aura + 15),
+            swCooldownTurns: 3,
+          },
+          news: [`DROPSHIP CAMPAIGN SUCCESS: Viral product move! +$${yieldAmount}`, ...state.news],
+        };
+      }
+      return applyAdvancement(next, 1);
+    }),
 
   sourceTechPallet: () => set((state) => {
     let cost = 100;
