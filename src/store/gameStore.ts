@@ -34,9 +34,50 @@ export const useGameStore = create<GameState>()(
           currentPl.hustleFatigue = newFatigue;
 
           // 2. Apply Baseline Expenses
-          const baseExpense = 500;
+          const baseExpense = currentPl.tier === 0 ? 500 : 1200;
           const marketMultiplier = MARKET_CONFIGS[currentMarket].expenseMultiplier;
           currentPl.bag -= (baseExpense * marketMultiplier);
+
+          // 2b. Passive Income & Risks
+          // Vintage Liquidation
+          if (currentPl.vintageInventoryValue > 0) {
+            const liquidatingAmount = currentPl.vintageInventoryValue * 0.15;
+            currentPl.bag += (liquidatingAmount * 1.4);
+            currentPl.vintageInventoryValue -= liquidatingAmount;
+          }
+
+          // GIG (Runner Fleet)
+          if (currentPl.runnerCount > 0) {
+            currentPl.bag += (currentPl.runnerCount * 150);
+
+            // Burnout Risk
+            if (Math.random() < 0.15) {
+              currentPl.runnerBurnout = true;
+              currentPl.bag -= 500;
+              currentPl.clout = Math.max(0, currentPl.clout - 10);
+              currentNews.unshift("RUNNER BURNOUT: Your fleet is exhausted. Operations hit with $500 penalty and major clout loss.");
+            }
+          }
+
+          // SMM (Social Media Agency)
+          if (currentPl.clientCount > 0) {
+            // Churn Check (Before income)
+            if (currentPl.clientCrisis) {
+              currentPl.clientCount = Math.max(0, currentPl.clientCount - 1);
+            }
+
+            currentPl.bag += (currentPl.clientCount * 300);
+
+            // Crisis Risk
+            if (Math.random() < 0.20) {
+              currentPl.clientCrisis = true;
+            }
+          }
+
+          // Cooldown Decay
+          if (currentPl.swCooldownTurns > 0) {
+            currentPl.swCooldownTurns -= 1;
+          }
 
           // Reset monthly flags
           currentPl.mo += 1;
