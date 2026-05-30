@@ -19,12 +19,13 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
   let startingClout = 5;
   let startingAura = 5;
 
-  if (diff === 1) { // Trust Fund
+  if (diff === 1) {
+    // Level 1: Trust Fund - ALL 10 mud tier hustles unlocked immediately
     startingBag = 25000;
     startingClout = 30;
     startingAura = 30;
-    allHustles.forEach(h => initialUnlocked[h] = true);
-  } else if (diff === 2) { // Middle Grind
+    allHustles.forEach((h) => (initialUnlocked[h] = true));
+  } else if (diff === 2) {
     startingBag = 5000;
     startingClout = 15;
     startingAura = 15;
@@ -34,7 +35,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
   }
 
   return {
-    ph: 'PROLOGUE',
+    ph: 'PLAYING',
     tab: 'STREET',
     alias: '',
     diff,
