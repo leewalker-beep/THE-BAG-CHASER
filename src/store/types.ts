@@ -14,6 +14,7 @@ export interface PlayerStats {
   mo: number; // Months elapsed
   tier: number;
   hustleFatigue: Record<HustleID, number>;
+  hustleLevels: Record<HustleID, number>;
   plasmaUsedThisMonth: boolean;
   techInventory: { raw: number; refined: number };
   vintageInventoryValue: number;
@@ -80,6 +81,7 @@ export interface GameState {
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
   runHustle: (hustleId: string) => void;
+  upgradeHustle: (hustleId: string) => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;

@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand'> => {
   const allHustles: string[] = [
     'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop',
     'cc', 'pod', 'music', 'drip', 'promo', 'meme',
@@ -9,6 +9,11 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
 
   const initialFatigue = allHustles.reduce((acc, hustle) => {
     acc[hustle] = 0;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const initialLevels = allHustles.reduce((acc, hustle) => {
+    acc[hustle] = 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -58,6 +63,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       mo: 0,
       tier: startingTier,
       hustleFatigue: initialFatigue,
+      hustleLevels: initialLevels,
       plasmaUsedThisMonth: false,
       techInventory: { raw: 0, refined: 0 },
       vintageInventoryValue: 0,

@@ -26,6 +26,44 @@ export const useGameStore = create<GameState>()(
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
+      upgradeHustle: (hustleId: string) =>
+        set((state) => {
+          const currentLvl = state.pl.hustleLevels[hustleId] || 1;
+          if (currentLvl >= 3) return {};
+
+          let cost = 0;
+          let rankName = "";
+
+          if (hustleId === 'drop') {
+            cost = currentLvl === 1 ? 4000 : 12000;
+            rankName = currentLvl === 1 ? "Store Phase: Private Wholesaler" : "Chain Phase: Global E-Com Empire";
+          } else if (hustleId === 'techFlip') {
+            cost = currentLvl === 1 ? 2500 : 8500;
+            rankName = currentLvl === 1 ? "Store Phase: Strip-Mall Kiosk" : "Chain Phase: Automated Refurb Plant";
+          } else if (hustleId === 'vintage') {
+            cost = currentLvl === 1 ? 2000 : 7000;
+            rankName = currentLvl === 1 ? "Store Phase: Consignment Boutique" : "Chain Phase: The Luxury Grail Archive";
+          } else {
+            return {};
+          }
+
+          if (state.pl.bag < cost) {
+            return { news: [`INSUFFICIENT FUNDS: Need $${cost.toLocaleString()} for upgrade.`, ...state.news] };
+          }
+
+          return {
+            pl: {
+              ...state.pl,
+              bag: state.pl.bag - cost,
+              hustleLevels: {
+                ...state.pl.hustleLevels,
+                [hustleId]: currentLvl + 1
+              }
+            },
+            news: [`RANK PROMOTED: ${hustleId.toUpperCase()} is now Level ${currentLvl + 1} (${rankName})`, ...state.news]
+          };
+        }),
+
       runHustle: (hustleId: string) =>
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
@@ -50,11 +88,33 @@ export const useGameStore = create<GameState>()(
           }
 
           // 2. Base Rewards & Penalties
+          const currentLvl = state.pl.hustleLevels[hustleId] || 1;
+          let finalYieldCash = config.yieldCash;
+          let finalYieldClout = config.yieldClout;
+          let finalYieldAura = config.yieldAura;
+
+          if (currentLvl > 1) {
+            if (hustleId === 'drop') {
+              if (currentLvl === 2) finalYieldCash *= 1.8;
+              if (currentLvl === 3) finalYieldCash *= 3.5;
+            } else if (hustleId === 'techFlip') {
+              if (currentLvl === 2) finalYieldCash *= 2.0;
+              if (currentLvl === 3) finalYieldCash *= 4.0;
+            } else if (hustleId === 'vintage') {
+              if (currentLvl === 2) finalYieldCash *= 2.2;
+              if (currentLvl === 3) {
+                finalYieldCash = 0;
+                finalYieldAura = 15;
+                finalYieldClout = 10;
+              }
+            }
+          }
+
           const nextPl = {
             ...state.pl,
-            bag: state.pl.bag - config.upfrontCost + config.yieldCash,
-            clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + config.yieldClout)),
-            aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + config.yieldAura)),
+            bag: state.pl.bag - config.upfrontCost + finalYieldCash,
+            clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + finalYieldClout)),
+            aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + finalYieldAura)),
             mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + config.hitMental)),
             heat: Math.min(100, Math.max(0, state.pl.heat + config.hitHeat)),
             hustleFatigue: {

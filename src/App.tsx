@@ -266,6 +266,26 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText
 
 function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: () => void, state: GameState }) {
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
+  const currentLvl = state.pl.hustleLevels[hustleId] || 1;
+
+  const getRankInfo = (id: string, lvl: number) => {
+    if (id === 'drop') {
+      if (lvl === 1) return { title: "Trunk Phase: Viral Ad Tester", nextCost: 4000 };
+      if (lvl === 2) return { title: "Store Phase: Private Wholesaler", nextCost: 12000 };
+      return { title: "Chain Phase: Global E-Com Empire", nextCost: null };
+    }
+    if (id === 'techFlip') {
+      if (lvl === 1) return { title: "Trunk Phase: Bedroom Repair Bench", nextCost: 2500 };
+      if (lvl === 2) return { title: "Store Phase: Strip-Mall Kiosk", nextCost: 8500 };
+      return { title: "Chain Phase: Automated Refurb Plant", nextCost: null };
+    }
+    if (id === 'vintage') {
+      if (lvl === 1) return { title: "Trunk Phase: Thrift Rack Hunter", nextCost: 2000 };
+      if (lvl === 2) return { title: "Store Phase: Consignment Boutique", nextCost: 7000 };
+      return { title: "Chain Phase: The Luxury Grail Archive", nextCost: null };
+    }
+    return null;
+  };
 
   const getHustleMetrics = (id: string) => {
     const { streetStats, startupStats } = state.pl;
@@ -289,6 +309,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   if (!config) return <div className="text-red-500">Hustle Config Not Found</div>;
 
   const metrics = getHustleMetrics(hustleId);
+  const rankInfo = getRankInfo(hustleId, currentLvl);
   const isStartupHustle = config.tier === 'STARTUP';
 
   return (
@@ -304,8 +325,18 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       </div>
 
       <div>
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
-        <p className="text-xs text-slate-500 mt-1">{config.description}</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+            <p className="text-xs text-slate-500 mt-1">{config.description}</p>
+          </div>
+          {rankInfo && (
+            <div className="text-right">
+              <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Operation Rank</div>
+              <div className="text-xs font-bold text-white italic">Level {currentLvl}: {rankInfo.title}</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {metrics && (
@@ -317,29 +348,53 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
 
       <div className="bg-black/50 border border-slate-800 rounded-xl p-4">
         <div className="text-[10px] font-black text-slate-600 uppercase mb-4 tracking-[0.2em]">Operating Controls</div>
-        <div className="grid grid-cols-1 gap-4 opacity-50 cursor-not-allowed">
+        <div className="grid grid-cols-1 gap-4">
            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <span className="text-xs font-bold text-slate-400">Unit Size / Capacity</span>
-              <span className="text-xs font-mono">DEFAULT_V1</span>
+              <span className="text-xs font-bold text-slate-400">Operational Level</span>
+              <span className="text-xs font-mono text-blue-400">LVL {currentLvl}</span>
            </div>
            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-slate-400">Yield Optimization</span>
-              <span className="text-xs font-mono">1.0x (BASE)</span>
+              <span className="text-xs font-mono text-emerald-400">
+                {hustleId === 'drop' && currentLvl === 1 && '1.0x (BASE)'}
+                {hustleId === 'drop' && currentLvl === 2 && '1.8x (PRO)'}
+                {hustleId === 'drop' && currentLvl === 3 && '3.5x (ELITE)'}
+                {hustleId === 'techFlip' && currentLvl === 1 && '1.0x (BASE)'}
+                {hustleId === 'techFlip' && currentLvl === 2 && '2.0x (PRO)'}
+                {hustleId === 'techFlip' && currentLvl === 3 && '4.0x (ELITE)'}
+                {hustleId === 'vintage' && currentLvl === 1 && '1.0x (BASE)'}
+                {hustleId === 'vintage' && currentLvl === 2 && '2.2x (PRO)'}
+                {hustleId === 'vintage' && currentLvl === 3 && 'AURA FOCUS'}
+                {!['drop', 'techFlip', 'vintage'].includes(hustleId) && '1.0x (BASE)'}
+              </span>
            </div>
            <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400">Risk Mitigation</span>
-              <span className="text-xs font-mono">0% (AUTO)</span>
+              <span className="text-xs font-mono text-slate-500 italic">0% (AUTO)</span>
            </div>
         </div>
         {/* GRANULAR MECHANICS INJECTION POINT */}
       </div>
 
-      <button
-        onClick={runHustle}
-        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-      >
-        Execute {config.name} for the Month
-      </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {rankInfo && (
+          <button
+            onClick={() => state.upgradeHustle(hustleId)}
+            disabled={rankInfo.nextCost === null || state.pl.bag < rankInfo.nextCost}
+            className="py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98] border border-blue-400/30"
+          >
+            {rankInfo.nextCost === null
+              ? "MAX RANK REACHED"
+              : `UPGRADE OPERATION BUSINESS RANK ($${rankInfo.nextCost.toLocaleString()})`}
+          </button>
+        )}
+        <button
+          onClick={runHustle}
+          className={`${rankInfo ? '' : 'md:col-span-2'} py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]`}
+        >
+          Execute {config.name} for the Month
+        </button>
+      </div>
     </div>
   );
 }
