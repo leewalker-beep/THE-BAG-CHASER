@@ -25,7 +25,7 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     if (currentPl.tier >= 3) baseExpense = 10000;
 
     const marketMultiplier = MARKET_CONFIGS[currentMarket].expenseMultiplier;
-    currentPl.bag -= (baseExpense * marketMultiplier);
+    currentPl.bag -= (baseExpense * marketMultiplier + currentPl.crises.deadstockOverhead);
 
     // 2b. Passive Income & Risks
     // Vintage Liquidation
@@ -73,9 +73,29 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
       currentPl.swCooldownTurns -= 1;
     }
 
+    // Crisis Turn Counters
+    if (currentPl.crises.shadowbanTurns > 0) {
+      currentPl.crises.shadowbanTurns -= 1;
+    }
+    if (currentPl.crises.blacklistTurns > 0) {
+      currentPl.crises.blacklistTurns -= 1;
+    }
+
     // Reset monthly flags
     currentPl.mo += 1;
     currentPl.plasmaUsedThisMonth = false;
+
+    // Apply Global Crisis Filters
+    // Shadowban intercepts all clout gains.
+    // If clout increased this turn, and shadowban is active, we need to correct it.
+    // However, the current engine doesn't have passive clout gains yet.
+    // We add this as a structural safeguard for Phase 5.5 compliance.
+    if (currentPl.crises.shadowbanTurns > 0) {
+       const cloutGain = currentPl.clout - state.pl.clout;
+       if (cloutGain > 0) {
+          currentPl.clout = Math.max(0, state.pl.clout + Math.floor(cloutGain * 0.5));
+       }
+    }
 
     // 3. Random Market Shifts
     if (Math.random() < 0.15) {

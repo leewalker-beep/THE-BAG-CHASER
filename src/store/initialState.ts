@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'unfreezeAccounts' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop'> => {
   const allHustles: string[] = [
     'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap',
     'cc', 'pod', 'music', 'drop', 'vintage', 'promo',
@@ -90,6 +90,12 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         saasUsers: 0,
         agencyStaff: 0,
         ecomOrders: 0,
+      },
+      crises: {
+        shadowbanTurns: 0,
+        deadstockOverhead: 0,
+        accountsFrozen: false,
+        blacklistTurns: 0,
       },
     },
     modifiers: {
