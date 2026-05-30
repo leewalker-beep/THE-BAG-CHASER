@@ -10,7 +10,13 @@ export type HustleID =
   | 'smm'
   | 'gig'
   | 'sw'
-  | 'drop';
+  | 'drop'
+  | 'cc'
+  | 'pod'
+  | 'music'
+  | 'drip'
+  | 'promo'
+  | 'meme';
 
 export interface PlayerStats {
   bag: number;
@@ -32,6 +38,13 @@ export interface PlayerStats {
   clientCrisis: boolean;
   runnerBurnout: boolean;
   swCooldownTurns: number;
+  streetStats: {
+    ccSubs: number;
+    podEpisodes: number;
+    audioTracks: number;
+    dripStock: number;
+    activeMemeTokens: number;
+  };
 }
 
 export interface GlobalModifiers {
@@ -88,6 +101,14 @@ export interface GameState {
   rGig: () => void;
   rSw: () => void;
   rDrop: () => void;
+
+  // Street Tier Hustles
+  runCreatorContent: () => void;
+  runPodcastSyndicate: () => void;
+  runMusicSyndicate: () => void;
+  runDripLabel: () => void;
+  runNightPromo: () => void;
+  runMemeDev: () => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;

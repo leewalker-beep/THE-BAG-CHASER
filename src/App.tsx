@@ -12,7 +12,7 @@ function App() {
   } = state;
   const {
     bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth,
-    swCooldownTurns, tier
+    tier
   } = pl;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ function App() {
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
               <div className="text-[9px] uppercase text-slate-500 font-black leading-none mb-1">Bankroll</div>
-              <div className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
+              <div data-testid="bankroll-value" className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
             </div>
 
             <div className="h-8 w-[1px] bg-slate-800 mx-1"></div>
@@ -177,63 +177,44 @@ function App() {
 
               {activeTab === 'STREET' && (
                 <>
-                  {unlockedHustles.techFlip && (
-                    <HustleCard
-                      title="Tech Flip"
-                      yield="REPAIR"
-                      cost="FATIGUE"
-                      onClick={() => setActiveHustleView('techFlip')}
-                    />
-                  )}
-
-                  {unlockedHustles.vintage && (
-                    <HustleCard
-                      title="Vintage Stock"
-                      yield="LIQUID"
-                      cost="CASH"
-                      onClick={() => setActiveHustleView('vintage')}
-                    />
-                  )}
-
-                  {unlockedHustles.gig && (
-                    <HustleCard
-                      title="Gig Fleet"
-                      yield="PASSIVE"
-                      cost="RISK"
-                      onClick={() => setActiveHustleView('gig')}
-                    />
-                  )}
-
-                  {unlockedHustles.smm && (
-                    <HustleCard
-                      title="SMM Agency"
-                      yield="RETAINER"
-                      cost="CLOUT"
-                      onClick={() => setActiveHustleView('smm')}
-                    />
-                  )}
-
-                  {unlockedHustles.sw && (
-                    <HustleCard
-                      title="SW Drop"
-                      yield="HYPER"
-                      cost="COOLDOWN"
-                      disabled={swCooldownTurns > 0}
-                      onClick={() => setActiveHustleView('sw')}
-                      variant="special"
-                    />
-                  )}
-
-                  {unlockedHustles.drop && (
-                    <HustleCard
-                      title="Flash Drop"
-                      yield="HYPER"
-                      cost="COOLDOWN"
-                      disabled={swCooldownTurns > 0}
-                      onClick={() => setActiveHustleView('drop')}
-                      variant="special"
-                    />
-                  )}
+                  <HustleCard
+                    title="Creator Content"
+                    yield="+1K SUBS"
+                    cost="$400"
+                    onClick={() => setActiveHustleView('cc')}
+                  />
+                  <HustleCard
+                    title="Podcast Syndicate"
+                    yield="+$1.5K"
+                    cost="$200"
+                    onClick={() => setActiveHustleView('pod')}
+                  />
+                  <HustleCard
+                    title="Music Syndicate"
+                    yield="ROYALTY"
+                    cost="$1K"
+                    onClick={() => setActiveHustleView('music')}
+                  />
+                  <HustleCard
+                    title="Drip Label"
+                    yield="+$4K"
+                    cost="$1.5K"
+                    onClick={() => setActiveHustleView('drip')}
+                  />
+                  <HustleCard
+                    title="Night Promo"
+                    yield="CASH BURST"
+                    cost="HIGH RISK"
+                    onClick={() => setActiveHustleView('promo')}
+                    variant="danger"
+                  />
+                  <HustleCard
+                    title="Meme Dev"
+                    yield="MULTIPLIER"
+                    cost="$2K"
+                    onClick={() => setActiveHustleView('meme')}
+                    variant="special"
+                  />
                 </>
               )}
             </div>
@@ -339,9 +320,27 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       gig: 'Gig Fleet',
       smm: 'SMM Agency',
       sw: 'Streetwear Drop',
-      drop: 'Flash Drop'
+      drop: 'Flash Drop',
+      cc: 'Creator Content',
+      pod: 'Podcast Syndicate',
+      music: 'Music Syndicate',
+      drip: 'Drip Label',
+      promo: 'Night Promo',
+      meme: 'Meme Dev'
     };
     return titles[id] || id.toUpperCase();
+  };
+
+  const getHustleMetrics = (id: string) => {
+    const { streetStats } = state.pl;
+    switch (id) {
+      case 'cc': return `Subscribers: ${streetStats.ccSubs.toLocaleString()}`;
+      case 'pod': return `Episodes: ${streetStats.podEpisodes}`;
+      case 'music': return `Active Tracks: ${streetStats.audioTracks}`;
+      case 'drip': return `Inventory: ${streetStats.dripStock}`;
+      case 'meme': return `Active Tokens: ${streetStats.activeMemeTokens}`;
+      default: return null;
+    }
   };
 
   const runHustle = () => {
@@ -356,6 +355,12 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       smm: state.rSmm,
       sw: state.rSw,
       drop: state.rDrop,
+      cc: state.runCreatorContent,
+      pod: state.runPodcastSyndicate,
+      music: state.runMusicSyndicate,
+      drip: state.runDripLabel,
+      promo: state.runNightPromo,
+      meme: state.runMemeDev,
     };
     if (actions[hustleId]) {
       actions[hustleId]();
@@ -367,12 +372,14 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
     }
   };
 
+  const metrics = getHustleMetrics(hustleId);
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          Back to Dashboard
+          Back to Street Operations Panel
         </button>
         <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
           OPERATIONAL MODE
@@ -383,6 +390,13 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         <h2 className="text-2xl font-black italic tracking-tighter uppercase">{getHustleTitle(hustleId)}</h2>
         <p className="text-xs text-slate-500 mt-1">Management and execution of {getHustleTitle(hustleId)} operations.</p>
       </div>
+
+      {metrics && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+           <div className="text-[10px] font-black text-emerald-500 uppercase mb-1 tracking-widest">Status Metrics</div>
+           <div className="text-lg font-black text-white">{metrics}</div>
+        </div>
+      )}
 
       <div className="bg-black/50 border border-slate-800 rounded-xl p-4">
         <div className="text-[10px] font-black text-slate-600 uppercase mb-4 tracking-[0.2em]">Operating Controls</div>
@@ -400,13 +414,14 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
               <span className="text-xs font-mono">0% (AUTO)</span>
            </div>
         </div>
+        {/* GRANULAR MECHANICS INJECTION POINT */}
       </div>
 
       <button
         onClick={runHustle}
         className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
       >
-        Execute Operation (+1 Month)
+        Execute {getHustleTitle(hustleId)} for the Month
       </button>
     </div>
   );
