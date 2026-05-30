@@ -23,6 +23,12 @@ export interface PlayerStats {
   clientCrisis: boolean;
   runnerBurnout: boolean;
   swCooldownTurns: number;
+  swPanelState: {
+    selectedBatchSize: number;
+    selectedQuality: 'BUDGET' | 'PREMIUM' | 'LUXURY';
+    retailPrice: number;
+    warehouseBrickedStock: number;
+  };
   streetStats: {
     ccSubs: number;
     podEpisodes: number;
@@ -93,4 +99,6 @@ export interface GameState {
   signSmmClient: () => void;
   resolveClientCrisis: () => void;
   escapeTheMud: () => void;
+  setSwInput: (field: string, value: any) => void;
+  executeStreetwearDrop: () => void;
 }
