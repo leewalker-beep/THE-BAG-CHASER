@@ -312,6 +312,100 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   const rankInfo = getRankInfo(hustleId, currentLvl);
   const isStartupHustle = config.tier === 'STARTUP';
 
+  if (hustleId === 'drop' || hustleId === 'sw') {
+    const { selectedBatchSize, selectedQuality, retailPrice } = state.pl.swPanelState;
+    const qualityCosts = { BUDGET: 10, PREMIUM: 30, LUXURY: 70 };
+    const totalCost = selectedBatchSize * qualityCosts[selectedQuality];
+    const canAfford = state.pl.bag >= totalCost;
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          {rankInfo && (
+            <div className="text-right">
+              <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">Rank</div>
+              <div className="text-[11px] font-bold text-white italic">{rankInfo.title}</div>
+            </div>
+          )}
+        </div>
+
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none">STREETWEAR DRIP LAB</h2>
+
+        {/* Section 1: Sourcing Options */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Batch Size Selection</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[50, 200, 500].map(size => (
+                <button
+                  key={size}
+                  onClick={() => state.setSwInput('selectedBatchSize', size)}
+                  className={`py-2 rounded text-xs font-bold transition-all border ${selectedBatchSize === size ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {size} units
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Garment Quality Tier</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['BUDGET', 'PREMIUM', 'LUXURY'] as const).map(q => (
+                <button
+                  key={q}
+                  onClick={() => state.setSwInput('selectedQuality', q)}
+                  className={`py-2 rounded text-xs font-bold transition-all border ${selectedQuality === q ? 'bg-purple-600 border-purple-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Pricing Logic */}
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Retail Price ($)</label>
+          <input
+            type="number"
+            value={retailPrice}
+            onChange={(e) => state.setSwInput('retailPrice', parseInt(e.target.value) || 0)}
+            className="w-full bg-black border border-slate-800 rounded p-3 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+          />
+        </div>
+
+        {/* Section 3: Live Projections Card */}
+        <div className={`p-4 rounded-xl border ${canAfford ? 'bg-slate-800/50 border-slate-700' : 'bg-red-900/20 border-red-900/50'}`}>
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Est. Manufacturing Cost</span>
+            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
+          </div>
+          {!canAfford && (
+            <div className="mt-2 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+              ⚠️ Insufficient Bankroll to fund production
+            </div>
+          )}
+        </div>
+
+        {/* Section 4: Launch Drop */}
+        <button
+          onClick={() => state.executeStreetwearDrop()}
+          disabled={!canAfford || state.pl.swCooldownTurns > 0}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+        >
+          {state.pl.swCooldownTurns > 0
+            ? `Cooldown: ${state.pl.swCooldownTurns} Months Remaining`
+            : "LAUNCH MONTHLY FLASH DROP"}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
       <div className="flex items-center justify-between">
