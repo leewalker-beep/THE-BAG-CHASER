@@ -1,8 +1,9 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev'> => {
   const allHustles: HustleID[] = [
-    'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop'
+    'labor', 'delivery', 'survey', 'plasma', 'techFlip', 'vintage', 'smm', 'gig', 'sw', 'drop',
+    'cc', 'pod', 'music', 'drip', 'promo', 'meme'
   ];
 
   const initialFatigue = allHustles.reduce((acc, hustle) => {
@@ -19,11 +20,14 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
   let startingClout = 5;
   let startingAura = 5;
 
+  let startingTier = 0;
+
   if (diff === 1) {
     // Level 1: Trust Fund - ALL 10 mud tier hustles unlocked immediately
     startingBag = 25000;
     startingClout = 30;
     startingAura = 30;
+    startingTier = 1;
     allHustles.forEach((h) => (initialUnlocked[h] = true));
   } else if (diff === 2) {
     startingBag = 5000;
@@ -36,8 +40,8 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
 
   return {
     ph: 'PLAYING',
-    tab: 'STREET',
-    activeTab: 'MUD',
+    tab: startingTier === 1 ? 'STREET' : 'MUD',
+    activeTab: startingTier === 1 ? 'STREET' : 'MUD',
     activeHustleView: null,
     alias: '',
     diff,
@@ -51,7 +55,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       maxClout: 100,
       heat: 0,
       mo: 0,
-      tier: 0,
+      tier: startingTier,
       hustleFatigue: initialFatigue,
       plasmaUsedThisMonth: false,
       techInventory: { raw: 0, refined: 0 },
@@ -61,6 +65,13 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       clientCrisis: false,
       runnerBurnout: false,
       swCooldownTurns: 0,
+      streetStats: {
+        ccSubs: 0,
+        podEpisodes: 0,
+        audioTracks: 0,
+        dripStock: 0,
+        activeMemeTokens: 0,
+      },
     },
     modifiers: {
       expenseBurnMultiplier: 1.0,

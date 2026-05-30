@@ -31,6 +31,11 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
       currentPl.vintageInventoryValue -= liquidatingAmount;
     }
 
+    // Music Royalty Passive Income
+    if (currentPl.streetStats.audioTracks > 0) {
+      currentPl.bag += (currentPl.streetStats.audioTracks * 100);
+    }
+
     // GIG (Runner Fleet)
     if (currentPl.runnerCount > 0) {
       currentPl.bag += (currentPl.runnerCount * 150);
