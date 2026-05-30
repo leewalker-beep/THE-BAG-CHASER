@@ -3,6 +3,8 @@ import { useGameStore } from './store/gameStore';
 import { getInitialGameState } from './store/initialState';
 import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
+import { PROGRESSION_MATRIX, type TierMilestone } from './engine/progressionMatrix';
+import { FLEX_ITEMS_REGISTRY, type FlexItemConfig } from './engine/flexRegistry';
 
 function App() {
   const state = useGameStore();
@@ -84,7 +86,7 @@ function App() {
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
               <div className="text-[9px] uppercase text-slate-500 font-black leading-none mb-1">Bankroll</div>
-              <div className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
+              <div data-testid="bankroll-value" className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
             </div>
 
             <div className="h-8 w-[1px] bg-slate-800 mx-1"></div>
@@ -99,18 +101,21 @@ function App() {
         </div>
 
         <div className="max-w-6xl mx-auto flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
+          {(['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE', 'MOGUL', 'FLEX2', 'PRESIDENT', 'OPEN', 'EXP'] as GameTab[]).map((t) => {
             const requiredTier = TAB_TIER_MAPPING[t];
+            // Allow viewing the next tier's tab if it's the immediate next one
+            const isClickable = tier >= requiredTier || requiredTier === tier + 1;
             const isLocked = tier < requiredTier;
             const isActive = activeTab === t;
+
             return (
               <button
                 key={t}
-                onClick={() => !isLocked && setActiveTab(t)}
-                disabled={isLocked}
+                onClick={() => isClickable && setActiveTab(t)}
                 className={`px-3 py-1 rounded flex-none text-[9px] font-black uppercase tracking-tighter transition-all
                   ${isActive ? 'bg-emerald-600 text-white' :
-                    isLocked ? 'bg-slate-800/50 text-slate-700 cursor-not-allowed' :
+                    !isClickable ? 'bg-slate-800/50 text-slate-700 cursor-not-allowed' :
+                    isLocked ? 'bg-slate-800/50 text-slate-400 cursor-pointer' :
                     'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
               >
                 {t}
@@ -124,14 +129,38 @@ function App() {
       <main className="pt-28 pb-32 px-4 max-w-2xl mx-auto">
         {activeHustleView === null ? (
           <>
+            {TAB_TIER_MAPPING[activeTab] === tier + 1 && (
+               <MilestoneCard
+                 milestone={PROGRESSION_MATRIX[tier]}
+                 currentStats={{ bag, clout, aura }}
+                 onUpgrade={state.performUpgrade}
+               />
+            )}
+
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
+              <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+                {activeTab.startsWith('FLEX') ? 'Luxury Assets' : `Active Hustles: ${activeTab}`}
+              </h2>
               <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
                 {marketType} MARKET
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              {(activeTab === 'FLEX1' || activeTab === 'FLEX2') && (
+                FLEX_ITEMS_REGISTRY
+                  .filter(item => item.tab === activeTab)
+                  .map(item => (
+                    <FlexItemCard
+                      key={item.id}
+                      item={item}
+                      owned={pl.ownedFlexIds.includes(item.id)}
+                      canAfford={bag >= item.cost}
+                      onBuy={() => state.buyFlexItem(item.id)}
+                    />
+                  ))
+              )}
+
               {activeTab === 'MUD' && (
                 <>
                   {unlockedHustles.labor && (
@@ -246,24 +275,6 @@ function App() {
           />
         )}
 
-        {tier === 0 && (
-           <div className="mt-8 p-6 bg-gradient-to-br from-yellow-900/10 to-transparent border border-yellow-900/30 rounded-2xl flex flex-col items-center gap-4">
-              <div className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em]">HQ Graduation</div>
-              <div className="flex gap-4 text-[10px] font-mono">
-                 <span className={bag >= 5000 ? 'text-emerald-400' : 'text-slate-600'}>${bag}/5K</span>
-                 <span className={clout >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{clout}/20 CLT</span>
-                 <span className={aura >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{aura}/20 AUR</span>
-              </div>
-              <button
-                onClick={state.escapeTheMud}
-                disabled={bag < 5000 || clout < 20 || aura < 20}
-                className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-20 text-white text-xs font-black rounded uppercase tracking-widest transition-all shadow-lg shadow-yellow-900/20"
-              >
-                Sign HQ Lease ($3,000)
-              </button>
-           </div>
-        )}
-
         <div className="mt-8 flex justify-center gap-6">
            <button onClick={() => state.setPh('PROLOGUE_INTRO')} className="text-[9px] text-slate-700 hover:text-slate-400 uppercase font-bold tracking-tighter transition-colors">Terminate Run</button>
         </div>
@@ -281,6 +292,78 @@ function App() {
           {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
         </div>
       </footer>
+    </div>
+  );
+}
+
+function MilestoneCard({ milestone, currentStats, onUpgrade }: {
+  milestone: TierMilestone,
+  currentStats: { bag: number, clout: number, aura: number },
+  onUpgrade: () => void
+}) {
+  if (!milestone) return null;
+
+  const canUpgrade = currentStats.bag >= milestone.cashCost &&
+                     currentStats.clout >= milestone.cloutReq &&
+                     currentStats.aura >= milestone.auraReq;
+
+  return (
+    <div className="mb-8 p-6 bg-gradient-to-br from-yellow-900/20 to-slate-900 border border-yellow-600/30 rounded-2xl flex flex-col items-center gap-4 animate-in slide-in-from-top-4 duration-500">
+      <div className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em]">{milestone.toTier} MILESTONE</div>
+      <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">{milestone.actionLabel}</h3>
+
+      <div className="grid grid-cols-3 gap-6 w-full max-w-sm">
+        <Requirement item={`$${milestone.cashCost.toLocaleString()}`} met={currentStats.bag >= milestone.cashCost} />
+        <Requirement item={`${milestone.cloutReq} CLT`} met={currentStats.clout >= milestone.cloutReq} />
+        <Requirement item={`${milestone.auraReq} AUR`} met={currentStats.aura >= milestone.auraReq} />
+      </div>
+
+      <button
+        onClick={onUpgrade}
+        disabled={!canUpgrade}
+        className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-10 text-white text-xs font-black rounded-xl uppercase tracking-[0.2em] transition-all shadow-xl shadow-yellow-900/40 active:scale-[0.98]"
+      >
+        Execute Upgrade (${milestone.cashCost.toLocaleString()})
+      </button>
+      <p className="text-[10px] text-slate-500 font-bold uppercase italic">Increases monthly expenses to ${milestone.newExpenses.toLocaleString()}/mo</p>
+    </div>
+  );
+}
+
+function Requirement({ item, met }: { item: string, met: boolean }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`text-xs font-black ${met ? 'text-emerald-400' : 'text-slate-600'}`}>{item}</div>
+      <div className={`h-1 w-full mt-1 rounded-full ${met ? 'bg-emerald-500' : 'bg-slate-800'}`}></div>
+    </div>
+  );
+}
+
+function FlexItemCard({ item, owned, canAfford, onBuy }: { item: FlexItemConfig, owned: boolean, canAfford: boolean, onBuy: () => void }) {
+  return (
+    <div className={`relative overflow-hidden bg-slate-900 border ${owned ? 'border-emerald-500/30' : 'border-slate-800'} rounded-xl p-4 flex flex-col gap-3 transition-all`}>
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-tight text-slate-500 mb-1">{item.name}</div>
+          <div className="text-lg font-black text-white italic tracking-tighter uppercase">${item.cost.toLocaleString()}</div>
+        </div>
+        {owned && <div className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded uppercase">Owned</div>}
+      </div>
+
+      <p className="text-[10px] text-slate-400 leading-relaxed h-8 overflow-hidden">{item.description}</p>
+
+      <div className="flex justify-between items-center mt-2">
+        <div className="text-[9px] font-bold text-slate-600 uppercase">Upkeep: ${item.monthlyUpkeep}/mo</div>
+        {!owned && (
+          <button
+            onClick={onBuy}
+            disabled={!canAfford}
+            className="px-4 py-1.5 bg-white text-black text-[9px] font-black rounded uppercase hover:bg-emerald-400 disabled:opacity-20 transition-colors"
+          >
+            Buy
+          </button>
+        )}
+      </div>
     </div>
   );
 }

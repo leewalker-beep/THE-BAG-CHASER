@@ -32,6 +32,7 @@ export interface PlayerStats {
   clientCrisis: boolean;
   runnerBurnout: boolean;
   swCooldownTurns: number;
+  ownedFlexIds: string[];
 }
 
 export interface GlobalModifiers {
@@ -40,19 +41,20 @@ export interface GlobalModifiers {
   stressRiskModifier: number;
 }
 
-export type GameTab = 'MUD' | 'STREET' | 'CORPORATE' | 'FLEX1' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
+export type GameTab = 'MUD' | 'STREET' | 'STARTUP' | 'CORPORATE' | 'FLEX1' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
 
 export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   MUD: 0,
   STREET: 1,
-  CORPORATE: 2,
-  FLEX1: 3,
-  ELITE: 4,
-  MOGUL: 5,
-  FLEX2: 6,
-  PRESIDENT: 7,
-  OPEN: 8,
-  EXP: 9,
+  STARTUP: 2,
+  CORPORATE: 3,
+  FLEX1: 4,
+  ELITE: 5,
+  MOGUL: 6,
+  FLEX2: 7,
+  PRESIDENT: 8,
+  OPEN: 9,
+  EXP: 10,
 };
 
 export interface GameState {
@@ -98,5 +100,6 @@ export interface GameState {
   payRunnerBonus: () => void;
   signSmmClient: () => void;
   resolveClientCrisis: () => void;
-  escapeTheMud: () => void;
+  performUpgrade: () => void;
+  buyFlexItem: (itemId: string) => void;
 }
