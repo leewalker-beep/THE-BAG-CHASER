@@ -151,7 +151,7 @@ function App() {
                       cost={displayCost}
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
                       lockText={`LOCKED: Requires ${activeTab} Tier`}
-                      disabled={h.id === 'plasma' && plasmaUsedThisMonth}
+                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
                       onClick={() => setActiveHustleView(h.id)}
                       variant={h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default'}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
@@ -312,7 +312,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   const rankInfo = getRankInfo(hustleId, currentLvl);
   const isStartupHustle = config.tier === 'STARTUP';
 
-  if (hustleId === 'drop' || hustleId === 'sw') {
+  if (hustleId === 'drop' || hustleId === 'vintage') {
     const { selectedBatchSize, selectedQuality, retailPrice } = state.pl.swPanelState;
     const qualityCosts = { BUDGET: 10, PREMIUM: 30, LUXURY: 70 };
     const totalCost = selectedBatchSize * qualityCosts[selectedQuality];
