@@ -16,7 +16,10 @@ export type HustleID =
   | 'music'
   | 'drip'
   | 'promo'
-  | 'meme';
+  | 'meme'
+  | 'saas_mvp'
+  | 'agency_scale'
+  | 'ecom_brand';
 
 export interface PlayerStats {
   bag: number;
@@ -45,6 +48,11 @@ export interface PlayerStats {
     dripStock: number;
     activeMemeTokens: number;
   };
+  startupStats: {
+    saasUsers: number;
+    agencyStaff: number;
+    ecomOrders: number;
+  };
 }
 
 export interface GlobalModifiers {
@@ -53,19 +61,20 @@ export interface GlobalModifiers {
   stressRiskModifier: number;
 }
 
-export type GameTab = 'MUD' | 'STREET' | 'CORPORATE' | 'FLEX1' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
+export type GameTab = 'MUD' | 'STREET' | 'STARTUP' | 'CORPORATE' | 'FLEX1' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
 
 export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   MUD: 0,
   STREET: 1,
-  CORPORATE: 2,
-  FLEX1: 3,
-  ELITE: 4,
-  MOGUL: 5,
-  FLEX2: 6,
-  PRESIDENT: 7,
-  OPEN: 8,
-  EXP: 9,
+  STARTUP: 2,
+  CORPORATE: 3,
+  FLEX1: 4,
+  ELITE: 5,
+  MOGUL: 6,
+  FLEX2: 7,
+  PRESIDENT: 8,
+  OPEN: 9,
+  EXP: 10,
 };
 
 export interface GameState {
@@ -109,6 +118,11 @@ export interface GameState {
   runDripLabel: () => void;
   runNightPromo: () => void;
   runMemeDev: () => void;
+
+  // Startup Tier Hustles
+  runSaasMvp: () => void;
+  runAgencyScale: () => void;
+  runEcomBrand: () => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;
