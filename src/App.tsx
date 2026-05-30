@@ -7,7 +7,7 @@ import type { GameState, GameTab } from './store/types';
 function App() {
   const state = useGameStore();
   const {
-    pl, ph, alias, unlockedHustles, marketType, fatalCause, news,
+    pl, ph, alias, marketType, fatalCause, news,
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
   const {
@@ -100,18 +100,13 @@ function App() {
 
         <div className="max-w-6xl mx-auto flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
-            const requiredTier = TAB_TIER_MAPPING[t];
-            const isLocked = tier < requiredTier;
             const isActive = activeTab === t;
             return (
               <button
                 key={t}
-                onClick={() => !isLocked && setActiveTab(t)}
-                disabled={isLocked}
+                onClick={() => setActiveTab(t)}
                 className={`px-3 py-1 rounded flex-none text-[9px] font-black uppercase tracking-tighter transition-all
-                  ${isActive ? 'bg-emerald-600 text-white' :
-                    isLocked ? 'bg-slate-800/50 text-slate-700 cursor-not-allowed' :
-                    'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                  ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
               >
                 {t}
               </button>
@@ -134,44 +129,44 @@ function App() {
             <div className="grid grid-cols-2 gap-3">
               {activeTab === 'MUD' && (
                 <>
-                  {unlockedHustles.labor && (
-                    <HustleCard
-                      title="Manual Labor"
-                      yield="+$250"
-                      cost="40 FATG"
-                      onClick={() => setActiveHustleView('labor')}
-                      icon={<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V2h-2v7z"/>}
-                    />
-                  )}
+                  <HustleCard
+                    title="Manual Labor"
+                    yield="+$750"
+                    cost="40 FATG"
+                    locked={tier < 0}
+                    lockText="Requires Mud Tier"
+                    onClick={() => setActiveHustleView('labor')}
+                    icon={<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V2h-2v7z"/>}
+                  />
 
-                  {unlockedHustles.delivery && (
-                    <HustleCard
-                      title="Delivery Gig"
-                      yield="+$150"
-                      cost="25 FATG"
-                      onClick={() => setActiveHustleView('delivery')}
-                    />
-                  )}
+                  <HustleCard
+                    title="Delivery Gig"
+                    yield="+$600-700"
+                    cost="25 FATG"
+                    locked={tier < 0}
+                    lockText="Requires Mud Tier"
+                    onClick={() => setActiveHustleView('delivery')}
+                  />
 
-                  {unlockedHustles.survey && (
-                    <HustleCard
-                      title="Surveys"
-                      yield="+$20"
-                      cost="0 FATG"
-                      onClick={() => setActiveHustleView('survey')}
-                    />
-                  )}
+                  <HustleCard
+                    title="Surveys"
+                    yield="+$520"
+                    cost="0 FATG"
+                    locked={tier < 0}
+                    lockText="Requires Mud Tier"
+                    onClick={() => setActiveHustleView('survey')}
+                  />
 
-                  {unlockedHustles.plasma && (
-                    <HustleCard
-                      title="Sell Plasma"
-                      yield="+$400"
-                      cost="-25 SAN"
-                      disabled={plasmaUsedThisMonth}
-                      onClick={() => setActiveHustleView('plasma')}
-                      variant="danger"
-                    />
-                  )}
+                  <HustleCard
+                    title="Sell Plasma"
+                    yield="+$900"
+                    cost="-25 SAN"
+                    locked={tier < 0}
+                    lockText="Requires Mud Tier"
+                    disabled={plasmaUsedThisMonth}
+                    onClick={() => setActiveHustleView('plasma')}
+                    variant="danger"
+                  />
                 </>
               )}
 
@@ -181,30 +176,40 @@ function App() {
                     title="Creator Content"
                     yield="+1K SUBS"
                     cost="$400"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('cc')}
                   />
                   <HustleCard
                     title="Podcast Syndicate"
                     yield="+$1.5K"
                     cost="$200"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('pod')}
                   />
                   <HustleCard
                     title="Music Syndicate"
                     yield="ROYALTY"
                     cost="$1K"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('music')}
                   />
                   <HustleCard
                     title="Drip Label"
                     yield="+$4K"
                     cost="$1.5K"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('drip')}
                   />
                   <HustleCard
                     title="Night Promo"
                     yield="CASH BURST"
                     cost="HIGH RISK"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('promo')}
                     variant="danger"
                   />
@@ -212,8 +217,39 @@ function App() {
                     title="Meme Dev"
                     yield="MULTIPLIER"
                     cost="$2K"
+                    locked={tier < 1}
+                    lockText="Requires Street Tier"
                     onClick={() => setActiveHustleView('meme')}
                     variant="special"
+                  />
+                </>
+              )}
+
+              {activeTab === 'STARTUP' && (
+                <>
+                  <HustleCard
+                    title="SaaS MVP"
+                    yield="+500 USERS"
+                    cost="$5K"
+                    locked={tier < 2}
+                    lockText="Requires Startup Tier"
+                    onClick={() => setActiveHustleView('saas_mvp')}
+                  />
+                  <HustleCard
+                    title="Agency Scale"
+                    yield="+$6.5K"
+                    cost="40 CLT"
+                    locked={tier < 2}
+                    lockText="Requires Startup Tier"
+                    onClick={() => setActiveHustleView('agency_scale')}
+                  />
+                  <HustleCard
+                    title="Ecom Brand"
+                    yield="+$9K"
+                    cost="$2.5K"
+                    locked={tier < 2}
+                    lockText="Requires Startup Tier"
+                    onClick={() => setActiveHustleView('ecom_brand')}
                   />
                 </>
               )}
@@ -227,11 +263,11 @@ function App() {
           />
         )}
 
-        {tier === 0 && (
+        {tier === 0 && activeTab === 'MUD' && (
            <div className="mt-8 p-6 bg-gradient-to-br from-yellow-900/10 to-transparent border border-yellow-900/30 rounded-2xl flex flex-col items-center gap-4">
               <div className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em]">HQ Graduation</div>
               <div className="flex gap-4 text-[10px] font-mono">
-                 <span className={bag >= 5000 ? 'text-emerald-400' : 'text-slate-600'}>${bag}/5K</span>
+                 <span className={bag >= 5000 ? 'text-emerald-400' : 'text-slate-600'}>${bag.toLocaleString()}/5K</span>
                  <span className={clout >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{clout}/20 CLT</span>
                  <span className={aura >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{aura}/20 AUR</span>
               </div>
@@ -281,18 +317,20 @@ interface HustleCardProps {
   cost: string;
   onClick: () => void;
   disabled?: boolean;
+  locked?: boolean;
+  lockText?: string;
   variant?: 'danger' | 'special' | 'default';
   icon?: React.ReactNode;
 }
 
-function HustleCard({ title, yield: y, cost, onClick, disabled, variant, icon }: HustleCardProps) {
+function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText, variant, icon }: HustleCardProps) {
   const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-3 text-left transition-all active:scale-[0.98] group";
   const colorClass = variant === 'danger' ? 'hover:border-red-500/50' : variant === 'special' ? 'hover:border-purple-500/50' : 'hover:border-slate-600';
-  const disabledClass = disabled ? 'opacity-40 grayscale cursor-not-allowed' : 'cursor-pointer';
+  const disabledClass = (disabled || locked) ? 'cursor-not-allowed' : 'cursor-pointer';
 
   return (
-    <button onClick={onClick} disabled={disabled} className={`${baseClass} ${colorClass} ${disabledClass}`}>
-      <div className="relative z-10">
+    <button onClick={locked ? undefined : onClick} disabled={disabled} className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''}`}>
+      <div className={`relative z-10 ${locked ? 'blur-[2px] opacity-30' : ''}`}>
         <div className="text-[10px] font-black uppercase tracking-tight text-slate-400 mb-1 group-hover:text-white transition-colors">{title}</div>
         <div className="flex justify-between items-end">
           <div className="text-sm font-black text-emerald-400">{y}</div>
@@ -302,6 +340,14 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, variant, icon }:
       {icon && (
         <div className="absolute top-1 right-1 opacity-5 group-hover:opacity-10 transition-opacity">
           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">{icon}</svg>
+        </div>
+      )}
+      {locked && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+          <div className="bg-slate-950/80 border border-slate-700 px-2 py-1 rounded text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+            <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 116 0v2H7V7z"></path></svg>
+            {lockText || 'Locked'}
+          </div>
         </div>
       )}
     </button>
@@ -326,19 +372,25 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       music: 'Music Syndicate',
       drip: 'Drip Label',
       promo: 'Night Promo',
-      meme: 'Meme Dev'
+      meme: 'Meme Dev',
+      saas_mvp: 'SaaS MVP',
+      agency_scale: 'Agency Scale',
+      ecom_brand: 'Ecom Brand'
     };
     return titles[id] || id.toUpperCase();
   };
 
   const getHustleMetrics = (id: string) => {
-    const { streetStats } = state.pl;
+    const { streetStats, startupStats } = state.pl;
     switch (id) {
       case 'cc': return `Subscribers: ${streetStats.ccSubs.toLocaleString()}`;
       case 'pod': return `Episodes: ${streetStats.podEpisodes}`;
       case 'music': return `Active Tracks: ${streetStats.audioTracks}`;
       case 'drip': return `Inventory: ${streetStats.dripStock}`;
       case 'meme': return `Active Tokens: ${streetStats.activeMemeTokens}`;
+      case 'saas_mvp': return `Active Users: ${startupStats.saasUsers.toLocaleString()}`;
+      case 'agency_scale': return `Agency Staff: ${startupStats.agencyStaff}`;
+      case 'ecom_brand': return `Monthly Orders: ${startupStats.ecomOrders.toLocaleString()}`;
       default: return null;
     }
   };
@@ -361,6 +413,9 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       drip: state.runDripLabel,
       promo: state.runNightPromo,
       meme: state.runMemeDev,
+      saas_mvp: state.runSaasMvp,
+      agency_scale: state.runAgencyScale,
+      ecom_brand: state.runEcomBrand,
     };
     if (actions[hustleId]) {
       actions[hustleId]();
@@ -373,13 +428,14 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   };
 
   const metrics = getHustleMetrics(hustleId);
+  const isStartupHustle = ['saas_mvp', 'agency_scale', 'ecom_brand'].includes(hustleId);
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          Back to Street Operations Panel
+          {isStartupHustle ? 'Back to Startup Operations' : 'Back to Operations Panel'}
         </button>
         <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
           OPERATIONAL MODE

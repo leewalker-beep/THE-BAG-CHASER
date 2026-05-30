@@ -4,6 +4,7 @@ import type { GameState } from './types';
 import { getInitialGameState } from './initialState';
 import { createMudSlice } from './slices/mudSlice';
 import { createStreetSlice } from './slices/streetSlice';
+import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from './engine';
 
 const SAVE_KEY = 'bag-chaser-state';
@@ -26,6 +27,7 @@ export const useGameStore = create<GameState>()(
 
       ...createMudSlice(set),
       ...createStreetSlice(set),
+      ...createStartupSlice(set),
     }),
     {
       name: SAVE_KEY,

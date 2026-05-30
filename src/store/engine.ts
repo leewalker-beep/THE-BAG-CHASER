@@ -19,7 +19,11 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     currentPl.hustleFatigue = newFatigue;
 
     // 2. Apply Baseline Expenses
-    const baseExpense = currentPl.tier === 0 ? 500 : 1200;
+    let baseExpense = 500;
+    if (currentPl.tier === 1) baseExpense = 1200;
+    if (currentPl.tier === 2) baseExpense = 3500;
+    if (currentPl.tier >= 3) baseExpense = 10000;
+
     const marketMultiplier = MARKET_CONFIGS[currentMarket].expenseMultiplier;
     currentPl.bag -= (baseExpense * marketMultiplier);
 
