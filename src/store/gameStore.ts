@@ -17,6 +17,10 @@ export const useGameStore = create<GameState>()(
 
       setTab: (tab) => set({ tab }),
 
+      setActiveTab: (activeTab) => set({ activeTab }),
+
+      setActiveHustleView: (activeHustleView) => set({ activeHustleView }),
+
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
       ...createMudSlice(set),
@@ -40,6 +44,7 @@ export const useGameStore = create<GameState>()(
         removeItem: (name) => localStorage.removeItem(name),
       })),
       partialize: (state) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { ph, ...rest } = state;
         return rest;
       },

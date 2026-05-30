@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from './store/gameStore';
 import { getInitialGameState } from './store/initialState';
-import type { GameState } from './store/types';
+import { TAB_TIER_MAPPING } from './store/types';
+import type { GameState, GameTab } from './store/types';
 
 function App() {
   const state = useGameStore();
-  const { pl, ph, alias, unlockedHustles, marketType, fatalCause, news } = state;
+  const {
+    pl, ph, alias, unlockedHustles, marketType, fatalCause, news,
+    activeTab, setActiveTab, activeHustleView, setActiveHustleView
+  } = state;
   const {
     bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth,
-    techInventory, vintageInventoryValue, runnerCount, runnerBurnout,
-    clientCount, clientCrisis, swCooldownTurns, tier
+    swCooldownTurns, tier
   } = pl;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -66,8 +69,8 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
       {/* STEP 1: THE STICKY TOP ZONE (STATS HUD) */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-800 p-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-800 p-3 pb-2">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar mb-2">
           <div className="flex items-center gap-3 shrink-0">
             <div className="bg-emerald-600 h-8 w-8 rounded-full flex items-center justify-center font-black text-xs shadow-lg shadow-emerald-900/20">
               {alias.charAt(0)}
@@ -94,134 +97,154 @@ function App() {
             </div>
           </div>
         </div>
+
+        <div className="max-w-6xl mx-auto flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
+            const requiredTier = TAB_TIER_MAPPING[t];
+            const isLocked = tier < requiredTier;
+            const isActive = activeTab === t;
+            return (
+              <button
+                key={t}
+                onClick={() => !isLocked && setActiveTab(t)}
+                disabled={isLocked}
+                className={`px-3 py-1 rounded flex-none text-[9px] font-black uppercase tracking-tighter transition-all
+                  ${isActive ? 'bg-emerald-600 text-white' :
+                    isLocked ? 'bg-slate-800/50 text-slate-700 cursor-not-allowed' :
+                    'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
       </header>
 
       {/* STEP 3: THE CENTER CORES (2-COLUMN HUSTLE GRID) */}
-      <main className="pt-20 pb-32 px-4 max-w-2xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-           <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles</h2>
-           <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
-             {marketType} MARKET
-           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {unlockedHustles.labor && (
-            <HustleCard
-              title="Manual Labor"
-              yield="+$250"
-              cost="40 FATG"
-              onClick={state.rLabor}
-              icon={<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V2h-2v7z"/>}
-            />
-          )}
-
-          {unlockedHustles.delivery && (
-            <HustleCard
-              title="Delivery Gig"
-              yield="+$150"
-              cost="25 FATG"
-              onClick={state.rDelivery}
-            />
-          )}
-
-          {unlockedHustles.survey && (
-            <HustleCard
-              title="Surveys"
-              yield="+$20"
-              cost="0 FATG"
-              onClick={state.rSurvey}
-            />
-          )}
-
-          {unlockedHustles.plasma && (
-            <HustleCard
-              title="Sell Plasma"
-              yield="+$400"
-              cost="-25 SAN"
-              disabled={plasmaUsedThisMonth}
-              onClick={state.rPlasma}
-              variant="danger"
-            />
-          )}
-
-          {unlockedHustles.techFlip && (
-            <div className="col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-black uppercase">Tech Flip</span>
-                <div className="flex gap-2">
-                  <span className="text-[10px] bg-black px-2 py-0.5 rounded text-blue-400">RAW: {techInventory.raw}</span>
-                  <span className="text-[10px] bg-black px-2 py-0.5 rounded text-emerald-400">REF: {techInventory.refined}</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <MiniButton label="Source" onClick={state.sourceTechPallet} color="bg-blue-600" />
-                <MiniButton label="Repair" onClick={state.repairTech} disabled={techInventory.raw <= 0} color="bg-slate-700" />
-                <MiniButton label="Sell" onClick={state.sellTech} disabled={techInventory.refined <= 0} color="bg-emerald-600" />
+      <main className="pt-28 pb-32 px-4 max-w-2xl mx-auto">
+        {activeHustleView === null ? (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
+              <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
+                {marketType} MARKET
               </div>
             </div>
-          )}
 
-          {unlockedHustles.vintage && (
-            <div className="col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
-               <div className="flex justify-between items-center">
-                  <span className="text-xs font-black uppercase">Vintage Stock</span>
-                  <span className="text-[10px] text-blue-400 font-mono">${vintageInventoryValue.toLocaleString()}</span>
-               </div>
-               <button onClick={state.buyVintageStock} className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 rounded text-[10px] font-black uppercase tracking-widest transition-all">
-                 Buy Stock ($150)
-               </button>
+            <div className="grid grid-cols-2 gap-3">
+              {activeTab === 'MUD' && (
+                <>
+                  {unlockedHustles.labor && (
+                    <HustleCard
+                      title="Manual Labor"
+                      yield="+$250"
+                      cost="40 FATG"
+                      onClick={() => setActiveHustleView('labor')}
+                      icon={<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V22h2.5v-9.03c2.09-.13 3.75-1.85 3.75-3.97V2h-2v7z"/>}
+                    />
+                  )}
+
+                  {unlockedHustles.delivery && (
+                    <HustleCard
+                      title="Delivery Gig"
+                      yield="+$150"
+                      cost="25 FATG"
+                      onClick={() => setActiveHustleView('delivery')}
+                    />
+                  )}
+
+                  {unlockedHustles.survey && (
+                    <HustleCard
+                      title="Surveys"
+                      yield="+$20"
+                      cost="0 FATG"
+                      onClick={() => setActiveHustleView('survey')}
+                    />
+                  )}
+
+                  {unlockedHustles.plasma && (
+                    <HustleCard
+                      title="Sell Plasma"
+                      yield="+$400"
+                      cost="-25 SAN"
+                      disabled={plasmaUsedThisMonth}
+                      onClick={() => setActiveHustleView('plasma')}
+                      variant="danger"
+                    />
+                  )}
+                </>
+              )}
+
+              {activeTab === 'STREET' && (
+                <>
+                  {unlockedHustles.techFlip && (
+                    <HustleCard
+                      title="Tech Flip"
+                      yield="REPAIR"
+                      cost="FATIGUE"
+                      onClick={() => setActiveHustleView('techFlip')}
+                    />
+                  )}
+
+                  {unlockedHustles.vintage && (
+                    <HustleCard
+                      title="Vintage Stock"
+                      yield="LIQUID"
+                      cost="CASH"
+                      onClick={() => setActiveHustleView('vintage')}
+                    />
+                  )}
+
+                  {unlockedHustles.gig && (
+                    <HustleCard
+                      title="Gig Fleet"
+                      yield="PASSIVE"
+                      cost="RISK"
+                      onClick={() => setActiveHustleView('gig')}
+                    />
+                  )}
+
+                  {unlockedHustles.smm && (
+                    <HustleCard
+                      title="SMM Agency"
+                      yield="RETAINER"
+                      cost="CLOUT"
+                      onClick={() => setActiveHustleView('smm')}
+                    />
+                  )}
+
+                  {unlockedHustles.sw && (
+                    <HustleCard
+                      title="SW Drop"
+                      yield="HYPER"
+                      cost="COOLDOWN"
+                      disabled={swCooldownTurns > 0}
+                      onClick={() => setActiveHustleView('sw')}
+                      variant="special"
+                    />
+                  )}
+
+                  {unlockedHustles.drop && (
+                    <HustleCard
+                      title="Flash Drop"
+                      yield="HYPER"
+                      cost="COOLDOWN"
+                      disabled={swCooldownTurns > 0}
+                      onClick={() => setActiveHustleView('drop')}
+                      variant="special"
+                    />
+                  )}
+                </>
+              )}
             </div>
-          )}
-
-          {unlockedHustles.gig && (
-             <div className={`col-span-2 bg-slate-900 border rounded-xl p-4 flex flex-col gap-3 ${runnerBurnout ? 'border-red-500' : 'border-slate-800'}`}>
-                <div className="flex justify-between items-center">
-                   <span className="text-xs font-black uppercase">Gig Fleet</span>
-                   <span className="text-[10px] text-slate-400 font-mono">{runnerCount} Runners</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <MiniButton label="Recruit" onClick={state.recruitRunner} color="bg-blue-600" />
-                  {runnerBurnout && <MiniButton label="Fix Burnout" onClick={state.payRunnerBonus} color="bg-red-600" />}
-                </div>
-             </div>
-          )}
-
-          {unlockedHustles.smm && (
-             <div className={`col-span-2 bg-slate-900 border rounded-xl p-4 flex flex-col gap-3 ${clientCrisis ? 'border-red-500' : 'border-slate-800'}`}>
-                <div className="flex justify-between items-center">
-                   <span className="text-xs font-black uppercase">SMM Agency</span>
-                   <span className="text-[10px] text-slate-400 font-mono">{clientCount} Clients</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                   <MiniButton label="Sign Client" onClick={state.signSmmClient} color="bg-blue-600" />
-                   {clientCrisis && <MiniButton label="Resolve Crisis" onClick={state.resolveClientCrisis} color="bg-red-600" />}
-                </div>
-             </div>
-          )}
-
-          {unlockedHustles.sw && (
-            <HustleCard
-              title="SW Drop"
-              yield="HYPER"
-              cost="COOLDOWN"
-              disabled={swCooldownTurns > 0}
-              onClick={state.rSw}
-              variant="special"
-            />
-          )}
-
-          {unlockedHustles.drop && (
-            <HustleCard
-              title="Flash Drop"
-              yield="HYPER"
-              cost="COOLDOWN"
-              disabled={swCooldownTurns > 0}
-              onClick={state.rDrop}
-              variant="special"
-            />
-          )}
-        </div>
+          </>
+        ) : (
+          <SubGamePanel
+            hustleId={activeHustleView}
+            onBack={() => setActiveHustleView(null)}
+            state={state}
+          />
+        )}
 
         {tier === 0 && (
            <div className="mt-8 p-6 bg-gradient-to-br from-yellow-900/10 to-transparent border border-yellow-900/30 rounded-2xl flex flex-col items-center gap-4">
@@ -247,16 +270,15 @@ function App() {
       </main>
 
       {/* STEP 2: THE FIXED BOTTOM ZONE (CONSOLE REGISTRY) */}
-      <footer className="fixed bottom-0 left-0 right-0 h-28 bg-slate-950 border-t border-slate-800 p-2 overflow-y-auto z-50 text-[11px] font-mono text-emerald-400 scroll-smooth" ref={scrollRef}>
-        <div className="max-w-2xl mx-auto space-y-1">
-          {news.map((msg, i) => (
-            <div key={i} className="flex gap-2">
+      <footer className="fixed bottom-0 left-0 right-0 h-12 bg-slate-950 border-t border-slate-800 p-2 overflow-hidden z-50 text-[11px] font-mono text-emerald-400">
+        <div className="max-w-2xl mx-auto h-full flex flex-col justify-center">
+          {news.slice(0, 2).map((msg, i) => (
+            <div key={i} className="flex gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
               <span className="text-slate-700 shrink-0">[{i+1}]</span>
               <span className={msg.startsWith('SYSTEM') ? 'text-blue-400 font-bold' : 'text-emerald-400'}>{msg}</span>
             </div>
           ))}
           {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
-          <div className="h-4"></div>
         </div>
       </footer>
     </div>
@@ -305,23 +327,90 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, variant, icon }:
   );
 }
 
-function MiniButton({ label, onClick, disabled, color }: { label: string, onClick: () => void, disabled?: boolean, color: 'bg-blue-600' | 'bg-slate-700' | 'bg-emerald-600' | 'bg-red-600' }) {
-  const borderColors = {
-    'bg-blue-600': 'border-blue-600/30',
-    'bg-slate-700': 'border-slate-700/30',
-    'bg-emerald-600': 'border-emerald-600/30',
-    'bg-red-600': 'border-red-600/30',
+function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: () => void, state: GameState }) {
+  const getHustleTitle = (id: string) => {
+    const titles: Record<string, string> = {
+      labor: 'Manual Labor',
+      delivery: 'Delivery Gig',
+      survey: 'Surveys',
+      plasma: 'Sell Plasma',
+      techFlip: 'Tech Flip',
+      vintage: 'Vintage Stock',
+      gig: 'Gig Fleet',
+      smm: 'SMM Agency',
+      sw: 'Streetwear Drop',
+      drop: 'Flash Drop'
+    };
+    return titles[id] || id.toUpperCase();
+  };
+
+  const runHustle = () => {
+    const actions: Record<string, () => void> = {
+      labor: state.rLabor,
+      delivery: state.rDelivery,
+      survey: state.rSurvey,
+      plasma: state.rPlasma,
+      techFlip: state.rTechFlip,
+      vintage: state.rVintage,
+      gig: state.rGig,
+      smm: state.rSmm,
+      sw: state.rSw,
+      drop: state.rDrop,
+    };
+    if (actions[hustleId]) {
+      actions[hustleId]();
+      // Placeholder actions don't advance time internally, so we do it here.
+      // Mud-tier manual actions and drops already call applyAdvancement(1).
+      if (['techFlip', 'vintage', 'gig', 'smm'].includes(hustleId)) {
+        state.adv(1);
+      }
+    }
   };
 
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`py-1.5 rounded text-[9px] font-black uppercase tracking-tight transition-all disabled:opacity-30 ${color} bg-opacity-20 hover:bg-opacity-40 border ${borderColors[color]}`}
-    >
-      {label}
-    </button>
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+          Back to Dashboard
+        </button>
+        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          OPERATIONAL MODE
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{getHustleTitle(hustleId)}</h2>
+        <p className="text-xs text-slate-500 mt-1">Management and execution of {getHustleTitle(hustleId)} operations.</p>
+      </div>
+
+      <div className="bg-black/50 border border-slate-800 rounded-xl p-4">
+        <div className="text-[10px] font-black text-slate-600 uppercase mb-4 tracking-[0.2em]">Operating Controls</div>
+        <div className="grid grid-cols-1 gap-4 opacity-50 cursor-not-allowed">
+           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <span className="text-xs font-bold text-slate-400">Unit Size / Capacity</span>
+              <span className="text-xs font-mono">DEFAULT_V1</span>
+           </div>
+           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <span className="text-xs font-bold text-slate-400">Yield Optimization</span>
+              <span className="text-xs font-mono">1.0x (BASE)</span>
+           </div>
+           <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-400">Risk Mitigation</span>
+              <span className="text-xs font-mono">0% (AUTO)</span>
+           </div>
+        </div>
+      </div>
+
+      <button
+        onClick={runHustle}
+        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+      >
+        Execute Operation (+1 Month)
+      </button>
+    </div>
   );
 }
+
 
 export default App;
