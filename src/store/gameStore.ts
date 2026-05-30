@@ -26,8 +26,25 @@ export const useGameStore = create<GameState>()(
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
+      unfreezeAccounts: () => set((state) => {
+        if (state.pl.bag < 5000) {
+          return { news: ["INSUFFICIENT FUNDS: Need $5,000 to retain legal counsel and unfreeze accounts.", ...state.news] };
+        }
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - 5000,
+            crises: { ...state.pl.crises, accountsFrozen: false }
+          },
+          news: ["SYSTEM: Legal retainer paid. Corporate accounts have been UNFROZEN.", ...state.news]
+        };
+      }),
+
       upgradeHustle: (hustleId: string) =>
         set((state) => {
+          if (state.pl.crises.accountsFrozen) {
+            return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
+          }
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
           if (currentLvl >= 3) return {};
 
@@ -77,6 +94,10 @@ export const useGameStore = create<GameState>()(
             return { news: [`LACK OF CLOUT: Need ${config.cloutReq} Clout to pull off ${config.name}.`, ...state.news] };
           }
 
+          if (state.pl.crises.blacklistTurns > 0 && (config.tier === 'ELITE' || config.tier === 'MOGUL')) {
+            return { news: [`BLACKLISTED: You are currently exiled from ${config.tier} circles for ${state.pl.crises.blacklistTurns} more months.`, ...state.news] };
+          }
+
           // Special check for Plasma
           if (hustleId === 'r_plasma' && state.pl.plasmaUsedThisMonth) {
              return { news: ["MEDICAL LIMIT: You can only sell plasma once per month.", ...state.news] };
@@ -87,25 +108,64 @@ export const useGameStore = create<GameState>()(
             return { news: ["COOLDOWN: You need to wait for the hype to rebuild before another drop.", ...state.news] };
           }
 
-          // 2. Base Rewards & Penalties
+          // 2. Execution & Mitigation Logic
+          const isSuccess = Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
-          let finalYieldCash = config.yieldCash;
-          let finalYieldClout = config.yieldClout;
-          let finalYieldAura = config.yieldAura;
+          let finalYieldCash = isSuccess ? config.yieldCash : 0;
+          let finalYieldClout = isSuccess ? config.yieldClout : 0;
+          let finalYieldAura = isSuccess ? config.yieldAura : 0;
+          let finalHitMental = config.hitMental;
 
-          if (currentLvl > 1) {
-            if (hustleId === 'drop') {
-              if (currentLvl === 2) finalYieldCash *= 1.8;
-              if (currentLvl === 3) finalYieldCash *= 3.5;
-            } else if (hustleId === 'techFlip') {
-              if (currentLvl === 2) finalYieldCash *= 2.0;
-              if (currentLvl === 3) finalYieldCash *= 4.0;
-            } else if (hustleId === 'vintage') {
-              if (currentLvl === 2) finalYieldCash *= 2.2;
-              if (currentLvl === 3) {
-                finalYieldCash = 0;
-                finalYieldAura = 15;
-                finalYieldClout = 10;
+          const currentNews = [...state.news];
+
+          const nextCrises = { ...state.pl.crises };
+
+          if (isSuccess) {
+            if (currentLvl > 1) {
+              if (hustleId === 'drop') {
+                if (currentLvl === 2) finalYieldCash *= 1.8;
+                if (currentLvl === 3) finalYieldCash *= 3.5;
+              } else if (hustleId === 'techFlip') {
+                if (currentLvl === 2) finalYieldCash *= 2.0;
+                if (currentLvl === 3) finalYieldCash *= 4.0;
+              } else if (hustleId === 'vintage') {
+                if (currentLvl === 2) finalYieldCash *= 2.2;
+                if (currentLvl === 3) {
+                  finalYieldCash = 0;
+                  finalYieldAura = 15;
+                  finalYieldClout = 10;
+                }
+              }
+            }
+
+            // Shadowban Filter
+            if (state.pl.crises.shadowbanTurns > 0 && (config.tier === 'MUD' || config.tier === 'STREET')) {
+              finalYieldClout *= 0.5;
+            }
+
+            currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
+          } else {
+            // FAILURE & AURA ARMOR MITIGATION
+            if (state.pl.aura >= 100) {
+              finalYieldAura = -30;
+              currentNews.unshift(`CRISIS MITIGATED: Your high Aura absorbed the public blow. Prevented systemic collapse.`);
+            } else {
+              finalHitMental *= 2;
+              if (config.tier === 'MUD' || config.tier === 'STREET') {
+                if (Math.random() < 0.5) {
+                  nextCrises.shadowbanTurns = 3;
+                } else {
+                  nextCrises.deadstockOverhead += 250;
+                }
+                currentNews.unshift(`CRITICAL FAILURE: Brand integrity shattered! You have been shadowbanned or hit with deadstock fees.`);
+              } else if (config.tier === 'STARTUP' || config.tier === 'CORPORATE') {
+                nextCrises.accountsFrozen = true;
+                currentNews.unshift(`CRITICAL FAILURE: Regulatory audit or broken contract detected. Corporate bank accounts have been FROZEN.`);
+              } else if (config.tier === 'ELITE' || config.tier === 'MOGUL') {
+                nextCrises.blacklistTurns = 4;
+                currentNews.unshift(`CRITICAL FAILURE: Exiled from high-society network circles. You are BLACKLISTED from elite operations.`);
+              } else {
+                currentNews.unshift(`CRITICAL FAILURE: ${config.name} collapsed spectacularly.`);
               }
             }
           }
@@ -115,37 +175,40 @@ export const useGameStore = create<GameState>()(
             bag: state.pl.bag - config.upfrontCost + finalYieldCash,
             clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + finalYieldClout)),
             aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + finalYieldAura)),
-            mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + config.hitMental)),
+            mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + finalHitMental)),
             heat: Math.min(100, Math.max(0, state.pl.heat + config.hitHeat)),
             hustleFatigue: {
               ...state.pl.hustleFatigue,
-              [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + config.fatigueCost
-            }
+              [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? config.fatigueCost : Math.floor(config.fatigueCost * 0.5))
+            },
+            crises: nextCrises
           };
 
-          // 3. Increment specialized stats
-          const nextStreet = { ...nextPl.streetStats };
-          const nextStartup = { ...nextPl.startupStats };
+          // 3. Increment specialized stats (Only on Success)
+          if (isSuccess) {
+            const nextStreet = { ...nextPl.streetStats };
+            const nextStartup = { ...nextPl.startupStats };
 
-          if (hustleId === 'cc') nextStreet.ccSubs += 1000;
-          if (hustleId === 'pod') nextStreet.podEpisodes += 1;
-          if (hustleId === 'music') nextStreet.audioTracks += 1;
-          if (hustleId === 'drip') nextStreet.dripStock += 10;
-          if (hustleId === 'meme') nextStreet.activeMemeTokens += 1;
-          if (hustleId === 'saas_mvp') nextStartup.saasUsers += 500;
-          if (hustleId === 'agency_scale') nextStartup.agencyStaff += 1;
-          if (hustleId === 'ecom_brand') nextStartup.ecomOrders += 200;
+            if (hustleId === 'cc') nextStreet.ccSubs += 1000;
+            if (hustleId === 'pod') nextStreet.podEpisodes += 1;
+            if (hustleId === 'music') nextStreet.audioTracks += 1;
+            if (hustleId === 'drip') nextStreet.dripStock += 10;
+            if (hustleId === 'meme') nextStreet.activeMemeTokens += 1;
+            if (hustleId === 'saas_mvp') nextStartup.saasUsers += 500;
+            if (hustleId === 'agency_scale') nextStartup.agencyStaff += 1;
+            if (hustleId === 'ecom_brand') nextStartup.ecomOrders += 200;
 
-          if (hustleId === 'r_plasma') nextPl.plasmaUsedThisMonth = true;
-          if (hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') nextPl.swCooldownTurns = 3;
+            if (hustleId === 'r_plasma') nextPl.plasmaUsedThisMonth = true;
+            if (hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') nextPl.swCooldownTurns = 3;
 
-          nextPl.streetStats = nextStreet;
-          nextPl.startupStats = nextStartup;
+            nextPl.streetStats = nextStreet;
+            nextPl.startupStats = nextStartup;
+          }
 
           const nextState: GameState = {
             ...state,
             pl: nextPl,
-            news: [`EXECUTED: ${config.name}. ${config.description}`, ...state.news],
+            news: currentNews,
           };
 
           return applyAdvancement(nextState, 1);

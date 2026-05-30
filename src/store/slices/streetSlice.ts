@@ -53,7 +53,10 @@ export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameS
     // 6. Calculate Financials & Stat Yields
     let grossRevenue = unitsSold * retailPrice;
 
-    const cloutReward = Math.floor(unitsSold * 0.2);
+    let cloutReward = Math.floor(unitsSold * 0.2);
+    if (state.pl.crises.shadowbanTurns > 0) {
+      cloutReward = Math.floor(cloutReward * 0.5);
+    }
     let auraReward = 0;
     if (selectedQuality === 'LUXURY') auraReward = Math.floor(unitsSold * 0.5);
     else if (selectedQuality === 'PREMIUM') auraReward = Math.floor(unitsSold * 0.1);

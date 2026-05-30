@@ -2,6 +2,13 @@ export type MarketType = 'NORMAL' | 'RECESSION' | 'BULL_MARKET' | 'CRACKDOWN';
 
 export type HustleID = string;
 
+export interface CrisisState {
+  shadowbanTurns: number;       // Halves all Clout generation across Mud/Street if > 0
+  deadstockOverhead: number;    // Compounding dollar fee added straight to monthly rent burn rate
+  accountsFrozen: boolean;      // If true, completely blocks buying upgrades or unlocking tabs until cleared
+  blacklistTurns: number;       // Locks the player out of executing Elite/Mogul operations if > 0
+}
+
 export interface PlayerStats {
   bag: number;
   mentalHealth: number;
@@ -41,6 +48,7 @@ export interface PlayerStats {
     agencyStaff: number;
     ecomOrders: number;
   };
+  crises: CrisisState;
 }
 
 export interface GlobalModifiers {
@@ -88,6 +96,7 @@ export interface GameState {
   adv: (intervals?: number) => void;
   runHustle: (hustleId: string) => void;
   upgradeHustle: (hustleId: string) => void;
+  unfreezeAccounts: () => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;

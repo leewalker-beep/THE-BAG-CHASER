@@ -105,9 +105,10 @@ function App() {
             return (
               <button
                 key={t}
+                disabled={pl.crises.accountsFrozen}
                 onClick={() => setActiveTab(t)}
                 className={`px-3 py-1 rounded flex-none text-[9px] font-black uppercase tracking-tighter transition-all
-                  ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                  ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'} ${pl.crises.accountsFrozen ? 'opacity-20 cursor-not-allowed' : ''}`}
               >
                 {t}
               </button>
@@ -116,8 +117,47 @@ function App() {
         </div>
       </header>
 
+      {/* STEP 1.5: CRISIS BANNERS */}
+      <div className="fixed top-24 left-0 right-0 z-40 px-4 pointer-events-none">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2">
+           {pl.crises.shadowbanTurns > 0 && (
+             <div className="bg-red-900/80 backdrop-blur border border-red-500 p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
+               ⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns} mo)
+             </div>
+           )}
+           {pl.crises.deadstockOverhead > 0 && (
+             <div className="bg-orange-900/80 backdrop-blur border border-orange-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
+               📦 DEADSTOCK BURN (+${pl.crises.deadstockOverhead}/mo)
+             </div>
+           )}
+           {pl.crises.accountsFrozen && (
+             <div className="bg-red-600 border-2 border-white p-2 rounded text-[10px] font-black text-white uppercase text-center">
+               🚫 ACCOUNTS FROZEN
+             </div>
+           )}
+           {pl.crises.blacklistTurns > 0 && (
+             <div className="bg-slate-900 border border-slate-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
+               ❌ ELITE BLACKLIST ({pl.crises.blacklistTurns} mo)
+             </div>
+           )}
+        </div>
+      </div>
+
       {/* STEP 3: THE CENTER CORES (2-COLUMN HUSTLE GRID) */}
-      <main className="pt-28 pb-32 px-4 max-w-2xl mx-auto">
+      <main className="pt-32 pb-32 px-4 max-w-2xl mx-auto">
+        {pl.crises.accountsFrozen && (
+           <div className="mb-8 p-6 bg-red-900/20 border-2 border-red-600 rounded-2xl flex flex-col items-center gap-4 text-center">
+              <div className="text-sm font-black text-white uppercase tracking-widest">Legal Crisis Detected</div>
+              <p className="text-xs text-red-400 font-bold">Your corporate accounts are frozen. Operations and upgrades are halted.</p>
+              <button
+                onClick={() => state.unfreezeAccounts()}
+                className="w-full py-4 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded uppercase tracking-widest transition-all shadow-xl shadow-red-900/40"
+              >
+                Pay $5,000 Corporate Legal Retainer to Unfreeze Accounts
+              </button>
+           </div>
+        )}
+
         {activeHustleView === null ? (
           <>
             <div className="mb-6 flex items-center justify-between">
@@ -179,7 +219,7 @@ function App() {
               </div>
               <button
                 onClick={state.escapeTheMud}
-                disabled={bag < 5000 || clout < 20 || aura < 20}
+                disabled={bag < 5000 || clout < 20 || aura < 20 || pl.crises.accountsFrozen}
                 className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-20 text-white text-xs font-black rounded uppercase tracking-widest transition-all shadow-lg shadow-yellow-900/20"
               >
                 Sign HQ Lease ($3,000)
