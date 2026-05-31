@@ -68,4 +68,11 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
   { id: 'r_therapy', tier: 'STARTUP', name: 'Mental Wellness Coaching', description: 'Hire a high-performance cognitive therapist to process corporate stress.', upfrontCost: 1200, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: 0, hitMental: 45, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
   { id: 'r_spa', tier: 'CORPORATE', name: 'Country Club Spa Day', description: 'Step off the trading floor for high-end executive decompression.', upfrontCost: 4500, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: 25, hitMental: 55, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
   { id: 'r_vending', tier: 'MUD', name: 'Vending Machine Route', description: 'Deploy cash-flowing candy and beverage machines in local retail breakrooms.', upfrontCost: 1500, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: 0, hitMental: 0, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: true, passiveYieldModifier: 'VENDING_ROUTE' },
+
+  // --- TIER 0 ADDITION ---
+  { id: 'r_flyers', tier: 'MUD', name: 'Guerrilla Poster Campaign', description: 'Spend a month slapping up flyer prints to build local neighborhood name recognition.', upfrontCost: 50, cloutReq: 0, yieldCash: 0, yieldClout: 15, yieldAura: 2, hitMental: -2, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
+
+  // --- TIER 1 ADDITIONS ---
+  { id: 'r_street_cred', tier: 'STREET', name: 'Local Style Pop-Ups', description: 'Invest in curated wardrobe updates and local style presence to forge safe, permanent street respect.', upfrontCost: 300, cloutReq: 0, yieldCash: 0, yieldClout: 10, yieldAura: 25, hitMental: 5, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
+  { id: 'r_ghost_mode', tier: 'STREET', name: 'Lay Low & Ghost Socials', description: 'Stay completely out of the public eye, scrub controversial podcast logs, and let active Heat drain away.', upfrontCost: 0, cloutReq: 0, yieldCash: 0, yieldClout: -10, yieldAura: 0, hitMental: 15, hitHeat: -25, fatigueCost: 0, successChance: 1.0, isPassive: false },
 ];
