@@ -86,7 +86,11 @@ export interface PlayerStats {
     footprint: number;
     supplyChain: 'OUTSOURCED' | 'INTEGRATED';
   };
+  streetwearPanel: {
+    brandTier: 'UNDERGROUND_IP' | 'SOHO_STORE' | 'PARIS_RUNWAY';
+  };
   hypeIsActive: boolean;
+  lastExecutedHustleId: string | null;
   crises: CrisisState;
 }
 
@@ -163,4 +167,6 @@ export interface GameState {
   executeAgencyRetainer: () => void;
   setFranchiseInput: (field: string, value: any) => void;
   executeFranchiseTurn: () => void;
+  setStreetwearInput: (field: string, value: any) => void;
+  executeStreetwearRun: () => void;
 }

@@ -71,6 +71,22 @@ export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameS
     const multiplier = levelMultipliers[currentLvl] || 1.0;
     grossRevenue *= multiplier;
 
+    const currentNews = [...state.news];
+
+    // Anti-Spam Filter
+    if (state.pl.lastExecutedHustleId === 'drop') {
+      grossRevenue *= 0.5;
+      cloutReward *= 0.5;
+      currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
+    }
+
+    // Synergy Ingestion
+    if (state.pl.hypeIsActive) {
+      grossRevenue *= 2;
+      auraReward *= 2;
+      currentNews.unshift("SYNERGY COMBO: Content hype applied! Business payouts doubled.");
+    }
+
     // 8. Update State
     const nextPl = {
       ...state.pl,
@@ -81,15 +97,18 @@ export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameS
         ...state.pl.swPanelState,
         warehouseBrickedStock: state.pl.swPanelState.warehouseBrickedStock + unitsBricked
       },
-      swCooldownTurns: 3 // Standard drop cooldown
+      swCooldownTurns: 3, // Standard drop cooldown
+      hypeIsActive: false,
+      lastExecutedHustleId: 'drop'
     };
 
     const summaryMessage = `DROP SUMMARY: ${selectedQuality} Drop of ${selectedBatchSize} units. Sold ${unitsSold} @ $${retailPrice} (${(demandRatio * 100).toFixed(1)}% Demand). Revenue: $${grossRevenue.toLocaleString()}. Bricked: ${unitsBricked}.`;
+    currentNews.unshift(summaryMessage);
 
     const nextState: GameState = {
       ...state,
       pl: nextPl,
-      news: [summaryMessage, ...state.news]
+      news: currentNews
     };
 
     // 9. Automatically trigger advancement
