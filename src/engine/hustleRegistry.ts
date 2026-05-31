@@ -49,6 +49,7 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
   // --- TIER 3: CORPORATE ---
   { id: 'consultant', tier: 'CORPORATE', name: 'Strategy Consultant', description: 'High-level advisory for Fortune 500 firms.', upfrontCost: 10000, cloutReq: 500, yieldCash: 25000, yieldClout: 200, yieldAura: 50, hitMental: -25, hitHeat: 0, fatigueCost: 30, isPassive: false, successChance: 0.8, icon: '💼' },
   { id: 'equity_trader', tier: 'CORPORATE', name: 'Equity Trader', description: 'Leveraging capital in the public markets.', upfrontCost: 50000, cloutReq: 300, yieldCash: 40000, yieldClout: 100, yieldAura: 20, hitMental: -40, hitHeat: 15, fatigueCost: 40, isPassive: false, successChance: 0.8, icon: '📈' },
+  { id: 'global_franchise', tier: 'CORPORATE', name: 'Global Franchise Syndicate', description: 'Scale an international network of highly optimized commercial locations and supply chains.', upfrontCost: 50000, cloutReq: 120, yieldCash: 0, yieldClout: 0, yieldAura: 0, hitMental: 0, hitHeat: 0, fatigueCost: 25, successChance: 0.85, icon: '🌍', isPassive: false },
 
   // --- TIER 5: ELITE ---
   { id: 'venture_capital', tier: 'ELITE', name: 'Venture Capital', description: 'Funding the next generation of unicorns.', upfrontCost: 250000, cloutReq: 1000, yieldCash: 150000, yieldClout: 500, yieldAura: 200, hitMental: -20, hitHeat: 10, fatigueCost: 10, isPassive: true, successChance: 0.75, icon: '🦄' },

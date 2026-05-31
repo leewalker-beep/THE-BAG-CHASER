@@ -306,6 +306,11 @@ export const useGameStore = create<GameState>()(
           const isSuccess = Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
           let finalYieldCash = isSuccess ? config.yieldCash : 0;
+
+          if (state.pl.crises.laborStrikeTurns > 0 && config.tier === 'CORPORATE') {
+            finalYieldCash = 0;
+          }
+
           let finalYieldClout = isSuccess ? config.yieldClout : 0;
           let finalYieldAura = isSuccess ? config.yieldAura : 0;
           let finalHitMental = config.hitMental;
@@ -424,6 +429,88 @@ export const useGameStore = create<GameState>()(
       ...createMudSlice(set),
       ...createStreetSlice(set),
       ...createStartupSlice(set),
+
+      setFranchiseInput: (field, value) => set((state) => ({
+        pl: {
+          ...state.pl,
+          franchisePanel: { ...state.pl.franchisePanel, [field]: value }
+        }
+      })),
+
+      executeFranchiseTurn: () => set((state) => {
+        const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === 'global_franchise');
+        const { sector, footprint, supplyChain } = state.pl.franchisePanel;
+        const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
+        const totalSetupCost = baseSetupCosts[sector] * footprint;
+
+        if (state.pl.bag < totalSetupCost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${totalSetupCost.toLocaleString()} to deploy this expansion.`, ...state.news] };
+        }
+
+        const isSuccess = Math.random() < (config?.successChance || 0.85);
+        const currentNews = [...state.news];
+
+        let finalYieldCash = 0;
+        let finalYieldClout = 0;
+        let finalYieldAura = 0;
+        let hitMental = -20;
+        const nextCrises = { ...state.pl.crises };
+        let nextHypeIsActive = state.pl.hypeIsActive;
+
+        if (isSuccess) {
+          const baseCashYields = { FAST_FOOD: 12000, WELLNESS: 28000, LOGISTICS: 75000 };
+          const baseCloutYields = { FAST_FOOD: 40, WELLNESS: 150, LOGISTICS: 100 };
+
+          finalYieldCash = baseCashYields[sector] * footprint;
+
+          if (state.pl.crises.laborStrikeTurns > 0) {
+             finalYieldCash = 0;
+             currentNews.unshift(`STRIKE BLOCK: No cash generated from corporate franchise operations during the active labor strike.`);
+          }
+
+          finalYieldClout = baseCloutYields[sector] * footprint;
+          finalYieldAura = 20 * footprint;
+
+          if (supplyChain === 'OUTSOURCED') {
+            finalYieldCash *= 0.6; // 40% logistics tax
+            currentNews.unshift(`EXPANSION SUCCESS: ${sector} network scaled via outsourced logistics. 40% tax applied.`);
+          } else {
+            currentNews.unshift(`EXPANSION SUCCESS: Vertically integrated ${sector} network is now operational.`);
+          }
+
+          if (state.pl.hypeIsActive && sector === 'WELLNESS') {
+            finalYieldCash *= 2;
+            finalYieldClout *= 2;
+            nextHypeIsActive = false;
+            currentNews.unshift(`SYNERGY: Wellness hype cycle triggered! Franchise yields doubled.`);
+          }
+        } else {
+          finalYieldCash = 0;
+          hitMental = -40;
+          if (supplyChain === 'INTEGRATED') {
+            nextCrises.laborStrikeTurns = 3;
+            currentNews.unshift(`CRITICAL FAILURE: Supply chain collapse triggered a total Labor Strike.`);
+          } else {
+            currentNews.unshift(`FAILURE: The franchise failed to find local market fit. Total capital loss.`);
+          }
+        }
+
+        const nextState = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - totalSetupCost + finalYieldCash,
+            clout: Math.min(200, state.pl.clout + finalYieldClout),
+            aura: Math.min(200, state.pl.aura + finalYieldAura),
+            mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
+            hypeIsActive: nextHypeIsActive,
+            crises: nextCrises
+          },
+          news: currentNews
+        };
+
+        return applyAdvancement(clampStats(nextState as GameState), 1);
+      }),
     }),
     {
       name: SAVE_KEY,
