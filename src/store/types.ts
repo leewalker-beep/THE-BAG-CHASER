@@ -7,6 +7,7 @@ export interface CrisisState {
   deadstockOverhead: number;    // Compounding dollar fee added straight to monthly rent burn rate
   accountsFrozen: boolean;      // If true, completely blocks buying upgrades or unlocking tabs until cleared
   blacklistTurns: number;       // Locks the player out of executing Elite/Mogul operations if > 0
+  laborStrikeTurns: number;     // If > 0, completely halts cash generation from all Corporate level operations
 }
 
 export interface PlayerStats {
@@ -80,6 +81,12 @@ export interface PlayerStats {
     client: 'SMB' | 'MID' | 'ENTERPRISE';
     staff: 'INTERNS' | 'FREELANCERS';
   };
+  franchisePanel: {
+    sector: 'FAST_FOOD' | 'WELLNESS' | 'LOGISTICS';
+    footprint: number;
+    supplyChain: 'OUTSOURCED' | 'INTEGRATED';
+  };
+  hypeIsActive: boolean;
   crises: CrisisState;
 }
 
@@ -154,4 +161,6 @@ export interface GameState {
   executeEcomBrand: () => void;
   setAgencyInput: (field: string, value: any) => void;
   executeAgencyRetainer: () => void;
+  setFranchiseInput: (field: string, value: any) => void;
+  executeFranchiseTurn: () => void;
 }

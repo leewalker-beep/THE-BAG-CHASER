@@ -85,6 +85,9 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     if (currentPl.crises.blacklistTurns > 0) {
       currentPl.crises.blacklistTurns -= 1;
     }
+    if (currentPl.crises.laborStrikeTurns > 0) {
+      currentPl.crises.laborStrikeTurns -= 1;
+    }
 
     // Reset monthly flags
     currentPl.mo += 1;
