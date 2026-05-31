@@ -232,17 +232,18 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
-      runHustle: (hustleId: string) =>
+      executeHustle: (hustleId: string) =>
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
 
-          // 1. Passive Asset Handle (Instant)
+          // 1. Passive Asset Handle (Instant Execution with Time Advancement)
           if (config.isPassive && hustleId === 'r_vending') {
             if (state.pl.bag < config.upfrontCost) {
               return { news: [`INSUFFICIENT FUNDS: Need $${config.upfrontCost.toLocaleString()} to purchase ${config.name}.`, ...state.news] };
             }
-            return {
+            const nextState = {
+              ...state,
               pl: {
                 ...state.pl,
                 bag: state.pl.bag - config.upfrontCost,
@@ -253,6 +254,7 @@ export const useGameStore = create<GameState>()(
               },
               news: ["ASSET ACQUIRED: Added 1 Vending Machine to your portfolio.", ...state.news]
             };
+            return applyAdvancement(clampStats(nextState as GameState), 1);
           }
 
           // 2. Special Logic: Audio Studio (Music Syndicate)

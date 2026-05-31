@@ -126,7 +126,7 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
-  runHustle: (hustleId: string) => void;
+  executeHustle: (hustleId: string) => void;
   upgradeHustle: (hustleId: string) => void;
   unfreezeAccounts: () => void;
 

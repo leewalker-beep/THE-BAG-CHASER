@@ -172,11 +172,27 @@ function App() {
               {(() => {
                 const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
                 return currentTabHustles.map(h => {
-                  const isWellness = ['r_sleep', 'r_chill', 'r_therapy', 'r_spa'].includes(h.id);
+                  const isInstant = h.id.startsWith('r_');
 
                   let displayYield = 'SPECIAL';
-                  if (isWellness) displayYield = `⚡ Instant Execute: Recover +${h.hitMental}% Mental`;
-                  else if (h.id === 'r_vending') displayYield = `Owned: ${pl.assetsOwned.vendingMachines}`;
+                  if (isInstant) {
+                    let shift = '';
+                    if (h.id === 'r_vending') shift = `Owned: ${pl.assetsOwned.vendingMachines}`;
+                    else if (h.hitHeat < 0) shift = `Heat ${h.hitHeat}`;
+                    else if (h.yieldAura > 20) shift = `Aura +${h.yieldAura}`;
+                    else if (h.yieldClout > 0) shift = `Clout +${h.yieldClout}`;
+                    else if (h.yieldClout < 0) shift = `Clout ${h.yieldClout}`;
+                    else if (h.yieldCash > 0) shift = `Cash +$${h.yieldCash.toLocaleString()}`;
+                    else if (h.yieldAura > 0) shift = `Aura +${h.yieldAura}`;
+                    else if (h.hitMental > 0) shift = `Mental +${h.hitMental}%`;
+
+                    const actionPrefix: Record<string, string> = {
+                      r_sleep: 'Sleep', r_chill: 'Chill', r_therapy: 'Therapy', r_spa: 'Spa Day',
+                      r_flyers: 'Slap Posters', r_street_cred: 'Buy Drip', r_ghost_mode: 'Go Ghost',
+                      r_labor: 'Grind', r_delivery: 'Deliver', r_survey: 'Survey', r_plasma: 'Sell Plasma', r_scrap: 'Scrap'
+                    };
+                    displayYield = `⚡ ${actionPrefix[h.id] || h.name}${shift ? ': ' + shift : ''}`;
+                  }
                   else if (h.id === 'audio') displayYield = `Tracks Released: ${pl.assetsOwned.masterTracks}`;
                   else if (h.id === 'saas_mvp') displayYield = 'SUBSCRIPTION REV';
                   else if (h.id === 'festival') displayYield = 'TICKET REVENUE';
@@ -204,10 +220,10 @@ function App() {
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
                       lockText={`LOCKED: Requires ${activeTab} Tier`}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => (isWellness || h.id === 'r_vending') ? state.runHustle(h.id) : setActiveHustleView(h.id)}
-                      variant={isWellness ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
+                      onClick={() => isInstant ? state.executeHustle(h.id) : setActiveHustleView(h.id)}
+                      variant={isInstant ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
-                      className={isWellness ? 'col-span-2 w-full' : ''}
+                      className={isInstant ? 'col-span-2 w-full' : ''}
                     />
                   );
                 });
@@ -356,8 +372,8 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
     }
   };
 
-  const runHustle = () => {
-    state.runHustle(hustleId);
+  const executeHustle = () => {
+    state.executeHustle(hustleId);
   };
 
   if (!config) return <div className="text-red-500">Hustle Config Not Found</div>;
@@ -1032,7 +1048,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
           </button>
         )}
         <button
-          onClick={runHustle}
+          onClick={executeHustle}
           className={`${rankInfo ? '' : 'md:col-span-2'} py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]`}
         >
           {hustleId === 'audio'
