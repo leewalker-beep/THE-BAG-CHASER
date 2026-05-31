@@ -10,6 +10,52 @@ import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
 
 const SAVE_KEY = 'bag-chaser-state';
 
+const clampStats = (state: GameState): GameState => {
+  const { tier } = state.pl;
+  let ceiling = Infinity;
+
+  if (tier === 0) ceiling = 30; // MUD
+  else if (tier === 1) ceiling = 50; // STREET
+  else if (tier === 2) ceiling = 100; // STARTUP
+  else if (tier === 3) ceiling = 200; // CORPORATE
+  else if (tier === 5) ceiling = 300; // ELITE
+  else if (tier === 6) ceiling = 500; // MOGUL
+  else if (tier === 8) ceiling = 1000; // PRESIDENT
+  else if (tier >= 9) ceiling = Infinity; // OPEN
+
+  const news = [...state.news];
+  let reached = false;
+
+  let nextClout = state.pl.clout;
+  let nextAura = state.pl.aura;
+
+  if (nextClout > ceiling) {
+    nextClout = ceiling;
+    reached = true;
+  }
+  if (nextAura > ceiling) {
+    nextAura = ceiling;
+    reached = true;
+  }
+
+  if (reached) {
+    console.warn("MAX CEILING REACHED: Upgrade your progression tier to expand your stats capacity.");
+    if (!news[0]?.includes("MAX CEILING REACHED")) {
+      news.unshift("MAX CEILING REACHED: Upgrade your progression tier to expand your stats capacity.");
+    }
+  }
+
+  return {
+    ...state,
+    pl: {
+      ...state.pl,
+      clout: nextClout,
+      aura: nextAura
+    },
+    news
+  };
+};
+
 export const useGameStore = create<GameState>()(
   persist(
     (set) => ({
@@ -25,6 +71,111 @@ export const useGameStore = create<GameState>()(
       setActiveHustleView: (activeHustleView) => set({ activeHustleView }),
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
+
+      setTechFlipInput: (field, value) => set((state) => ({
+        pl: {
+          ...state.pl,
+          techFlipPanel: { ...state.pl.techFlipPanel, [field]: value }
+        }
+      })),
+
+      executeTechFlipDrop: () => set((state) => {
+        const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
+        const lotCosts = { PHONES: 150, LAPTOPS: 400, RIGS: 1200 };
+        const toolCosts = { BUDGET: 50, PRECISION: 200 };
+        const totalCost = lotCosts[selectedLot] + toolCosts[toolQuality];
+
+        if (state.pl.bag < totalCost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${totalCost} for this operation.`, ...state.news] };
+        }
+
+        const baseChances = { PHONES: 0.85, LAPTOPS: 0.70, RIGS: 0.55 };
+        let successChance = baseChances[selectedLot];
+        if (toolQuality === 'PRECISION') successChance += 0.15;
+
+        const isSuccess = Math.random() < successChance;
+        const currentNews = [...state.news];
+        let yieldCash = 0;
+        let yieldClout = 0;
+        let yieldAura = 0;
+        let hitMental = -8;
+
+        if (isSuccess) {
+          const maxPrice = lotCosts[selectedLot] * 2;
+          yieldCash = Math.min(listingPrice, maxPrice);
+          yieldClout = 5;
+          currentNews.unshift(`SUCCESS: Refurbished ${selectedLot} sold for $${yieldCash.toLocaleString()}.`);
+        } else {
+          yieldCash = 0;
+          yieldAura = -10;
+          hitMental = -20;
+          currentNews.unshift(`FAILURE: The hardware fried. Lost the lot and took a hit to your reputation.`);
+        }
+
+        const nextState = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - totalCost + yieldCash,
+            clout: state.pl.clout + yieldClout,
+            aura: state.pl.aura + yieldAura,
+            mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
+          },
+          news: currentNews
+        };
+
+        return applyAdvancement(clampStats(nextState), 1);
+      }),
+
+      setPodcastInput: (field, value) => set((state) => ({
+        pl: {
+          ...state.pl,
+          podcastPanel: { ...state.pl.podcastPanel, [field]: value }
+        }
+      })),
+
+      executePodcastEpisode: () => set((state) => {
+        const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
+        const guestCosts = { LOCAL: 100, MICRO: 500, ICON: 2500 };
+        const baseCloutYields = { LOCAL: 10, MICRO: 40, ICON: 200 };
+
+        if (state.pl.bag < guestCosts[selectedGuest]) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${guestCosts[selectedGuest]} to book this guest.`, ...state.news] };
+        }
+
+        const controversyChance = unhingedSlider * 0.20;
+        const isCrisis = Math.random() < controversyChance;
+        const currentNews = [...state.news];
+
+        let finalYieldClout = 0;
+        let finalYieldCash = 0;
+        let finalHitMental = -5;
+        const nextCrises = { ...state.pl.crises };
+
+        if (isCrisis) {
+          finalHitMental = -25;
+          nextCrises.shadowbanTurns = 3;
+          currentNews.unshift(`CONTROVERSY: The episode exploded... in the wrong way. You've been shadowbanned.`);
+        } else {
+          finalYieldClout = baseCloutYields[selectedGuest] * unhingedSlider;
+          finalYieldCash = (guestCosts[selectedGuest] * 0.5) * unhingedSlider;
+          currentNews.unshift(`VIRAL: The episode with the ${selectedGuest} guest was a hit! (+${finalYieldClout} Clout)`);
+        }
+
+        const nextState = {
+          ...state,
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - guestCosts[selectedGuest] + finalYieldCash,
+            clout: state.pl.clout + finalYieldClout,
+            mentalHealth: Math.max(0, state.pl.mentalHealth + finalHitMental),
+            crises: nextCrises
+          },
+          news: currentNews
+        };
+
+        return applyAdvancement(clampStats(nextState), 1);
+      }),
 
       unfreezeAccounts: () => set((state) => {
         if (state.pl.bag < 5000) {
@@ -211,7 +362,7 @@ export const useGameStore = create<GameState>()(
             news: currentNews,
           };
 
-          return applyAdvancement(nextState, 1);
+          return applyAdvancement(clampStats(nextState), 1);
         }),
 
       ...createMudSlice(set),
