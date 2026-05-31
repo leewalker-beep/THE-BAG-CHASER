@@ -144,7 +144,7 @@ function App() {
         </div>
       </div>
 
-      {/* STEP 3: THE CENTER CORES (2-COLUMN HUSTLE GRID) */}
+      {/* STEP 3: THE CENTER CORES (UNIFORM 2-COLUMN GRID) */}
       <main className="pt-32 pb-32 px-4 max-w-2xl mx-auto">
         {pl.crises.accountsFrozen && (
            <div className="mb-8 p-6 bg-red-900/20 border-2 border-red-600 rounded-2xl flex flex-col items-center gap-4 text-center">
@@ -171,47 +171,19 @@ function App() {
             <div className="mb-2">
               <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Business & Active Operations</h3>
             </div>
-            <div className="grid grid-cols-2 gap-3 mb-8">
+            <div className="grid grid-cols-2 gap-3 mb-8 w-full">
               {(() => {
                 const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
                 const operations = currentTabHustles.filter(h => !h.id.startsWith('r_') || h.isPassive);
                 return operations.map(h => {
-                  const isInstant = h.id.startsWith('r_');
-                  let displayYield = 'SPECIAL';
-                  if (isInstant) {
-                    let shift = '';
-                    if (h.id === 'r_vending') shift = `Owned: ${pl.assetsOwned.vendingMachines}`;
-                    displayYield = `⚡ ${h.name}${shift ? ': ' + shift : ''}`;
-                  }
-                  else if (h.id === 'audio') displayYield = `Tracks Released: ${pl.assetsOwned.masterTracks}`;
-                  else if (h.id === 'saas_mvp') displayYield = 'SUBSCRIPTION REV';
-                  else if (h.id === 'festival') displayYield = 'TICKET REVENUE';
-                  else if (h.id === 'agency_scale') displayYield = 'CLIENT RETAINER';
-                  else if (h.id === 'ecom_brand') displayYield = 'D2C PROFITS';
-                  else if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
-                  else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
-                  else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
-
-                  let displayCost = 'FREE';
-                  if (h.id === 'r_vending') displayCost = 'Purchase Route Asset (-$1,500)';
-                  else if (h.id === 'audio') displayCost = pl.streetStats.studioOwned ? '$500' : 'ESTABLISH STUDIO';
-                  else if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
-                  else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
-                  else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
-                  else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
-                  else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
-
                   return (
                     <HustleCard
                       key={h.id}
                       title={h.name}
-                      yield={displayYield}
-                      cost={displayCost}
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
-                      lockText={`LOCKED: Requires ${activeTab} Tier`}
-                      onClick={() => isInstant ? state.executeHustle(h.id) : setActiveHustleView(h.id)}
-                      variant={isInstant ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
-                      icon={h.icon ? <path d={h.icon} /> : undefined}
+                      lockText={`LOCKED: ${activeTab} TIER`}
+                      onClick={() => setActiveHustleView(h.id)}
+                      icon={h.icon}
                     />
                   );
                 });
@@ -223,47 +195,20 @@ function App() {
             <div className="mb-2">
               <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Lifestyle & Empire Logistics</h3>
             </div>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3 w-full">
               {(() => {
                 const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
                 const logistics = currentTabHustles.filter(h => h.id.startsWith('r_') && !h.isPassive);
                 return logistics.map(h => {
-                  let shift = '';
-                  if (h.hitHeat < 0) shift = `Heat ${h.hitHeat}`;
-                  else if (h.yieldAura > 20) shift = `Aura +${h.yieldAura}`;
-                  else if (h.yieldClout > 0) shift = `Clout +${h.yieldClout}`;
-                  else if (h.yieldClout < 0) shift = `Clout ${h.yieldClout}`;
-                  else if (h.yieldCash > 0) shift = `Cash +$${h.yieldCash.toLocaleString()}`;
-                  else if (h.yieldAura > 0) shift = `Aura +${h.yieldAura}`;
-                  else if (h.hitMental > 0) shift = `Mental +${h.hitMental}%`;
-
-                  const actionPrefix: Record<string, string> = {
-                    r_sleep: 'Sleep', r_chill: 'Chill', r_therapy: 'Therapy', r_spa: 'Spa Day',
-                    r_flyers: 'Slap Posters', r_pr_campaign: 'Stunt', r_ghost_mode: 'Go Ghost',
-                    r_labor: 'Grind', r_delivery: 'Deliver', r_survey: 'Survey', r_plasma: 'Sell Plasma', r_scrap: 'Scrap'
-                  };
-                  const displayYield = `⚡ ${actionPrefix[h.id] || h.name}${shift ? ': ' + shift : ''}`;
-
-                  let displayCost = 'FREE';
-                  if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
-                  else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
-                  else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
-                  else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
-                  else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
-
                   return (
                     <HustleCard
                       key={h.id}
                       title={h.name}
-                      yield={displayYield}
-                      cost={displayCost}
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
-                      lockText={`LOCKED: Requires ${activeTab} Tier`}
+                      lockText={`LOCKED: ${activeTab} TIER`}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => state.executeHustle(h.id)}
-                      variant="special"
-                      icon={h.icon ? <path d={h.icon} /> : undefined}
-                      className="w-full"
+                      onClick={() => setActiveHustleView(h.id)}
+                      icon={h.icon}
                     />
                   );
                 });
@@ -328,20 +273,17 @@ function StatBadge({ label, value, color }: { label: string, value: string | num
 
 interface HustleCardProps {
   title: string;
-  yield: string;
-  cost: string;
   onClick: () => void;
   disabled?: boolean;
   locked?: boolean;
   lockText?: string;
-  variant?: 'danger' | 'special' | 'default';
-  icon?: React.ReactNode;
+  icon: string;
   className?: string;
 }
 
-function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText, variant, icon, className }: HustleCardProps) {
-  const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-3 text-left transition-all active:scale-[0.98] group";
-  const colorClass = variant === 'danger' ? 'hover:border-red-500/50' : variant === 'special' ? 'hover:border-purple-500/50' : 'hover:border-slate-600';
+function HustleCard({ title, onClick, disabled, locked, lockText, icon, className }: HustleCardProps) {
+  const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-6 text-center transition-all active:scale-[0.95] group";
+  const colorClass = "hover:border-emerald-500/50";
   const disabledClass = (disabled || locked) ? 'cursor-not-allowed' : 'cursor-pointer';
 
   return (
@@ -350,23 +292,14 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText
       disabled={disabled}
       className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${locked ? 'pointer-events-none' : ''} ${className || ''}`}
     >
-      <div className={`relative z-10 ${locked ? 'opacity-40 blur-[1px]' : ''}`}>
-        <div className="text-[10px] font-black uppercase tracking-tight text-slate-400 mb-1 group-hover:text-white transition-colors">{title}</div>
-        <div className="flex justify-between items-end">
-          <div className="text-sm font-black text-emerald-400">{y}</div>
-          <div className="text-[9px] font-bold text-slate-600 uppercase">{cost}</div>
-        </div>
-        {icon && (
-          <div className="absolute top-1 right-1 opacity-5 group-hover:opacity-10 transition-opacity">
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">{icon}</svg>
-          </div>
-        )}
+      <div className={`relative z-10 flex flex-col items-center justify-center gap-3 ${locked ? 'opacity-20 blur-[2px]' : ''}`}>
+        <div className="text-4xl mb-1">{icon}</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors leading-tight">{title}</div>
       </div>
       {locked && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
-          <div className="bg-slate-950/80 border border-slate-700 px-2 py-1 rounded text-[8px] font-black text-slate-200 uppercase tracking-widest flex items-center gap-1 shadow-2xl">
-            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 116 0v2H7V7z"></path></svg>
-            {lockText || 'Locked'}
+          <div className="bg-slate-950/90 border border-slate-700 px-3 py-1 rounded text-[8px] font-black text-slate-200 uppercase tracking-widest flex items-center gap-1 shadow-2xl">
+            {lockText || 'LOCKED'}
           </div>
         </div>
       )}
