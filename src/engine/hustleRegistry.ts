@@ -59,4 +59,10 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
 
   // --- TIER 9: OPEN ---
   { id: 'global_index', tier: 'OPEN', name: 'Global Index', description: 'Owning the majority share of world production.', upfrontCost: 25000000, cloutReq: 100000, yieldCash: 10000000, yieldClout: 20000, yieldAura: 5000, hitMental: -10, hitHeat: 10, fatigueCost: 0, isPassive: true, successChance: 1.0 },
+
+  // --- WELLNESS & RECOVERY (INSTANT) ---
+  { id: 'r_sleep', tier: 'MUD', name: 'Deep Sleep & Rest', description: 'Sacrifice a month to catch up on sleep. 100% safe but lowers active cultural presence.', upfrontCost: 0, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: -5, hitMental: 25, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
+  { id: 'r_chill', tier: 'STREET', name: 'Vibe & Couch Gaming', description: 'Unplug from the hype cycle with your close day-ones to destress.', upfrontCost: 150, cloutReq: 0, yieldCash: 0, yieldClout: 5, yieldAura: 0, hitMental: 30, hitHeat: 0, fatigueCost: 0, successChance: 0.98, isPassive: false },
+  { id: 'r_therapy', tier: 'STARTUP', name: 'Mental Wellness Coaching', description: 'Hire a high-performance cognitive therapist to process corporate stress.', upfrontCost: 1200, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: 0, hitMental: 45, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
+  { id: 'r_spa', tier: 'CORPORATE', name: 'Country Club Spa Day', description: 'Step off the trading floor for high-end executive decompression.', upfrontCost: 4500, cloutReq: 0, yieldCash: 0, yieldClout: 0, yieldAura: 25, hitMental: 55, hitHeat: 0, fatigueCost: 0, successChance: 1.0, isPassive: false },
 ];
