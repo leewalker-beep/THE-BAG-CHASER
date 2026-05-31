@@ -1,11 +1,11 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'unfreezeAccounts' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'executeTechFlipDrop' | 'setPodcastInput' | 'executePodcastEpisode'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'runHustle' | 'upgradeHustle' | 'unfreezeAccounts' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'executeTechFlipDrop' | 'setPodcastInput' | 'executePodcastEpisode' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer'> => {
   const allHustles: string[] = [
     'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap',
     'cc', 'pod', 'music', 'drop', 'vintage', 'promo',
     'techFlip', 'smm', 'gig', 'sw', 'drip', 'meme',
-    'saas_mvp', 'agency_scale', 'ecom_brand'
+    'saas_mvp', 'agency_scale', 'ecom_brand', 'festival'
   ];
 
   const initialFatigue = allHustles.reduce((acc, hustle) => {
@@ -99,6 +99,24 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         saasUsers: 0,
         agencyStaff: 0,
         ecomOrders: 0,
+      },
+      saasPanel: {
+        infra: 'AWS',
+        focus: 'GROWTH',
+        subscriptionPrice: 20,
+      },
+      festivalPanel: {
+        venue: 'FAIR',
+        insured: false,
+        ticketPrice: 50,
+      },
+      ecomBrandPanel: {
+        runSize: 500,
+        adSpend: 1000,
+      },
+      agencyPanel: {
+        client: 'SMB',
+        staff: 'INTERNS',
       },
       crises: {
         shadowbanTurns: 0,

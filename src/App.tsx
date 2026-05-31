@@ -7,6 +7,7 @@ import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 
 function App() {
   const state = useGameStore();
+
   const {
     pl, ph, alias, marketType, fatalCause, news,
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
@@ -175,6 +176,10 @@ function App() {
 
                   let displayYield = 'SPECIAL';
                   if (isWellness) displayYield = `⚡ Instant Execute: Recover +${h.hitMental}% Mental`;
+                  else if (h.id === 'saas_mvp') displayYield = 'SUBSCRIPTION REV';
+                  else if (h.id === 'festival') displayYield = 'TICKET REVENUE';
+                  else if (h.id === 'agency_scale') displayYield = 'CLIENT RETAINER';
+                  else if (h.id === 'ecom_brand') displayYield = 'D2C PROFITS';
                   else if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
                   else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
                   else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
@@ -356,6 +361,328 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   const metrics = getHustleMetrics(hustleId);
   const rankInfo = getRankInfo(hustleId, currentLvl);
   const isStartupHustle = config.tier === 'STARTUP';
+
+  if (hustleId === 'saas_mvp') {
+    const { infra, focus, subscriptionPrice } = state.pl.saasPanel;
+    const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
+    const canAfford = state.pl.bag >= infraCosts[infra];
+    let outageRisk = 0;
+    if (focus === 'GROWTH') {
+      if (infra === 'AWS') outageRisk = 50;
+      else if (infra === 'DEVOPS') outageRisk = 20;
+    }
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            ENGINEERING BAY
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-emerald-400">SAAS MVP DASHBOARD</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Infrastructure Stack</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['AWS', 'DEVOPS', 'ENTERPRISE'] as const).map(i => (
+                <button
+                  key={i}
+                  onClick={() => state.setSaaSInput('infra', i)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${infra === i ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {i}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Operational Focus</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['GROWTH', 'PATCH'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => state.setSaaSInput('focus', f)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${focus === f ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Subscription Price ($)</label>
+            <input
+              type="number"
+              value={subscriptionPrice}
+              onChange={(e) => state.setSaaSInput('subscriptionPrice', parseInt(e.target.value) || 0)}
+              className="w-full bg-black border border-slate-800 rounded p-3 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className={`p-4 rounded-xl border ${outageRisk > 30 ? 'bg-red-900/20 border-red-900/50' : 'bg-slate-800/50 border-slate-700'}`}>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Monthly Infra Cost</span>
+            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${infraCosts[infra].toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Server Crash Risk</span>
+            <span className={`font-mono font-bold ${outageRisk > 0 ? 'text-red-500' : 'text-emerald-400'}`}>{outageRisk}%</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => state.executeSaaSProject()}
+          disabled={!canAfford}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+        >
+          {canAfford ? "DEPLOY & SCALE PLATFORM" : "INSUFFICIENT FUNDS"}
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'festival') {
+    const { venue, insured, ticketPrice } = state.pl.festivalPanel;
+    const venueCosts = { FAIR: 3000, ARENA: 10000, STADIUM: 25000 };
+    const insuranceCost = 2000;
+    const totalCost = venueCosts[venue] + (insured ? insuranceCost : 0);
+    const canAfford = state.pl.bag >= totalCost;
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+            EVENT PROMOTER
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-purple-400">CONCERT FESTIVAL LAB</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Venue Selection</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['FAIR', 'ARENA', 'STADIUM'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => state.setFestivalInput('venue', v)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${venue === v ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+            <div>
+              <div className="text-[10px] font-black text-white uppercase">Event Insurance</div>
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Recover 80% on failure ($2,000)</div>
+            </div>
+            <button
+              onClick={() => state.setFestivalInput('insured', !insured)}
+              className={`w-12 h-6 rounded-full transition-all relative ${insured ? 'bg-emerald-600' : 'bg-slate-700'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${insured ? 'left-7' : 'left-1'}`} />
+            </button>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Ticket Price ($)</label>
+            <input
+              type="number"
+              value={ticketPrice}
+              onChange={(e) => state.setFestivalInput('ticketPrice', parseInt(e.target.value) || 0)}
+              className="w-full bg-black border border-slate-800 rounded p-3 text-purple-400 font-mono font-bold focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Upfront Production</span>
+            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Est. Success Chance</span>
+            <span className="font-mono font-bold text-emerald-400">75%</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => state.executeConcertFestival()}
+          disabled={!canAfford}
+          className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
+        >
+          {canAfford ? "LAUNCH FESTIVAL WEEKEND" : "INSUFFICIENT FUNDS"}
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'ecom_brand') {
+    const { runSize, adSpend } = state.pl.ecomBrandPanel;
+    const baseCost = runSize === 500 ? 2500 : 7500;
+    const totalCost = baseCost + adSpend;
+    const canAfford = state.pl.bag >= totalCost;
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+            D2C WAREHOUSE
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-orange-400">ECOM BRAND BUILDER</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Production Run Size</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([500, 2000] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => state.setEcomBrandInput('runSize', s)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${runSize === s ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {s} UNITS
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Ad Spend Slider ($)</label>
+            <input
+              type="range"
+              min="1000"
+              max="20000"
+              step="1000"
+              value={adSpend}
+              onChange={(e) => state.setEcomBrandInput('adSpend', parseInt(e.target.value))}
+              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-500"
+            />
+            <div className="flex justify-between text-[8px] font-black text-slate-600 mt-1 uppercase tracking-tighter">
+              <span>$1,000</span>
+              <span>${adSpend.toLocaleString()}</span>
+              <span>$20,000</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Inventory + Marketing</span>
+            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Customs Risk</span>
+            <span className="font-mono font-bold text-orange-400">15% Seizure Rate</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => state.executeEcomBrand()}
+          disabled={!canAfford}
+          className="w-full py-4 bg-orange-600 hover:bg-orange-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-[0.98]"
+        >
+          {canAfford ? "EXECUTE PRODUCTION RUN" : "INSUFFICIENT FUNDS"}
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'agency_scale') {
+    const { client, staff } = state.pl.agencyPanel;
+    const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
+    const canAfford = staff === 'FREELANCERS' ? (state.pl.bag >= yields[client] * 0.5) : true;
+    const successChance = staff === 'INTERNS' ? 60 : 95;
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+            AGENCY HQ
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-blue-400">AGENCY RETAINER LAB</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Target Client Tier</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['SMB', 'MID', 'ENTERPRISE'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => state.setAgencyInput('client', c)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${client === c ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Staffing Strategy</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['INTERNS', 'FREELANCERS'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => state.setAgencyInput('staff', s)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${staff === s ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Payroll / Execution Cost</span>
+            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${(staff === 'FREELANCERS' ? yields[client] * 0.5 : 0).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black text-slate-500 uppercase">Project Success Rate</span>
+            <span className={`font-mono font-bold ${successChance < 70 ? 'text-orange-500' : 'text-emerald-400'}`}>{successChance}%</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => state.executeAgencyRetainer()}
+          disabled={!canAfford}
+          className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
+        >
+          {canAfford ? "PITCH & CLOSE RETAINER" : "INSUFFICIENT FUNDS"}
+        </button>
+      </div>
+    );
+  }
 
   if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
     const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
