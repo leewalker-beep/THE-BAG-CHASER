@@ -112,6 +112,13 @@ export const useGameStore = create<GameState>()(
           currentNews.unshift(`FAILURE: The hardware fried. Lost the lot and took a hit to your reputation.`);
         }
 
+        // Anti-Spam Filter
+        if (state.pl.lastExecutedHustleId === 'techFlip' || state.pl.lastExecutedHustleId === 'tech_flip') {
+          yieldCash *= 0.5;
+          yieldClout *= 0.5;
+          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
+        }
+
         const nextState = {
           ...state,
           pl: {
@@ -120,6 +127,7 @@ export const useGameStore = create<GameState>()(
             clout: state.pl.clout + yieldClout,
             aura: state.pl.aura + yieldAura,
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
+            lastExecutedHustleId: selectedLot === 'PHONES' ? 'tech_flip' : 'techFlip',
           },
           news: currentNews
         };
@@ -162,6 +170,13 @@ export const useGameStore = create<GameState>()(
           currentNews.unshift(`VIRAL: The episode with the ${selectedGuest} guest was a hit! (+${finalYieldClout} Clout)`);
         }
 
+        // Anti-Spam Filter
+        if (state.pl.lastExecutedHustleId === 'pod') {
+          finalYieldCash *= 0.5;
+          finalYieldClout *= 0.5;
+          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
+        }
+
         const nextState = {
           ...state,
           pl: {
@@ -169,7 +184,9 @@ export const useGameStore = create<GameState>()(
             bag: state.pl.bag - guestCosts[selectedGuest] + finalYieldCash,
             clout: state.pl.clout + finalYieldClout,
             mentalHealth: Math.max(0, state.pl.mentalHealth + finalHitMental),
-            crises: nextCrises
+            crises: nextCrises,
+            hypeIsActive: !isCrisis,
+            lastExecutedHustleId: 'pod'
           },
           news: currentNews
         };
@@ -303,7 +320,7 @@ export const useGameStore = create<GameState>()(
           }
 
           // 4. Execution & Mitigation Logic
-          const isSuccess = Math.random() < config.successChance;
+          const isSuccess = config.id.startsWith('r_') && config.id !== 'r_vending' ? true : Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
           let finalYieldCash = isSuccess ? config.yieldCash : 0;
 
@@ -321,6 +338,20 @@ export const useGameStore = create<GameState>()(
           const nextCrises = { ...state.pl.crises };
 
           if (isSuccess) {
+            // Anti-Spam Filter
+            if (hustleId === state.pl.lastExecutedHustleId) {
+              finalYieldCash *= 0.5;
+              finalYieldClout *= 0.5;
+              currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
+            }
+
+            // Synergy Ingestion
+            if (state.pl.hypeIsActive && (hustleId === 'drop' || hustleId === 'vintage')) {
+              finalYieldCash *= 2;
+              finalYieldAura *= 2;
+              currentNews.unshift("SYNERGY COMBO: Content hype applied! Business payouts doubled.");
+            }
+
             if (currentLvl > 1) {
               if (hustleId === 'drop') {
                 if (currentLvl === 2) finalYieldCash *= 1.8;
@@ -388,6 +419,12 @@ export const useGameStore = create<GameState>()(
               ...state.pl.hustleFatigue,
               [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? config.fatigueCost : Math.floor(config.fatigueCost * 0.5))
             },
+            hypeIsActive: (isSuccess && (hustleId === 'cc' || hustleId === 'pod'))
+                          ? true
+                          : (isSuccess && (hustleId === 'drop' || hustleId === 'vintage'))
+                            ? false
+                            : state.pl.hypeIsActive,
+            lastExecutedHustleId: hustleId,
             crises: nextCrises
           };
 
@@ -429,6 +466,83 @@ export const useGameStore = create<GameState>()(
       ...createMudSlice(set),
       ...createStreetSlice(set),
       ...createStartupSlice(set),
+
+      setStreetwearInput: (field, value) => set((state) => ({
+        pl: {
+          ...state.pl,
+          streetwearPanel: { ...state.pl.streetwearPanel, [field]: value }
+        }
+      })),
+
+      executeStreetwearRun: () => set((state) => {
+        const { brandTier } = state.pl.streetwearPanel;
+        const currentNews = [...state.news];
+        let yieldCash = 0;
+        let yieldClout = 0;
+        let yieldAura = 0;
+        let cost = 0;
+
+        if (brandTier === 'UNDERGROUND_IP') {
+          cost = 500;
+          yieldCash = 1800;
+          yieldClout = 10;
+          yieldAura = 5;
+        } else if (brandTier === 'SOHO_STORE') {
+          cost = 8000;
+          if (state.pl.clout < 40 || state.pl.aura < 30) {
+            currentNews.unshift("LOCKED: Soho Flagship requires 40 Clout and 30 Aura.");
+            return { news: currentNews };
+          }
+          yieldCash = 12000;
+          yieldClout = 25;
+          yieldAura = 30;
+        } else if (brandTier === 'PARIS_RUNWAY') {
+          cost = 35000;
+          if (state.pl.clout < 80 || state.pl.aura < 60) {
+            currentNews.unshift("LOCKED: Paris Runway requires 80 Clout and 60 Aura.");
+            return { news: currentNews };
+          }
+          yieldCash = 0;
+          yieldClout = 100;
+          yieldAura = 150;
+        }
+
+        if (state.pl.bag < cost) {
+          currentNews.unshift(`INSUFFICIENT FUNDS: Need $${cost.toLocaleString()} for this operation.`);
+          return { news: currentNews };
+        }
+
+        // Anti-Spam Filter
+        if (state.pl.lastExecutedHustleId === 'vintage') {
+          yieldCash *= 0.5;
+          yieldClout *= 0.5;
+          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
+        }
+
+        // Synergy Ingestion
+        if (state.pl.hypeIsActive) {
+          yieldCash *= 2;
+          yieldAura *= 2;
+          currentNews.unshift("SYNERGY COMBO: Content hype applied! Business payouts doubled.");
+        }
+
+        const nextPl = {
+          ...state.pl,
+          bag: state.pl.bag - cost + yieldCash,
+          clout: Math.min(state.pl.maxClout, state.pl.clout + yieldClout),
+          aura: Math.min(state.pl.maxAura, state.pl.aura + yieldAura),
+          hypeIsActive: false,
+          lastExecutedHustleId: 'vintage'
+        };
+
+        const nextState = {
+          ...state,
+          pl: nextPl,
+          news: currentNews
+        };
+
+        return applyAdvancement(clampStats(nextState as GameState), 1);
+      }),
 
       setFranchiseInput: (field, value) => set((state) => ({
         pl: {
@@ -504,6 +618,7 @@ export const useGameStore = create<GameState>()(
             aura: Math.min(200, state.pl.aura + finalYieldAura),
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
             hypeIsActive: nextHypeIsActive,
+            lastExecutedHustleId: 'global_franchise',
             crises: nextCrises
           },
           news: currentNews
