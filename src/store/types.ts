@@ -36,6 +36,15 @@ export interface PlayerStats {
     retailPrice: number;
     warehouseBrickedStock: number;
   };
+  techFlipPanel: {
+    selectedLot: 'PHONES' | 'LAPTOPS' | 'RIGS';
+    toolQuality: 'BUDGET' | 'PRECISION';
+    listingPrice: number;
+  };
+  podcastPanel: {
+    selectedGuest: 'LOCAL' | 'MICRO' | 'ICON';
+    unhingedSlider: number;
+  };
   streetStats: {
     ccSubs: number;
     podEpisodes: number;
@@ -110,4 +119,8 @@ export interface GameState {
   escapeTheMud: () => void;
   setSwInput: (field: string, value: any) => void;
   executeStreetwearDrop: () => void;
+  setTechFlipInput: (field: string, value: any) => void;
+  executeTechFlipDrop: () => void;
+  setPodcastInput: (field: string, value: any) => void;
+  executePodcastEpisode: () => void;
 }
