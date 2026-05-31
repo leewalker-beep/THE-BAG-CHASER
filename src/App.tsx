@@ -176,6 +176,8 @@ function App() {
 
                   let displayYield = 'SPECIAL';
                   if (isWellness) displayYield = `⚡ Instant Execute: Recover +${h.hitMental}% Mental`;
+                  else if (h.id === 'r_vending') displayYield = `Owned: ${pl.assetsOwned.vendingMachines}`;
+                  else if (h.id === 'audio') displayYield = `Tracks Released: ${pl.assetsOwned.masterTracks}`;
                   else if (h.id === 'saas_mvp') displayYield = 'SUBSCRIPTION REV';
                   else if (h.id === 'festival') displayYield = 'TICKET REVENUE';
                   else if (h.id === 'agency_scale') displayYield = 'CLIENT RETAINER';
@@ -185,7 +187,9 @@ function App() {
                   else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
 
                   let displayCost = 'FREE';
-                  if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
+                  if (h.id === 'r_vending') displayCost = 'Purchase Route Asset (-$1,500)';
+                  else if (h.id === 'audio') displayCost = pl.streetStats.studioOwned ? '$500' : 'ESTABLISH STUDIO';
+                  else if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
                   else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
                   else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
                   else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
@@ -200,7 +204,7 @@ function App() {
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
                       lockText={`LOCKED: Requires ${activeTab} Tier`}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isWellness ? state.runHustle(h.id) : setActiveHustleView(h.id)}
+                      onClick={() => (isWellness || h.id === 'r_vending') ? state.runHustle(h.id) : setActiveHustleView(h.id)}
                       variant={isWellness ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
                       className={isWellness ? 'col-span-2 w-full' : ''}
@@ -342,7 +346,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
     switch (id) {
       case 'cc': return `Subscribers: ${streetStats.ccSubs.toLocaleString()}`;
       case 'pod': return `Episodes: ${streetStats.podEpisodes}`;
-      case 'music': return `Active Tracks: ${streetStats.audioTracks}`;
+      case 'audio': return `Active Tracks: ${state.pl.assetsOwned.masterTracks}`;
       case 'drip': return `Inventory: ${streetStats.dripStock}`;
       case 'meme': return `Active Tokens: ${streetStats.activeMemeTokens}`;
       case 'saas_mvp': return `Active Users: ${startupStats.saasUsers.toLocaleString()}`;
@@ -1031,7 +1035,9 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
           onClick={runHustle}
           className={`${rankInfo ? '' : 'md:col-span-2'} py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]`}
         >
-          Execute {config.name} for the Month
+          {hustleId === 'audio'
+            ? (state.pl.streetStats.studioOwned ? 'Produce Master Track (-$500)' : `Establish ${config.name} (-$${config.upfrontCost.toLocaleString()})`)
+            : `Execute ${config.name} for the Month`}
         </button>
       </div>
     </div>

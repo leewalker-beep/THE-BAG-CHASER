@@ -237,9 +237,50 @@ export const useGameStore = create<GameState>()(
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
 
-          // 1. Validation Logic
-          if (state.pl.bag < config.upfrontCost) {
-            return { news: [`INSUFFICIENT FUNDS: Need $${config.upfrontCost.toLocaleString()} to execute ${config.name}.`, ...state.news] };
+          // 1. Passive Asset Handle (Instant)
+          if (config.isPassive && hustleId === 'r_vending') {
+            if (state.pl.bag < config.upfrontCost) {
+              return { news: [`INSUFFICIENT FUNDS: Need $${config.upfrontCost.toLocaleString()} to purchase ${config.name}.`, ...state.news] };
+            }
+            return {
+              pl: {
+                ...state.pl,
+                bag: state.pl.bag - config.upfrontCost,
+                assetsOwned: {
+                  ...state.pl.assetsOwned,
+                  vendingMachines: state.pl.assetsOwned.vendingMachines + 1
+                }
+              },
+              news: ["ASSET ACQUIRED: Added 1 Vending Machine to your portfolio.", ...state.news]
+            };
+          }
+
+          // 2. Special Logic: Audio Studio (Music Syndicate)
+          if (hustleId === 'audio') {
+            if (!state.pl.streetStats.studioOwned) {
+              if (state.pl.bag < config.upfrontCost) {
+                return { news: [`INSUFFICIENT FUNDS: Need $${config.upfrontCost.toLocaleString()} to build out the Music Studio.`, ...state.news] };
+              }
+              return {
+                pl: {
+                  ...state.pl,
+                  bag: state.pl.bag - config.upfrontCost,
+                  streetStats: { ...state.pl.streetStats, studioOwned: true }
+                },
+                news: ["ASSET ACQUIRED: Music Studio is now operational. You can now produce Master Tracks.", ...state.news]
+              };
+            }
+            // If already owned, it costs $500 per track and advances time
+            if (state.pl.bag < 500) {
+              return { news: ["INSUFFICIENT FUNDS: Need $500 for studio time and production costs.", ...state.news] };
+            }
+          }
+
+          // 3. Validation Logic
+          const effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
+
+          if (state.pl.bag < effectiveUpfrontCost) {
+            return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} to execute ${config.name}.`, ...state.news] };
           }
           if (state.pl.clout < config.cloutReq) {
             return { news: [`LACK OF CLOUT: Need ${config.cloutReq} Clout to pull off ${config.name}.`, ...state.news] };
@@ -259,7 +300,7 @@ export const useGameStore = create<GameState>()(
             return { news: ["COOLDOWN: You need to wait for the hype to rebuild before another drop.", ...state.news] };
           }
 
-          // 2. Execution & Mitigation Logic
+          // 4. Execution & Mitigation Logic
           const isSuccess = Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
           let finalYieldCash = isSuccess ? config.yieldCash : 0;
@@ -323,7 +364,7 @@ export const useGameStore = create<GameState>()(
 
           const nextPl = {
             ...state.pl,
-            bag: state.pl.bag - config.upfrontCost + finalYieldCash,
+            bag: state.pl.bag - effectiveUpfrontCost + finalYieldCash,
             clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + finalYieldClout)),
             aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + finalYieldAura)),
             mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + finalHitMental)),
@@ -335,14 +376,18 @@ export const useGameStore = create<GameState>()(
             crises: nextCrises
           };
 
-          // 3. Increment specialized stats (Only on Success)
+          // 5. Increment specialized stats (Only on Success)
           if (isSuccess) {
             const nextStreet = { ...nextPl.streetStats };
             const nextStartup = { ...nextPl.startupStats };
+            const nextAssets = { ...nextPl.assetsOwned };
 
             if (hustleId === 'cc') nextStreet.ccSubs += 1000;
             if (hustleId === 'pod') nextStreet.podEpisodes += 1;
-            if (hustleId === 'music') nextStreet.audioTracks += 1;
+            if (hustleId === 'audio') {
+              nextStreet.audioTracks += 1;
+              nextAssets.masterTracks += 1;
+            }
             if (hustleId === 'drip') nextStreet.dripStock += 10;
             if (hustleId === 'meme') nextStreet.activeMemeTokens += 1;
             if (hustleId === 'saas_mvp') nextStartup.saasUsers += 500;
@@ -354,6 +399,7 @@ export const useGameStore = create<GameState>()(
 
             nextPl.streetStats = nextStreet;
             nextPl.startupStats = nextStartup;
+            nextPl.assetsOwned = nextAssets;
           }
 
           const nextState: GameState = {
