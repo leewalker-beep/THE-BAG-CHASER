@@ -309,6 +309,7 @@ export const useGameStore = create<GameState>()(
           let finalYieldClout = isSuccess ? config.yieldClout : 0;
           let finalYieldAura = isSuccess ? config.yieldAura : 0;
           let finalHitMental = config.hitMental;
+          let finalHitHeat = config.hitHeat;
 
           const currentNews = [...state.news];
 
@@ -344,6 +345,13 @@ export const useGameStore = create<GameState>()(
               finalYieldAura = -30;
               currentNews.unshift(`CRISIS MITIGATED: Your high Aura absorbed the public blow. Prevented systemic collapse.`);
             } else {
+              if (hustleId === 'r_pr_campaign') {
+                finalYieldCash = 0;
+                finalYieldAura = 0;
+                finalHitMental = -10; // Will be doubled to -20 below
+                finalHitHeat = 20;
+                currentNews.unshift(`STUNT BACKFIRED: The PR campaign was exposed as a fake! Your reputation is in tatters and the heat is on.`);
+              }
               finalHitMental *= 2;
               if (config.tier === 'MUD' || config.tier === 'STREET') {
                 if (Math.random() < 0.5) {
@@ -370,7 +378,7 @@ export const useGameStore = create<GameState>()(
             clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + finalYieldClout)),
             aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + finalYieldAura)),
             mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + finalHitMental)),
-            heat: Math.min(100, Math.max(0, state.pl.heat + config.hitHeat)),
+            heat: Math.min(100, Math.max(0, state.pl.heat + finalHitHeat)),
             hustleFatigue: {
               ...state.pl.hustleFatigue,
               [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? config.fatigueCost : Math.floor(config.fatigueCost * 0.5))

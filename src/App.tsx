@@ -168,30 +168,20 @@ function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="mb-2">
+              <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Business & Active Operations</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-8">
               {(() => {
                 const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
-                return currentTabHustles.map(h => {
+                const operations = currentTabHustles.filter(h => !h.id.startsWith('r_') || h.isPassive);
+                return operations.map(h => {
                   const isInstant = h.id.startsWith('r_');
-
                   let displayYield = 'SPECIAL';
                   if (isInstant) {
                     let shift = '';
                     if (h.id === 'r_vending') shift = `Owned: ${pl.assetsOwned.vendingMachines}`;
-                    else if (h.hitHeat < 0) shift = `Heat ${h.hitHeat}`;
-                    else if (h.yieldAura > 20) shift = `Aura +${h.yieldAura}`;
-                    else if (h.yieldClout > 0) shift = `Clout +${h.yieldClout}`;
-                    else if (h.yieldClout < 0) shift = `Clout ${h.yieldClout}`;
-                    else if (h.yieldCash > 0) shift = `Cash +$${h.yieldCash.toLocaleString()}`;
-                    else if (h.yieldAura > 0) shift = `Aura +${h.yieldAura}`;
-                    else if (h.hitMental > 0) shift = `Mental +${h.hitMental}%`;
-
-                    const actionPrefix: Record<string, string> = {
-                      r_sleep: 'Sleep', r_chill: 'Chill', r_therapy: 'Therapy', r_spa: 'Spa Day',
-                      r_flyers: 'Slap Posters', r_street_cred: 'Buy Drip', r_ghost_mode: 'Go Ghost',
-                      r_labor: 'Grind', r_delivery: 'Deliver', r_survey: 'Survey', r_plasma: 'Sell Plasma', r_scrap: 'Scrap'
-                    };
-                    displayYield = `⚡ ${actionPrefix[h.id] || h.name}${shift ? ': ' + shift : ''}`;
+                    displayYield = `⚡ ${h.name}${shift ? ': ' + shift : ''}`;
                   }
                   else if (h.id === 'audio') displayYield = `Tracks Released: ${pl.assetsOwned.masterTracks}`;
                   else if (h.id === 'saas_mvp') displayYield = 'SUBSCRIPTION REV';
@@ -219,11 +209,61 @@ function App() {
                       cost={displayCost}
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
                       lockText={`LOCKED: Requires ${activeTab} Tier`}
-                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
                       onClick={() => isInstant ? state.executeHustle(h.id) : setActiveHustleView(h.id)}
                       variant={isInstant ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
-                      className={isInstant ? 'col-span-2 w-full' : ''}
+                    />
+                  );
+                });
+              })()}
+            </div>
+
+            <hr className="border-slate-800 my-6" />
+
+            <div className="mb-2">
+              <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Lifestyle & Empire Logistics</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {(() => {
+                const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
+                const logistics = currentTabHustles.filter(h => h.id.startsWith('r_') && !h.isPassive);
+                return logistics.map(h => {
+                  let shift = '';
+                  if (h.hitHeat < 0) shift = `Heat ${h.hitHeat}`;
+                  else if (h.yieldAura > 20) shift = `Aura +${h.yieldAura}`;
+                  else if (h.yieldClout > 0) shift = `Clout +${h.yieldClout}`;
+                  else if (h.yieldClout < 0) shift = `Clout ${h.yieldClout}`;
+                  else if (h.yieldCash > 0) shift = `Cash +$${h.yieldCash.toLocaleString()}`;
+                  else if (h.yieldAura > 0) shift = `Aura +${h.yieldAura}`;
+                  else if (h.hitMental > 0) shift = `Mental +${h.hitMental}%`;
+
+                  const actionPrefix: Record<string, string> = {
+                    r_sleep: 'Sleep', r_chill: 'Chill', r_therapy: 'Therapy', r_spa: 'Spa Day',
+                    r_flyers: 'Slap Posters', r_pr_campaign: 'Stunt', r_ghost_mode: 'Go Ghost',
+                    r_labor: 'Grind', r_delivery: 'Deliver', r_survey: 'Survey', r_plasma: 'Sell Plasma', r_scrap: 'Scrap'
+                  };
+                  const displayYield = `⚡ ${actionPrefix[h.id] || h.name}${shift ? ': ' + shift : ''}`;
+
+                  let displayCost = 'FREE';
+                  if (h.upfrontCost > 0) displayCost = `$${h.upfrontCost.toLocaleString()}`;
+                  else if (h.cloutReq > 0) displayCost = `${h.cloutReq} CLT`;
+                  else if (h.hitMental < -15) displayCost = `${Math.abs(h.hitMental)} SAN`;
+                  else if (h.yieldAura < 0) displayCost = `${Math.abs(h.yieldAura)} AUR`;
+                  else if (h.fatigueCost > 0) displayCost = `${h.fatigueCost} FATG`;
+
+                  return (
+                    <HustleCard
+                      key={h.id}
+                      title={h.name}
+                      yield={displayYield}
+                      cost={displayCost}
+                      locked={tier < TAB_TIER_MAPPING[h.tier]}
+                      lockText={`LOCKED: Requires ${activeTab} Tier`}
+                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
+                      onClick={() => state.executeHustle(h.id)}
+                      variant="special"
+                      icon={h.icon ? <path d={h.icon} /> : undefined}
+                      className="w-full"
                     />
                   );
                 });
