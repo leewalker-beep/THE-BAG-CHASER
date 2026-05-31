@@ -198,6 +198,7 @@ function App() {
                       onClick={() => isWellness ? state.runHustle(h.id) : setActiveHustleView(h.id)}
                       variant={isWellness ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
+                      className={isWellness ? 'col-span-2 w-full' : ''}
                     />
                   );
                 });
@@ -270,9 +271,10 @@ interface HustleCardProps {
   lockText?: string;
   variant?: 'danger' | 'special' | 'default';
   icon?: React.ReactNode;
+  className?: string;
 }
 
-function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText, variant, icon }: HustleCardProps) {
+function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText, variant, icon, className }: HustleCardProps) {
   const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-3 text-left transition-all active:scale-[0.98] group";
   const colorClass = variant === 'danger' ? 'hover:border-red-500/50' : variant === 'special' ? 'hover:border-purple-500/50' : 'hover:border-slate-600';
   const disabledClass = (disabled || locked) ? 'cursor-not-allowed' : 'cursor-pointer';
@@ -281,7 +283,7 @@ function HustleCard({ title, yield: y, cost, onClick, disabled, locked, lockText
     <button
       onClick={locked ? undefined : onClick}
       disabled={disabled}
-      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${locked ? 'pointer-events-none' : ''}`}
+      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${locked ? 'pointer-events-none' : ''} ${className || ''}`}
     >
       <div className={`relative z-10 ${locked ? 'opacity-40 blur-[1px]' : ''}`}>
         <div className="text-[10px] font-black uppercase tracking-tight text-slate-400 mb-1 group-hover:text-white transition-colors">{title}</div>
@@ -317,7 +319,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
       if (lvl === 2) return { title: "Store Phase: Private Wholesaler", nextCost: 12000 };
       return { title: "Chain Phase: Global E-Com Empire", nextCost: null };
     }
-    if (id === 'techFlip') {
+    if (id === 'techFlip' || id === 'tech_flip') {
       if (lvl === 1) return { title: "Trunk Phase: Bedroom Repair Bench", nextCost: 2500 };
       if (lvl === 2) return { title: "Store Phase: Strip-Mall Kiosk", nextCost: 8500 };
       return { title: "Chain Phase: Automated Refurb Plant", nextCost: null };
@@ -355,7 +357,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
   const rankInfo = getRankInfo(hustleId, currentLvl);
   const isStartupHustle = config.tier === 'STARTUP';
 
-  if (hustleId === 'techFlip') {
+  if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
     const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
     const lotCosts = { PHONES: 150, LAPTOPS: 400, RIGS: 1200 };
     const toolCosts = { BUDGET: 50, PRECISION: 200 };

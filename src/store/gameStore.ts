@@ -205,7 +205,7 @@ export const useGameStore = create<GameState>()(
           if (hustleId === 'drop') {
             cost = currentLvl === 1 ? 4000 : 12000;
             rankName = currentLvl === 1 ? "Store Phase: Private Wholesaler" : "Chain Phase: Global E-Com Empire";
-          } else if (hustleId === 'techFlip') {
+          } else if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
             cost = currentLvl === 1 ? 2500 : 8500;
             rankName = currentLvl === 1 ? "Store Phase: Strip-Mall Kiosk" : "Chain Phase: Automated Refurb Plant";
           } else if (hustleId === 'vintage') {
@@ -276,7 +276,7 @@ export const useGameStore = create<GameState>()(
               if (hustleId === 'drop') {
                 if (currentLvl === 2) finalYieldCash *= 1.8;
                 if (currentLvl === 3) finalYieldCash *= 3.5;
-              } else if (hustleId === 'techFlip') {
+              } else if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
                 if (currentLvl === 2) finalYieldCash *= 2.0;
                 if (currentLvl === 3) finalYieldCash *= 4.0;
               } else if (hustleId === 'vintage') {
