@@ -57,6 +57,24 @@ export interface PlayerStats {
     agencyStaff: number;
     ecomOrders: number;
   };
+  saasPanel: {
+    infra: 'AWS' | 'DEVOPS' | 'ENTERPRISE';
+    focus: 'GROWTH' | 'PATCH';
+    subscriptionPrice: number;
+  };
+  festivalPanel: {
+    venue: 'FAIR' | 'ARENA' | 'STADIUM';
+    insured: boolean;
+    ticketPrice: number;
+  };
+  ecomBrandPanel: {
+    runSize: 500 | 2000;
+    adSpend: number;
+  };
+  agencyPanel: {
+    client: 'SMB' | 'MID' | 'ENTERPRISE';
+    staff: 'INTERNS' | 'FREELANCERS';
+  };
   crises: CrisisState;
 }
 
@@ -123,4 +141,12 @@ export interface GameState {
   executeTechFlipDrop: () => void;
   setPodcastInput: (field: string, value: any) => void;
   executePodcastEpisode: () => void;
+  setSaaSInput: (field: string, value: any) => void;
+  executeSaaSProject: () => void;
+  setFestivalInput: (field: string, value: any) => void;
+  executeConcertFestival: () => void;
+  setEcomBrandInput: (field: string, value: any) => void;
+  executeEcomBrand: () => void;
+  setAgencyInput: (field: string, value: any) => void;
+  executeAgencyRetainer: () => void;
 }

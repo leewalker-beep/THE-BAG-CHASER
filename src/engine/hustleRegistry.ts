@@ -44,6 +44,7 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
   { id: 'saas_mvp', tier: 'STARTUP', name: 'SaaS MVP', description: 'Build and scale a software-as-a-service platform.', upfrontCost: 5000, cloutReq: 100, yieldCash: 0, yieldClout: 2500, yieldAura: 10, hitMental: -15, hitHeat: 0, fatigueCost: 20, isPassive: false, successChance: 0.85 },
   { id: 'agency_scale', tier: 'STARTUP', name: 'Agency Scale', description: 'Expanding a service business with full-time staff.', upfrontCost: 0, cloutReq: 150, yieldCash: 6500, yieldClout: 50, yieldAura: 20, hitMental: -20, hitHeat: 5, fatigueCost: 25, isPassive: false, successChance: 0.85 },
   { id: 'ecom_brand', tier: 'STARTUP', name: 'Ecom Brand', description: 'Full-scale direct-to-consumer product empire.', upfrontCost: 2500, cloutReq: 120, yieldCash: 9000, yieldClout: 30, yieldAura: 15, hitMental: -10, hitHeat: 2, fatigueCost: 15, isPassive: false, successChance: 0.85 },
+  { id: 'festival', tier: 'STARTUP', name: 'Concert Festival', description: 'Organize and promote a multi-day live music event.', upfrontCost: 10000, cloutReq: 200, yieldCash: 0, yieldClout: 500, yieldAura: 150, hitMental: -35, hitHeat: 10, fatigueCost: 50, isPassive: false, successChance: 0.75 },
 
   // --- TIER 3: CORPORATE ---
   { id: 'consultant', tier: 'CORPORATE', name: 'Strategy Consultant', description: 'High-level advisory for Fortune 500 firms.', upfrontCost: 10000, cloutReq: 500, yieldCash: 25000, yieldClout: 200, yieldAura: 50, hitMental: -25, hitHeat: 0, fatigueCost: 30, isPassive: false, successChance: 0.8 },
