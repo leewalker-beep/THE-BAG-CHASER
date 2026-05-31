@@ -171,8 +171,11 @@ function App() {
               {(() => {
                 const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
                 return currentTabHustles.map(h => {
+                  const isWellness = ['r_sleep', 'r_chill', 'r_therapy', 'r_spa'].includes(h.id);
+
                   let displayYield = 'SPECIAL';
-                  if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
+                  if (isWellness) displayYield = `⚡ Instant Execute: Recover +${h.hitMental}% Mental`;
+                  else if (h.yieldCash > 0) displayYield = `+$${h.yieldCash.toLocaleString()}`;
                   else if (h.yieldClout > 0) displayYield = `+${h.yieldClout} CLT`;
                   else if (h.yieldAura > 0) displayYield = `+${h.yieldAura} AUR`;
 
@@ -192,8 +195,8 @@ function App() {
                       locked={tier < TAB_TIER_MAPPING[h.tier]}
                       lockText={`LOCKED: Requires ${activeTab} Tier`}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => setActiveHustleView(h.id)}
-                      variant={h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default'}
+                      onClick={() => isWellness ? state.runHustle(h.id) : setActiveHustleView(h.id)}
+                      variant={isWellness ? 'special' : (h.hitHeat > 20 || h.hitMental < -20 ? 'danger' : h.yieldAura < 0 ? 'special' : 'default')}
                       icon={h.icon ? <path d={h.icon} /> : undefined}
                     />
                   );
