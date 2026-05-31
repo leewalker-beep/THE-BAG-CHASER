@@ -51,6 +51,11 @@ export interface PlayerStats {
     audioTracks: number;
     dripStock: number;
     activeMemeTokens: number;
+    studioOwned: boolean;
+  };
+  assetsOwned: {
+    vendingMachines: number;
+    masterTracks: number;
   };
   startupStats: {
     saasUsers: number;
