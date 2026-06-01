@@ -140,7 +140,7 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
-  executeHustle: (hustleId: string) => void;
+  executeHustle: (hustleId: string, forceSuccess?: boolean) => void;
   upgradeHustle: (hustleId: string) => void;
   unfreezeAccounts: () => void;
 
