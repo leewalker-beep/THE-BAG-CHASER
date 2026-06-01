@@ -1,9 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from './store/gameStore';
+import { VFXManager } from './components/juice/VFXManager';
+import { CashReel } from './components/juice/CashReel';
 import { getInitialGameState } from './store/initialState';
 import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
+import { SneakerDropMatch, PalletFlippingMatch } from './components/hustles/Tier1Match';
+import { MemeCoinMatch, ViralStreamMatch } from './components/hustles/Tier2Match';
+import { RealEstateMatch } from './components/hustles/Tier3Match';
 
 const TIER_ORDER: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL', 'PRESIDENT', 'OPEN'];
 
@@ -142,6 +147,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
+      <VFXManager />
       {/* STEP 1: THE SCOREBOARD (Top Section) */}
       <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
         <div className={`bg-slate-900/90 backdrop-blur p-3 pointer-events-auto ${isCritical ? "border-b border-rose-600/40 shadow-[0_0_15px_rgba(225,29,72,0.25)] transition-all duration-500" : "border-b border-slate-800"}`}>
@@ -159,7 +165,9 @@ function App() {
             <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
               <div className="text-[9px] uppercase text-slate-500 font-black leading-none mb-1">Bankroll</div>
-              <div data-testid="bankroll-value" className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
+              <div data-testid="bankroll-value" className="leading-none min-w-[80px]">
+                <CashReel value={bag} />
+              </div>
             </div>
 
             <div className="h-8 w-[1px] bg-slate-800 mx-1"></div>
@@ -450,6 +458,23 @@ function HustleCard({ title, onClick, disabled, icon, className }: HustleCardPro
 function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: () => void, state: GameState }) {
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
   const currentLvl = state.pl.hustleLevels[hustleId] || 1;
+
+  // INTERACTIVE MATCH LAYERS
+  if (hustleId === 'drop') {
+    return <SneakerDropMatch onResult={(s) => { state.executeHustle('drop', s); onBack(); }} />;
+  }
+  if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
+    return <PalletFlippingMatch onResult={(s) => { state.executeHustle(hustleId, s); onBack(); }} />;
+  }
+  if (hustleId === 'meme') {
+    return <MemeCoinMatch onResult={(s) => { state.executeHustle('meme', s); onBack(); }} />;
+  }
+  if (hustleId === 'cc') {
+    return <ViralStreamMatch onResult={(s) => { state.executeHustle('cc', s); onBack(); }} />;
+  }
+  if (hustleId === 'real_estate_empire') {
+    return <RealEstateMatch onResult={(s) => { state.executeHustle('real_estate_empire', s); onBack(); }} />;
+  }
 
   if (hustleId === 'global_franchise') {
     const { sector, footprint, supplyChain } = state.pl.franchisePanel;

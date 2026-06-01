@@ -7,6 +7,7 @@ import { createStreetSlice } from './slices/streetSlice';
 import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from './engine';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
+import { useJuiceStore } from './juiceStore';
 
 const SAVE_KEY = 'bag-chaser-state';
 
@@ -268,7 +269,7 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
-      executeHustle: (hustleId: string) =>
+      executeHustle: (hustleId: string, forceSuccess?: boolean) =>
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
@@ -339,7 +340,11 @@ export const useGameStore = create<GameState>()(
           }
 
           // 4. Execution & Mitigation Logic
-          const isSuccess = config.id.startsWith('r_') && config.id !== 'r_vending' ? true : Math.random() < config.successChance;
+          const isSuccess = forceSuccess !== undefined
+            ? forceSuccess
+            : config.id.startsWith('r_') && config.id !== 'r_vending'
+              ? true
+              : Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
           let finalYieldCash = isSuccess ? config.yieldCash : 0;
 
@@ -357,6 +362,7 @@ export const useGameStore = create<GameState>()(
           const nextCrises = { ...state.pl.crises };
 
           if (isSuccess) {
+            useJuiceStore.getState().triggerSurge();
             // Anti-Spam Filter
             if (hustleId === state.pl.lastExecutedHustleId) {
               finalYieldCash *= 0.5;
@@ -395,6 +401,7 @@ export const useGameStore = create<GameState>()(
 
             currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
           } else {
+            useJuiceStore.getState().triggerCascade();
             // FAILURE & AURA ARMOR MITIGATION
             if (state.pl.aura >= 100) {
               finalYieldAura = -30;
