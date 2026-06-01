@@ -5,6 +5,11 @@ import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 
+const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: number, fee: number, description: string }> = {
+  STARTUP: { cash: 15000, clout: 50, aura: 50, fee: 5000, description: "Startup Incorporation" },
+  CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
+};
+
 function App() {
   const state = useGameStore();
 
@@ -167,35 +172,24 @@ function App() {
         {activeHustleView === null ? (
           <>
             {tier < TAB_TIER_MAPPING[activeTab] ? (
-              <div className="mb-8 p-8 bg-slate-900/50 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
-                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center text-4xl shadow-inner">🔒</div>
+              <div className="mb-8 p-8 bg-slate-900 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-emerald-600/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-emerald-500/30">🏛️</div>
                 <div>
-                  <h2 className="text-xl font-black uppercase tracking-tighter text-white mb-2 italic">Tier Locked: {activeTab}</h2>
-                  <p className="text-xs text-slate-500 font-bold max-w-xs mx-auto uppercase tracking-widest leading-relaxed">Establish your presence and meet the operational requirements to incorporate in this sector.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2 italic">The Incorporation & Advancement Bureau</h2>
+                  <p className="text-xs text-slate-400 font-bold max-w-md mx-auto uppercase tracking-widest leading-relaxed">Official registration and compliance checks are required to unlock {activeTab} operations. meet the milestones below to advance.</p>
                 </div>
 
                 <div className="w-full max-w-sm grid grid-cols-1 gap-3">
-                  {activeTab === 'STARTUP' && (
+                  {TIER_REQUIREMENTS[activeTab] ? (
                     <GraduationCheck
-                      reqs={{ cash: 15000, clout: 50, aura: 50, fee: 5000 }}
+                      reqs={TIER_REQUIREMENTS[activeTab]}
                       current={{ cash: bag, clout: clout, aura: aura }}
-                      tierName="STARTUP"
-                      description="Startup Incorporation"
-                      onUnlock={() => state.setCurrentTier('STARTUP', 5000)}
+                      tierName={activeTab}
+                      description={TIER_REQUIREMENTS[activeTab].description}
+                      onUnlock={() => state.setCurrentTier(activeTab, TIER_REQUIREMENTS[activeTab].fee)}
                       disabled={pl.crises.accountsFrozen}
                     />
-                  )}
-                  {activeTab === 'CORPORATE' && (
-                    <GraduationCheck
-                      reqs={{ cash: 100000, clout: 100, aura: 100, fee: 25000 }}
-                      current={{ cash: bag, clout: clout, aura: aura }}
-                      tierName="CORPORATE"
-                      description="Institutional Compliance"
-                      onUnlock={() => state.setCurrentTier('CORPORATE', 25000)}
-                      disabled={pl.crises.accountsFrozen}
-                    />
-                  )}
-                  {!['STARTUP', 'CORPORATE'].includes(activeTab) && (
+                  ) : (
                     <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Requires {activeTab} Graduation</span>
                     </div>
@@ -320,29 +314,73 @@ function GraduationCheck({ reqs, current, tierName, description, onUnlock, disab
   const meetsAura = current.aura >= reqs.aura;
   const canUnlock = meetsCash && meetsClout && meetsAura && !disabled;
 
+  const getProgressWidth = (curr: number, target: number) => {
+    return `${Math.min(100, (curr / target) * 100)}%`;
+  };
+
   return (
-    <div className="p-6 bg-slate-800/80 border border-slate-700 rounded-2xl flex flex-col gap-4 shadow-xl">
-      <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{description} Requirements</div>
-      <div className="grid grid-cols-3 gap-2">
-         <div className={`flex flex-col p-2 rounded border ${meetsCash ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
-            <span className="text-[8px] font-black uppercase text-slate-500">Capital</span>
-            <span className={`text-[10px] font-mono font-bold ${meetsCash ? 'text-emerald-400' : 'text-red-400'}`}>${current.cash.toLocaleString()}/${(reqs.cash/1000)}k</span>
+    <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col gap-6 shadow-2xl">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{description} Milestone</div>
+        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase font-bold">
+          Verification Pending
+        </div>
+      </div>
+
+      <div className="space-y-5">
+         <div className="space-y-2">
+            <div className="flex justify-between items-end">
+               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Available Capital</span>
+               <span className={`text-[11px] font-mono font-bold ${meetsCash ? 'text-emerald-400' : 'text-slate-500'}`}>${current.cash.toLocaleString()} / ${reqs.cash.toLocaleString()}</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+               <div
+                 className={`h-full transition-all duration-1000 ease-out ${meetsCash ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-600'}`}
+                 style={{ width: getProgressWidth(current.cash, reqs.cash) }}
+               />
+            </div>
          </div>
-         <div className={`flex flex-col p-2 rounded border ${meetsClout ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
-            <span className="text-[8px] font-black uppercase text-slate-500">Clout</span>
-            <span className={`text-[10px] font-mono font-bold ${meetsClout ? 'text-emerald-400' : 'text-red-400'}`}>{current.clout}/{reqs.clout}</span>
+
+         <div className="space-y-2">
+            <div className="flex justify-between items-end">
+               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Public Clout</span>
+               <span className={`text-[11px] font-mono font-bold ${meetsClout ? 'text-blue-400' : 'text-slate-500'}`}>{current.clout} / {reqs.clout}</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+               <div
+                 className={`h-full transition-all duration-1000 ease-out ${meetsClout ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-slate-600'}`}
+                 style={{ width: getProgressWidth(current.clout, reqs.clout) }}
+               />
+            </div>
          </div>
-         <div className={`flex flex-col p-2 rounded border ${meetsAura ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
-            <span className="text-[8px] font-black uppercase text-slate-500">Aura</span>
-            <span className={`text-[10px] font-mono font-bold ${meetsAura ? 'text-emerald-400' : 'text-red-400'}`}>{current.aura}/{reqs.aura}</span>
+
+         <div className="space-y-2">
+            <div className="flex justify-between items-end">
+               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Social Aura</span>
+               <span className={`text-[11px] font-mono font-bold ${meetsAura ? 'text-purple-400' : 'text-slate-500'}`}>{current.aura} / {reqs.aura}</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+               <div
+                 className={`h-full transition-all duration-1000 ease-out ${meetsAura ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-slate-600'}`}
+                 style={{ width: getProgressWidth(current.aura, reqs.aura) }}
+               />
+            </div>
          </div>
       </div>
+
       <button
         onClick={onUnlock}
         disabled={!canUnlock}
-        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 disabled:grayscale text-white text-[10px] font-black rounded-xl uppercase tracking-[0.1em] transition-all shadow-lg shadow-emerald-900/40"
+        className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all
+          ${canUnlock
+            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse'
+            : 'bg-slate-800 text-slate-600 border border-slate-700 opacity-50 cursor-not-allowed'
+          }`}
       >
-        {canUnlock ? `⚡ Incorporate & Unlock Tier ${tierName} (-$${reqs.fee.toLocaleString()})` : "Requirements Not Met"}
+        {canUnlock
+          ? `⚡ File Incorporation Documents & Unlock Tier (-$${reqs.fee.toLocaleString()})`
+          : "Insufficient Verification Metrics"
+        }
       </button>
     </div>
   );
