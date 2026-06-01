@@ -248,7 +248,7 @@ function App() {
                           key={h.id}
                           title={h.name}
                           disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                          onClick={() => setActiveHustleView(h.id)}
+                          onClick={() => state.executeHustle(h.id)}
                           icon={h.icon}
                         />
                       );

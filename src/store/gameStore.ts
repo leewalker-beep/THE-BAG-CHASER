@@ -98,7 +98,7 @@ export const useGameStore = create<GameState>()(
         let yieldCash = 0;
         let yieldClout = 0;
         let yieldAura = 0;
-        let hitMental = -8;
+        let hitMental = 5;
 
         if (isSuccess) {
           const maxPrice = lotCosts[selectedLot] * 2;
