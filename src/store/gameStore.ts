@@ -669,6 +669,17 @@ export const useGameStore = create<GameState>()(
         const { ph, ...rest } = state;
         return rest;
       },
+      merge: (persistedState: any, currentState: GameState) => {
+        const merged = { ...currentState, ...(persistedState as any) };
+        // SECURE THE INITIAL STATE FALLBACK: Ensure name exists for legacy players
+        if (merged.pl) {
+          merged.pl = {
+            name: (persistedState as any)?.pl?.name || "",
+            ...merged.pl,
+          };
+        }
+        return merged;
+      },
     }
   )
 );
