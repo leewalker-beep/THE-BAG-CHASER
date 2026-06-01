@@ -169,4 +169,5 @@ export interface GameState {
   executeFranchiseTurn: () => void;
   setStreetwearInput: (field: string, value: any) => void;
   executeStreetwearRun: () => void;
+  setCurrentTier: (tierName: GameTab, fee?: number) => void;
 }
