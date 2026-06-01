@@ -40,6 +40,26 @@ function App() {
   const ageYears = 18 + Math.floor(mo / 12);
   const ageMonths = mo % 12;
 
+  const isCritical = mentalHealth <= 20 || aura <= 10 || heat >= 80;
+
+  const mntTheme = mentalHealth > 35
+    ? { color: "text-emerald-400", icon: "🧠" }
+    : mentalHealth > 20
+      ? { color: "text-amber-500", icon: "⚠️" }
+      : { color: "text-rose-600 font-bold animate-pulse", icon: "⚡" };
+
+  const aurTheme = aura > 20
+    ? { color: "text-purple-400", icon: "🛡️" }
+    : aura > 10
+      ? { color: "text-amber-500", icon: "⚠️" }
+      : { color: "text-rose-600 font-bold animate-pulse", icon: "💥" };
+
+  const htTheme = heat < 40
+    ? { color: "text-slate-400", icon: "📡" }
+    : heat < 80
+      ? { color: "text-orange-400", icon: "🔥" }
+      : { color: "text-red-500 font-bold animate-bounce", icon: "🚨" };
+
   if (ph === 'PROLOGUE_INTRO') {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 text-center">
@@ -78,7 +98,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
       {/* STEP 1: THE STICKY TOP ZONE (STATS HUD) */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-800 p-3 pb-2">
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur p-3 pb-2 ${isCritical ? "border border-rose-600/40 shadow-[0_0_15px_rgba(225,29,72,0.25)] transition-all duration-500" : "border-b border-slate-800"}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar mb-2">
           <div className="flex items-center gap-3 shrink-0">
             <div className="bg-emerald-600 h-8 w-8 rounded-full flex items-center justify-center font-black text-xs shadow-lg shadow-emerald-900/20">
@@ -100,9 +120,9 @@ function App() {
 
             <div className="flex gap-3">
               <StatBadge label="CLT" value={clout} color="text-blue-400" />
-              <StatBadge label="AUR" value={aura} color="text-purple-400" />
-              <StatBadge label="MNT" value={`${mentalHealth}%`} color={mentalHealth < 30 ? "text-red-500" : "text-slate-300"} />
-              <StatBadge label="HT" value={`${heat}%`} color={heat > 50 ? "text-orange-500" : "text-slate-500"} />
+              <StatBadge label={aurTheme.icon} value={aura} color={aurTheme.color} />
+              <StatBadge label={mntTheme.icon} value={`${mentalHealth}%`} color={mntTheme.color} />
+              <StatBadge label={htTheme.icon} value={`${heat}%`} color={htTheme.color} />
             </div>
           </div>
         </div>
@@ -372,10 +392,10 @@ function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
   );
 }
 
-function StatBadge({ label, value, color }: { label: string, value: string | number, color: string }) {
+function StatBadge({ label, value, color }: { label: React.ReactNode, value: string | number, color: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="text-[8px] font-black text-slate-600 leading-none mb-1">{label}</div>
+      <div className={`text-[8px] font-black leading-none mb-1 ${color}`}>{label}</div>
       <div className={`text-xs font-bold leading-none ${color}`}>{value}</div>
     </div>
   );
