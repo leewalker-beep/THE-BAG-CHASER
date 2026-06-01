@@ -20,9 +20,6 @@ function App() {
     pl, ph, fatalCause, news,
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
-  const {
-    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth
-  } = pl;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +30,7 @@ function App() {
   }, [news]);
 
   const resetGame = (d: 1 | 2 | 3) => {
-    const currentName = useGameStore.getState().pl.name;
+    const currentName = useGameStore.getState().pl?.name || "";
     const initialState = getInitialGameState(d);
     useGameStore.setState({
       ...(initialState as GameState),
@@ -42,17 +39,12 @@ function App() {
     });
   };
 
-  const ageYears = 18 + Math.floor(mo / 12);
-  const ageMonths = mo % 12;
-
-  const isCritical = mentalHealth <= 20 || aura <= 10 || heat >= 80;
-
-  if (pl.name === "") {
+  if (!pl || !pl.name || pl.name.trim() === "") {
     return (
-      <div className="min-h-screen bg-black text-emerald-500 font-mono flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full space-y-8 border border-emerald-900/30 p-12 bg-slate-950/50 backdrop-blur-xl rounded-3xl shadow-2xl shadow-emerald-900/10">
+      <div className="fixed inset-0 bg-[#020817] z-[9999] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="max-w-md w-full space-y-8">
           <div className="space-y-4 text-center">
-            <div className="text-[10px] uppercase tracking-[0.4em] text-emerald-800 font-black mb-2">System Auth Required</div>
+            <div className="text-emerald-400 font-mono tracking-widest text-sm mb-4">System Auth Required</div>
             <h2 className="text-xl font-black uppercase tracking-tighter text-white">
               SYSTEM READY... INITIALIZING RUN. ENTER OPERATOR ALIAS:
             </h2>
@@ -61,7 +53,7 @@ function App() {
             <input
               type="text"
               autoFocus
-              className="w-full bg-black border-b-2 border-emerald-900 focus:border-emerald-500 py-4 px-2 text-emerald-400 font-black outline-none transition-all placeholder:text-emerald-900/50 uppercase tracking-widest text-center"
+              className="bg-slate-900 border border-slate-800 text-white placeholder-slate-600 rounded px-4 py-3 text-center text-lg font-mono focus:outline-none focus:border-emerald-500 w-full max-w-xs mb-4"
               placeholder="_____"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -85,6 +77,15 @@ function App() {
       </div>
     );
   }
+
+  const {
+    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth
+  } = pl;
+
+  const ageYears = 18 + Math.floor(mo / 12);
+  const ageMonths = mo % 12;
+
+  const isCritical = mentalHealth <= 20 || aura <= 10 || heat >= 80;
 
   const mntTheme = mentalHealth > 35
     ? { color: "text-emerald-400", icon: "🧠" }

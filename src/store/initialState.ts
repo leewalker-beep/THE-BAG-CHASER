@@ -54,6 +54,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     alias: '',
     diff,
     pl: {
+      // SECURE THE INITIAL STATE FALLBACK: Always ensure name is a string
       name: '',
       bag: startingBag,
       mentalHealth: 100,
