@@ -99,7 +99,8 @@ export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameS
       },
       swCooldownTurns: 3, // Standard drop cooldown
       hypeIsActive: false,
-      lastExecutedHustleId: 'drop'
+      lastExecutedHustleId: 'drop',
+      streak: state.pl.streak + 1, // Success on dropshipping (demand logic)
     };
 
     const summaryMessage = `DROP SUMMARY: ${selectedQuality} Drop of ${selectedBatchSize} units. Sold ${unitsSold} @ $${retailPrice} (${(demandRatio * 100).toFixed(1)}% Demand). Revenue: $${grossRevenue.toLocaleString()}. Bricked: ${unitsBricked}.`;

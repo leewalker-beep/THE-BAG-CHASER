@@ -133,6 +133,7 @@ export const useGameStore = create<GameState>()(
             aura: state.pl.aura + yieldAura,
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
             lastExecutedHustleId: selectedLot === 'PHONES' ? 'tech_flip' : 'techFlip',
+            streak: isSuccess ? state.pl.streak + 1 : 0,
           },
           news: currentNews
         };
@@ -191,7 +192,8 @@ export const useGameStore = create<GameState>()(
             mentalHealth: Math.max(0, state.pl.mentalHealth + finalHitMental),
             crises: nextCrises,
             hypeIsActive: !isCrisis,
-            lastExecutedHustleId: 'pod'
+            lastExecutedHustleId: 'pod',
+            streak: !isCrisis ? state.pl.streak + 1 : 0,
           },
           news: currentNews
         };
@@ -451,6 +453,7 @@ export const useGameStore = create<GameState>()(
                             ? false
                             : state.pl.hypeIsActive,
             lastExecutedHustleId: hustleId,
+          streak: isSuccess ? state.pl.streak + 1 : 0,
             crises: nextCrises
           };
 
@@ -558,7 +561,8 @@ export const useGameStore = create<GameState>()(
           clout: Math.min(state.pl.maxClout, state.pl.clout + yieldClout),
           aura: Math.min(state.pl.maxAura, state.pl.aura + yieldAura),
           hypeIsActive: false,
-          lastExecutedHustleId: 'vintage'
+          lastExecutedHustleId: 'vintage',
+          streak: state.pl.streak + 1, // Deterministic success for IP
         };
 
         const nextState = {
@@ -645,6 +649,7 @@ export const useGameStore = create<GameState>()(
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
             hypeIsActive: nextHypeIsActive,
             lastExecutedHustleId: 'global_franchise',
+            streak: isSuccess ? state.pl.streak + 1 : 0,
             crises: nextCrises
           },
           news: currentNews

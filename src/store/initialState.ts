@@ -137,6 +137,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       },
       hypeIsActive: false,
       lastExecutedHustleId: null,
+      streak: 0,
       crises: {
         shadowbanTurns: 0,
         deadstockOverhead: 0,

@@ -93,6 +93,7 @@ export interface PlayerStats {
   };
   hypeIsActive: boolean;
   lastExecutedHustleId: string | null;
+  streak: number;
   crises: CrisisState;
 }
 
