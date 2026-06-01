@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from './store/gameStore';
 import { VFXManager } from './components/juice/VFXManager';
 import { CashReel } from './components/juice/CashReel';
+import { HeatDrizzle } from './components/juice/HeatDrizzle';
 import { getInitialGameState } from './store/initialState';
-import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { SneakerDropMatch, PalletFlippingMatch } from './components/hustles/Tier1Match';
@@ -84,31 +85,15 @@ function App() {
   }
 
   const {
-    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth
+    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth, streak
   } = pl;
+
+  const maxAura = pl.maxAura || 100;
 
   const ageYears = 18 + Math.floor(mo / 12);
   const ageMonths = mo % 12;
 
-  const isCritical = mentalHealth <= 20 || aura <= 10 || heat >= 80;
-
-  const mntTheme = mentalHealth > 35
-    ? { color: "text-emerald-400", icon: "🧠" }
-    : mentalHealth > 20
-      ? { color: "text-amber-500", icon: "⚠️" }
-      : { color: "text-rose-600 font-bold animate-pulse", icon: "⚡" };
-
-  const aurTheme = aura > 20
-    ? { color: "text-purple-400", icon: "🛡️" }
-    : aura > 10
-      ? { color: "text-amber-500", icon: "⚠️" }
-      : { color: "text-rose-600 font-bold animate-pulse", icon: "💥" };
-
-  const htTheme = heat < 40
-    ? { color: "text-slate-400", icon: "📡" }
-    : heat < 80
-      ? { color: "text-orange-400", icon: "🔥" }
-      : { color: "text-red-500 font-bold animate-bounce", icon: "🚨" };
+  const isHighHeat = heat >= 80;
 
   if (ph === 'PROLOGUE_INTRO') {
     return (
@@ -148,99 +133,139 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
       <VFXManager />
-      {/* STEP 1: THE SCOREBOARD (Top Section) */}
-      <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        <div className={`bg-slate-900/90 backdrop-blur p-3 pointer-events-auto ${isCritical ? "border-b border-rose-600/40 shadow-[0_0_15px_rgba(225,29,72,0.25)] transition-all duration-500" : "border-b border-slate-800"}`}>
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="bg-emerald-600 h-8 w-8 rounded-full flex items-center justify-center font-black text-xs shadow-lg shadow-emerald-900/20 text-white">
+
+      {/* TOP HUD SCOREBOARD BANNER (15% Viewport Height) */}
+      <header
+        className={`fixed top-0 left-0 right-0 h-[15vh] z-50 transition-all duration-500 border-b-2 shadow-2xl overflow-visible
+          ${isHighHeat
+            ? "bg-gradient-to-r from-orange-600 to-red-600 border-yellow-400 shadow-[0_10px_40px_rgba(239,68,68,0.5)]"
+            : "bg-slate-900/95 backdrop-blur-md border-cyan-500/50 shadow-[0_4px_30px_rgba(34,211,238,0.2)]"
+          }`}
+      >
+        <div className="h-full max-w-[1400px] mx-auto flex items-center justify-between px-8 relative">
+
+          {/* Left Side: Avatar & Mega Cash Counter */}
+          <div className="flex items-center gap-8 h-full">
+            <div className="relative group">
+              <div className="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center text-4xl font-black shadow-2xl border-4 border-white/20 transform -rotate-3 group-hover:rotate-0 transition-transform">
                 {pl.name.charAt(0)}
               </div>
-              <div>
-                <div className="text-xs font-black uppercase tracking-tight text-white">{pl.name} | AGE: {ageYears}y {ageMonths}m</div>
-                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter italic">{pl.currentTier} TIER</div>
+              <AnimatePresence>
+                {streak >= 5 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    className="absolute -inset-4 pointer-events-none z-10"
+                  >
+                    <motion.div
+                      animate={{
+                        opacity: [0.4, 0.8, 0.4],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      className="w-full h-full bg-orange-500 mix-blend-screen blur-xl rounded-full"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-4xl">🔥</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="absolute -bottom-2 -right-2 bg-black px-2 py-0.5 rounded border border-white/20 text-[10px] font-black uppercase tracking-tighter">
+                {pl.currentTier}
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end">
-              <div className="text-[9px] uppercase text-slate-500 font-black leading-none mb-1">Bankroll</div>
-              <div data-testid="bankroll-value" className="leading-none min-w-[80px]">
+            <div className="flex flex-col">
+              <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Liquid Capital</div>
+              <div className="text-5xl font-black italic tracking-tighter leading-none scale-y-110 origin-left">
                 <CashReel value={bag} />
               </div>
             </div>
+          </div>
 
-            <div className="h-8 w-[1px] bg-slate-800 mx-1"></div>
+          {/* Right Side: Slide Stats & Massive Action Buttons */}
+          <div className="flex items-center gap-12">
+            <div className="flex flex-col gap-3">
+              <SlideStat label="AURA" value={aura} max={maxAura} color="bg-purple-500 shadow-[0_0_12px_#a855f7]" />
+              <SlideStat label="STREAK" value={streak} max={10} color="bg-orange-500 shadow-[0_0_12px_#f97316]" />
+            </div>
 
-            <div className="flex gap-3">
-              <StatBadge label="CLT" value={clout} color="text-blue-400" />
-              <StatBadge label={aurTheme.icon} value={aura} color={aurTheme.color} />
-              <StatBadge label={mntTheme.icon} value={`${mentalHealth}%`} color={mntTheme.color} />
-              <StatBadge label={htTheme.icon} value={`${heat}%`} color={htTheme.color} />
+            <div className="flex items-center gap-4">
+              <ActionButton
+                onClick={() => state.adv(1)}
+                className="scale-140"
+              >
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] leading-tight">ADVANCE</span>
+                  <span className="text-[8px] opacity-60">MONTH</span>
+                </div>
+              </ActionButton>
+
+              <div className="h-16 w-px bg-white/10 mx-2" />
+
+              <div className="flex gap-2">
+                {['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL', 'PRESIDENT'].map((t) => {
+                  const currentIdx = TIER_ORDER.indexOf(state.pl.currentTier);
+                  const tabIdx = TIER_ORDER.indexOf(t as GameTab);
+                  const isLocked = tabIdx > currentIdx + 1; // Can only see one tier ahead
+
+                  if (tabIdx > TIER_ORDER.indexOf('CORPORATE') && isLocked) return null;
+
+                  return (
+                    <button
+                      key={t}
+                      disabled={pl.crises.accountsFrozen || isLocked}
+                      onClick={() => {
+                        setActiveTab(t as GameTab);
+                        setActiveHustleView(null);
+                      }}
+                      className={`h-16 w-16 rounded-2xl flex items-center justify-center text-[10px] font-black border-2 transition-all active:scale-95 shadow-lg shrink-0
+                        ${activeTab === t
+                          ? 'bg-emerald-500 border-white text-black shadow-emerald-500/50'
+                          : isLocked
+                            ? 'bg-slate-900 border-slate-800 text-slate-700 opacity-50 cursor-not-allowed'
+                            : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/30'
+                        }`}
+                    >
+                      {t.charAt(0)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
-        </div>
-
-        {/* GLOBAL ALERTS TRAY */}
-        {(pl.crises.shadowbanTurns > 0 || pl.crises.deadstockOverhead > 0 || pl.crises.accountsFrozen || pl.crises.blacklistTurns > 0 || pl.crises.laborStrikeTurns > 0) && (
-          <div className="w-full flex flex-col gap-2 px-4 mt-2 pointer-events-auto">
-             {pl.crises.shadowbanTurns > 0 && (
-               <div className="bg-red-900/80 backdrop-blur border border-red-500 p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
-                 ⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns} mo)
-               </div>
-             )}
-             {pl.crises.deadstockOverhead > 0 && (
-               <div className="bg-orange-900/80 backdrop-blur border border-orange-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
-                 📦 DEADSTOCK BURN (+${pl.crises.deadstockOverhead}/mo)
-               </div>
-             )}
-             {pl.crises.accountsFrozen && (
-               <div className="bg-red-600 border-2 border-white p-2 rounded text-[10px] font-black text-white uppercase text-center">
-                 🚫 ACCOUNTS FROZEN
-               </div>
-             )}
-             {pl.crises.blacklistTurns > 0 && (
-               <div className="bg-slate-900 border border-slate-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
-                 ❌ ELITE BLACKLIST ({pl.crises.blacklistTurns} mo)
-               </div>
-             )}
-             {pl.crises.laborStrikeTurns > 0 && (
-               <div className="bg-red-800/90 border border-white p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
-                 ⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns} mo)
-               </div>
-             )}
+          {/* GLOBAL ALERTS OVERLAY (Inside Header for better visibility) */}
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full w-full max-w-2xl pointer-events-none flex flex-col gap-1 px-4 pt-2">
+            <AnimatePresence>
+              {pl.crises.shadowbanTurns > 0 && (
+                <AlertPill color="bg-red-600">⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns}mo)</AlertPill>
+              )}
+              {pl.crises.accountsFrozen && (
+                <AlertPill color="bg-red-900 border-2 border-white">🚫 ACCOUNTS FROZEN</AlertPill>
+              )}
+              {pl.crises.laborStrikeTurns > 0 && (
+                <AlertPill color="bg-orange-600 animate-pulse">⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns}mo)</AlertPill>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+        </div>
 
+        <HeatDrizzle heat={heat} />
       </header>
 
-      {/* STEP 2: THE NAVIGATION DOCK (Middle Section) */}
-      <div className="pt-20 px-4 max-w-2xl mx-auto">
-        <div className="mt-3 mb-4 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
-            const isActive = activeTab === t;
-            return (
-              <button
-                key={t}
-                disabled={pl.crises.accountsFrozen}
-                onClick={() => {
-                  setActiveTab(t);
-                  setActiveHustleView(null);
-                }}
-                className={`px-4 py-2 rounded-lg flex-none text-[10px] font-black uppercase tracking-tighter transition-all border
-                  ${isActive ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800 hover:text-slate-300'} ${pl.crises.accountsFrozen ? 'opacity-20 cursor-not-allowed' : ''}`}
-              >
-                {t}
-              </button>
-            );
-          })}
+      {/* MAIN CONTENT AREA (Offset by HUD height) */}
+      <main className="pt-[18vh] pb-32 px-4 max-w-4xl mx-auto min-h-screen">
+        <div className="flex justify-between items-center mb-8 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+          <div className="flex gap-8">
+            <StatSmall label="CLOUT" value={clout} color="text-blue-400" />
+            <StatSmall label="MENTAL" value={`${mentalHealth}%`} color={mentalHealth < 20 ? "text-red-500 animate-pulse" : "text-emerald-400"} />
+            <StatSmall label="HEAT" value={`${heat}%`} color={heat > 80 ? "text-red-500" : "text-orange-400"} />
+          </div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
+            OPERATOR: {pl.name} // AGE {ageYears}Y {ageMonths}M
+          </div>
         </div>
-      </div>
-
-      {/* STEP 3: THE CENTER CORES (UNIFORM 2-COLUMN GRID) */}
-      <main className="pb-32 px-4 max-w-2xl mx-auto">
         {pl.crises.accountsFrozen && (
            <div className="mb-8 p-6 bg-red-900/20 border-2 border-red-600 rounded-2xl flex flex-col items-center gap-4 text-center">
               <div className="text-sm font-black text-white uppercase tracking-widest">Legal Crisis Detected</div>
@@ -419,12 +444,59 @@ function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
   );
 }
 
-function StatBadge({ label, value, color }: { label: React.ReactNode, value: string | number, color: string }) {
+function SlideStat({ label, value, max, color }: { label: string, value: number, max: number, color: string }) {
+  const percent = Math.min(100, (value / max) * 100);
   return (
-    <div className="flex flex-col items-center">
-      <div className={`text-[8px] font-black leading-none mb-1 ${color}`}>{label}</div>
-      <div className={`text-xs font-bold leading-none ${color}`}>{value}</div>
+    <div className="flex items-center gap-3 w-48">
+      <span className="text-[10px] font-black text-white/60 w-12 tracking-tighter">{label}</span>
+      <div className="flex-1 h-3 bg-black/40 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          className={`h-full ${color} transition-all duration-500`}
+        />
+        <div className="absolute inset-0 flex items-center justify-center text-[8px] font-black mix-blend-difference">
+          {value} / {max}
+        </div>
+      </div>
     </div>
+  );
+}
+
+function StatSmall({ label, value, color }: { label: string, value: string | number, color: string }) {
+  return (
+    <div className="flex flex-col">
+      <div className="text-[9px] font-black text-slate-600 uppercase tracking-tighter">{label}</div>
+      <div className={`text-sm font-black ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function ActionButton({ onClick, children, className, disabled }: any) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative group active:top-[2px] transition-all disabled:opacity-50 disabled:pointer-events-none ${className}`}
+    >
+      <div className="absolute inset-0 bg-slate-400 rounded-full translate-y-[4px] shadow-lg" />
+      <div className="relative px-8 py-4 bg-white text-black font-black uppercase text-xs rounded-full border-2 border-slate-300 group-hover:bg-slate-100 group-active:translate-y-[2px] transition-all flex items-center justify-center min-w-[120px]">
+        {children}
+      </div>
+    </button>
+  );
+}
+
+function AlertPill({ children, color }: { children: React.ReactNode, color: string }) {
+  return (
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -20, opacity: 0 }}
+      className={`${color} px-4 py-1.5 rounded-full text-[10px] font-black text-white uppercase text-center shadow-lg border border-white/20`}
+    >
+      {children}
+    </motion.div>
   );
 }
 

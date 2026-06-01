@@ -52,7 +52,8 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
         bag: state.pl.bag - cost + yieldCash,
         clout: Math.max(0, state.pl.clout + yieldClout),
         mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
-        startupStats: nextStartupStats
+        startupStats: nextStartupStats,
+        streak: !isOutage ? state.pl.streak + 1 : 0,
       },
       news: currentNews
     };
@@ -117,6 +118,7 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
         bag: nextPl.bag - totalUpfront + finalYieldCash,
         aura: Math.max(0, nextPl.aura + finalYieldAura),
         mentalHealth: Math.max(0, nextPl.mentalHealth + finalHitMental),
+        streak: isSuccess ? state.pl.streak + 1 : 0,
       },
       news: currentNews
     };
@@ -169,7 +171,8 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
         bag: state.pl.bag - totalCost + yieldCash,
         startupStats: nextStartupStats,
         crises: nextCrises,
-        mentalHealth: Math.max(0, state.pl.mentalHealth - 10)
+        mentalHealth: Math.max(0, state.pl.mentalHealth - 10),
+        streak: !isSeizure ? state.pl.streak + 1 : 0,
       },
       news: currentNews
     };
@@ -218,7 +221,8 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
         bag: state.pl.bag - payrollCost + finalYield,
         startupStats: nextStartupStats,
         crises: nextCrises,
-        mentalHealth: Math.max(0, state.pl.mentalHealth - 20)
+        mentalHealth: Math.max(0, state.pl.mentalHealth - 20),
+        streak: isSuccess ? state.pl.streak + 1 : 0,
       },
       news: currentNews
     };
