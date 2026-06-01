@@ -17,7 +17,7 @@ function App() {
   const state = useGameStore();
 
   const {
-    pl, ph, alias, marketType, fatalCause, news,
+    pl, ph, fatalCause, news,
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
   const {
@@ -33,14 +33,58 @@ function App() {
   }, [news]);
 
   const resetGame = (d: 1 | 2 | 3) => {
+    const currentName = useGameStore.getState().pl.name;
     const initialState = getInitialGameState(d);
-    useGameStore.setState({ ...(initialState as GameState), ph: 'PLAYING' });
+    useGameStore.setState({
+      ...(initialState as GameState),
+      ph: 'PLAYING',
+      pl: { ...initialState.pl, name: currentName }
+    });
   };
 
   const ageYears = 18 + Math.floor(mo / 12);
   const ageMonths = mo % 12;
 
   const isCritical = mentalHealth <= 20 || aura <= 10 || heat >= 80;
+
+  if (pl.name === "") {
+    return (
+      <div className="min-h-screen bg-black text-emerald-500 font-mono flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full space-y-8 border border-emerald-900/30 p-12 bg-slate-950/50 backdrop-blur-xl rounded-3xl shadow-2xl shadow-emerald-900/10">
+          <div className="space-y-4 text-center">
+            <div className="text-[10px] uppercase tracking-[0.4em] text-emerald-800 font-black mb-2">System Auth Required</div>
+            <h2 className="text-xl font-black uppercase tracking-tighter text-white">
+              SYSTEM READY... INITIALIZING RUN. ENTER OPERATOR ALIAS:
+            </h2>
+          </div>
+          <div className="space-y-6">
+            <input
+              type="text"
+              autoFocus
+              className="w-full bg-black border-b-2 border-emerald-900 focus:border-emerald-500 py-4 px-2 text-emerald-400 font-black outline-none transition-all placeholder:text-emerald-900/50 uppercase tracking-widest text-center"
+              placeholder="_____"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = e.currentTarget.value.trim().toUpperCase();
+                  if (val) state.setPlayerName(val);
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                const input = document.querySelector('input') as HTMLInputElement;
+                const val = input.value.trim().toUpperCase();
+                if (val) state.setPlayerName(val);
+              }}
+              className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-[0.3em] transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/40"
+            >
+              ⚡ ACTIVATE SYSTEM
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const mntTheme = mentalHealth > 35
     ? { color: "text-emerald-400", icon: "🧠" }
@@ -97,20 +141,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
-      {/* STEP 1: THE STICKY TOP ZONE (STATS HUD) */}
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur p-3 pb-2 ${isCritical ? "border border-rose-600/40 shadow-[0_0_15px_rgba(225,29,72,0.25)] transition-all duration-500" : "border-b border-slate-800"}`}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar mb-2">
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-emerald-600 h-8 w-8 rounded-full flex items-center justify-center font-black text-xs shadow-lg shadow-emerald-900/20">
-              {alias.charAt(0)}
+      {/* STEP 1: THE SCOREBOARD (Top Section) */}
+      <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+        <div className={`bg-slate-900/90 backdrop-blur p-3 pointer-events-auto ${isCritical ? "border-b border-rose-600/40 shadow-[0_0_15px_rgba(225,29,72,0.25)] transition-all duration-500" : "border-b border-slate-800"}`}>
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="bg-emerald-600 h-8 w-8 rounded-full flex items-center justify-center font-black text-xs shadow-lg shadow-emerald-900/20 text-white">
+                {pl.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-tight text-white">{pl.name} | AGE: {ageYears}y {ageMonths}m</div>
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter italic">{pl.currentTier} TIER</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-black uppercase tracking-tight">{alias}</div>
-              <div className="text-[10px] text-slate-500 font-bold">Age: {ageYears}y {ageMonths}m</div>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
               <div className="text-[9px] uppercase text-slate-500 font-black leading-none mb-1">Bankroll</div>
               <div data-testid="bankroll-value" className="text-sm font-black text-emerald-400 leading-none">${bag.toLocaleString()}</div>
@@ -127,9 +172,11 @@ function App() {
           </div>
         </div>
 
+        </div>
+
         {/* GLOBAL ALERTS TRAY */}
         {(pl.crises.shadowbanTurns > 0 || pl.crises.deadstockOverhead > 0 || pl.crises.accountsFrozen || pl.crises.blacklistTurns > 0 || pl.crises.laborStrikeTurns > 0) && (
-          <div className="w-full flex flex-col gap-2 px-4 mb-4 pointer-events-auto">
+          <div className="w-full flex flex-col gap-2 px-4 mt-2 pointer-events-auto">
              {pl.crises.shadowbanTurns > 0 && (
                <div className="bg-red-900/80 backdrop-blur border border-red-500 p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
                  ⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns} mo)
@@ -158,26 +205,33 @@ function App() {
           </div>
         )}
 
-        <div className="max-w-6xl mx-auto flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+      </header>
+
+      {/* STEP 2: THE NAVIGATION DOCK (Middle Section) */}
+      <div className="pt-20 px-4 max-w-2xl mx-auto">
+        <div className="mt-3 mb-4 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
             const isActive = activeTab === t;
             return (
               <button
                 key={t}
                 disabled={pl.crises.accountsFrozen}
-                onClick={() => setActiveTab(t)}
-                className={`px-3 py-1 rounded flex-none text-[9px] font-black uppercase tracking-tighter transition-all
-                  ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'} ${pl.crises.accountsFrozen ? 'opacity-20 cursor-not-allowed' : ''}`}
+                onClick={() => {
+                  setActiveTab(t);
+                  setActiveHustleView(null);
+                }}
+                className={`px-4 py-2 rounded-lg flex-none text-[10px] font-black uppercase tracking-tighter transition-all border
+                  ${isActive ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800 hover:text-slate-300'} ${pl.crises.accountsFrozen ? 'opacity-20 cursor-not-allowed' : ''}`}
               >
                 {t}
               </button>
             );
           })}
         </div>
-      </header>
+      </div>
 
       {/* STEP 3: THE CENTER CORES (UNIFORM 2-COLUMN GRID) */}
-      <main className="pt-32 pb-32 px-4 max-w-2xl mx-auto">
+      <main className="pb-32 px-4 max-w-2xl mx-auto">
         {pl.crises.accountsFrozen && (
            <div className="mb-8 p-6 bg-red-900/20 border-2 border-red-600 rounded-2xl flex flex-col items-center gap-4 text-center">
               <div className="text-sm font-black text-white uppercase tracking-widest">Legal Crisis Detected</div>
@@ -224,58 +278,22 @@ function App() {
               );
             }
 
+            const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
             return (
-              <>
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
-                  <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
-                    {marketType} MARKET
-                  </div>
-                </div>
-
-                <div className="mb-2">
-                  <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Business & Active Operations</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-8 w-full">
-                  {(() => {
-                    const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
-                    const operations = currentTabHustles.filter(h => !h.id.startsWith('r_') || h.isPassive);
-                    return operations.map(h => {
-                      return (
-                        <HustleCard
-                          key={h.id}
-                          title={h.name}
-                          onClick={() => setActiveHustleView(h.id)}
-                          icon={h.icon}
-                        />
-                      );
-                    });
-                  })()}
-                </div>
-
-                <hr className="border-slate-800 my-6" />
-
-                <div className="mb-2">
-                  <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Lifestyle & Empire Logistics</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3 w-full">
-                  {(() => {
-                    const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
-                    const logistics = currentTabHustles.filter(h => h.id.startsWith('r_') && !h.isPassive);
-                    return logistics.map(h => {
-                      return (
-                        <HustleCard
-                          key={h.id}
-                          title={h.name}
-                          disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                          onClick={() => state.executeHustle(h.id)}
-                          icon={h.icon}
-                        />
-                      );
-                    });
-                  })()}
-                </div>
-              </>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                {currentTabHustles.map(h => {
+                  const isLifestyle = h.id.startsWith('r_') && !h.isPassive;
+                  return (
+                    <HustleCard
+                      key={h.id}
+                      title={h.name}
+                      icon={h.icon}
+                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
+                      onClick={() => isLifestyle ? state.executeHustle(h.id) : setActiveHustleView(h.id)}
+                    />
+                  );
+                })}
+              </div>
             );
           })()
         ) : (

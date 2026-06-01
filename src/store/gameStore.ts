@@ -64,6 +64,10 @@ export const useGameStore = create<GameState>()(
 
       setPh: (ph) => set({ ph }),
 
+      setPlayerName: (name) => set((state) => ({
+        pl: { ...state.pl, name }
+      })),
+
       setTab: (tab) => set({ tab }),
 
       setActiveTab: (activeTab) => set({ activeTab }),
