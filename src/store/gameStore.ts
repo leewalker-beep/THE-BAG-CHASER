@@ -215,7 +215,8 @@ export const useGameStore = create<GameState>()(
           pl: {
             ...state.pl,
             bag: state.pl.bag - fee,
-            tier: newTier
+            tier: newTier,
+            currentTier: tierName
           },
           news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news]
         };

@@ -21,6 +21,7 @@ export interface PlayerStats {
   heat: number;
   mo: number; // Months elapsed
   tier: number;
+  currentTier: GameTab;
   hustleFatigue: Record<HustleID, number>;
   hustleLevels: Record<HustleID, number>;
   plasmaUsedThisMonth: boolean;
