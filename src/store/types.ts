@@ -11,6 +11,7 @@ export interface CrisisState {
 }
 
 export interface PlayerStats {
+  name: string;
   bag: number;
   mentalHealth: number;
   maxMentalHealth: number;
@@ -134,6 +135,7 @@ export interface GameState {
 
   // Base Actions
   setPh: (ph: GameState['ph']) => void;
+  setPlayerName: (name: string) => void;
   setTab: (tab: string) => void;
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
