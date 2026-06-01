@@ -69,12 +69,12 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeConcertFestival: () => set((state) => {
     const { venue, insured, ticketPrice } = state.pl.festivalPanel;
-    const venueCosts = { FAIR: 3000, ARENA: 10000, STADIUM: 25000 };
-    const insuranceCost = 2000;
+    const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
+    const insuranceCost = 25000;
     const totalUpfront = venueCosts[venue] + (insured ? insuranceCost : 0);
 
     if (state.pl.bag < totalUpfront) {
-      return { news: [`INSUFFICIENT FUNDS: Need $${totalUpfront.toLocaleString()} to book the venue.`, ...state.news] };
+      return { news: [`INSUFFICIENT FUNDS: Need $${totalUpfront.toLocaleString()} for circuit booking.`, ...state.news] };
     }
 
     const isSuccess = Math.random() < 0.75;
@@ -85,22 +85,28 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
     const nextPl = { ...state.pl };
 
     if (isSuccess) {
-      const venueCapacities = { FAIR: 500, ARENA: 2000, STADIUM: 8000 };
-      const demandScore = state.pl.aura / ticketPrice;
-      const attendance = Math.min(venueCapacities[venue], Math.floor(venueCapacities[venue] * demandScore * 2));
+      const capacities = { TOUR: 50000, CIRCUIT: 250000, SATURATION: 1000000 };
+      const demandScore = state.pl.aura / (ticketPrice / 10); // Scaled for corporate aura
+      const attendance = Math.min(capacities[venue], Math.floor(capacities[venue] * demandScore * 0.5));
 
       finalYieldCash = attendance * ticketPrice;
+
+      if (state.pl.crises.laborStrikeTurns > 0) {
+        finalYieldCash = 0;
+        currentNews.unshift(`LABOR STRIKE: Global festival revenue halted by union action.`);
+      }
+
       finalYieldAura = 150;
-      currentNews.unshift(`FESTIVAL SUCCESS: ${attendance.toLocaleString()} fans attended! Sold out the ${venue}. Grossed $${finalYieldCash.toLocaleString()}.`);
+      currentNews.unshift(`CIRCUIT SUCCESS: ${attendance.toLocaleString()} fans attended! Domestic market saturated in ${venue}. Grossed $${finalYieldCash.toLocaleString()}.`);
     } else {
-      currentNews.unshift(`SEVERE WEATHER: A freak storm forced evacuation.`);
+      currentNews.unshift(`HEADLINER BREACH: A key headliner canceled the circuit.`);
       if (insured) {
         const reimbursement = Math.floor(venueCosts[venue] * 0.8);
         nextPl.bag += reimbursement;
-        currentNews.unshift(`INSURANCE: Policy triggered. Recovered $${reimbursement.toLocaleString()} in damages.`);
+        currentNews.unshift(`INSURANCE: Global policy triggered. Recovered $${reimbursement.toLocaleString()} in damages.`);
       } else {
         finalYieldAura = -40;
-        currentNews.unshift(`DISASTER: No insurance. Total capital loss and massive reputational hit.`);
+        currentNews.unshift(`DISASTER: No coverage. Total capital loss and massive reputational hit.`);
       }
     }
 
@@ -127,11 +133,11 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeEcomBrand: () => set((state) => {
     const { runSize, adSpend } = state.pl.ecomBrandPanel;
-    const baseCost = runSize === 500 ? 2500 : 7500;
+    const baseCost = runSize === 5000 ? 50000 : 200000;
     const totalCost = baseCost + adSpend;
 
     if (state.pl.bag < totalCost) {
-      return { news: [`INSUFFICIENT FUNDS: Need $${totalCost.toLocaleString()} for this production run.`, ...state.news] };
+      return { news: [`INSUFFICIENT FUNDS: Need $${totalCost.toLocaleString()} for conglomerate operations.`, ...state.news] };
     }
 
     const isSeizure = Math.random() < 0.15;
@@ -141,13 +147,19 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
     const nextStartupStats = { ...state.pl.startupStats };
 
     if (isSeizure) {
-      nextCrises.deadstockOverhead += 200;
-      currentNews.unshift(`CUSTOMS SEIZURE: 200 units were flagged and destroyed. Deadstock overhead increased.`);
+      nextCrises.deadstockOverhead += 2000;
+      currentNews.unshift(`SUPPLY CHAIN WARFARE: Global trade embargo destroyed your container ships. Deadstock overhead increased.`);
     } else {
-      const conversions = Math.floor((adSpend + state.pl.clout * 10) * (runSize / 500));
-      yieldCash = conversions * 45; // $45 average profit per unit
+      const conversions = Math.min(runSize, Math.floor((adSpend / 10 + state.pl.clout * 100) * (runSize / 5000)));
+      yieldCash = conversions * 125; // High-margin corporate profit
+
+      if (state.pl.crises.laborStrikeTurns > 0) {
+        yieldCash = 0;
+        currentNews.unshift(`LABOR STRIKE: Conglomerate warehouse automation halted by union action.`);
+      }
+
       nextStartupStats.ecomOrders += conversions;
-      currentNews.unshift(`ECOM RUN SUCCESS: Generated ${conversions.toLocaleString()} orders. Net profit: $${yieldCash.toLocaleString()}.`);
+      currentNews.unshift(`CONGLOMERATE SUCCESS: Generated ${conversions.toLocaleString()} high-margin orders. Net profit: $${yieldCash.toLocaleString()}.`);
     }
 
     const nextState = {

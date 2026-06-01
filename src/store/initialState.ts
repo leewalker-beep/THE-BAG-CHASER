@@ -115,13 +115,13 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         subscriptionPrice: 20,
       },
       festivalPanel: {
-        venue: 'FAIR',
+        venue: 'TOUR',
         insured: false,
-        ticketPrice: 50,
+        ticketPrice: 500,
       },
       ecomBrandPanel: {
-        runSize: 500,
-        adSpend: 1000,
+        runSize: 5000,
+        adSpend: 50000,
       },
       agencyPanel: {
         client: 'SMB',
