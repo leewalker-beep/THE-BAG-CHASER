@@ -71,12 +71,12 @@ export interface PlayerStats {
     subscriptionPrice: number;
   };
   festivalPanel: {
-    venue: 'FAIR' | 'ARENA' | 'STADIUM';
+    venue: 'TOUR' | 'CIRCUIT' | 'SATURATION';
     insured: boolean;
     ticketPrice: number;
   };
   ecomBrandPanel: {
-    runSize: 500 | 2000;
+    runSize: 5000 | 25000;
     adSpend: number;
   };
   agencyPanel: {
