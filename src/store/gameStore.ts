@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { GameState } from './types';
+import { TAB_TIER_MAPPING, type GameState } from './types';
 import { getInitialGameState } from './initialState';
 import { createMudSlice } from './slices/mudSlice';
 import { createStreetSlice } from './slices/streetSlice';
@@ -205,6 +205,18 @@ export const useGameStore = create<GameState>()(
             crises: { ...state.pl.crises, accountsFrozen: false }
           },
           news: ["SYSTEM: Legal retainer paid. Corporate accounts have been UNFROZEN.", ...state.news]
+        };
+      }),
+
+      setCurrentTier: (tierName, fee = 0) => set((state) => {
+        const newTier = TAB_TIER_MAPPING[tierName];
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - fee,
+            tier: newTier
+          },
+          news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news]
         };
       }),
 

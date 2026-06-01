@@ -100,6 +100,37 @@ function App() {
           </div>
         </div>
 
+        {/* GLOBAL ALERTS TRAY */}
+        {(pl.crises.shadowbanTurns > 0 || pl.crises.deadstockOverhead > 0 || pl.crises.accountsFrozen || pl.crises.blacklistTurns > 0 || pl.crises.laborStrikeTurns > 0) && (
+          <div className="w-full flex flex-col gap-2 px-4 mb-4 pointer-events-auto">
+             {pl.crises.shadowbanTurns > 0 && (
+               <div className="bg-red-900/80 backdrop-blur border border-red-500 p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
+                 ⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns} mo)
+               </div>
+             )}
+             {pl.crises.deadstockOverhead > 0 && (
+               <div className="bg-orange-900/80 backdrop-blur border border-orange-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
+                 📦 DEADSTOCK BURN (+${pl.crises.deadstockOverhead}/mo)
+               </div>
+             )}
+             {pl.crises.accountsFrozen && (
+               <div className="bg-red-600 border-2 border-white p-2 rounded text-[10px] font-black text-white uppercase text-center">
+                 🚫 ACCOUNTS FROZEN
+               </div>
+             )}
+             {pl.crises.blacklistTurns > 0 && (
+               <div className="bg-slate-900 border border-slate-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
+                 ❌ ELITE BLACKLIST ({pl.crises.blacklistTurns} mo)
+               </div>
+             )}
+             {pl.crises.laborStrikeTurns > 0 && (
+               <div className="bg-red-800/90 border border-white p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
+                 ⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns} mo)
+               </div>
+             )}
+          </div>
+        )}
+
         <div className="max-w-6xl mx-auto flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {(Object.keys(TAB_TIER_MAPPING) as GameTab[]).map((t) => {
             const isActive = activeTab === t;
@@ -118,37 +149,6 @@ function App() {
         </div>
       </header>
 
-      {/* STEP 1.5: CRISIS BANNERS */}
-      <div className="fixed top-24 left-0 right-0 z-40 px-4 pointer-events-none">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2">
-           {pl.crises.shadowbanTurns > 0 && (
-             <div className="bg-red-900/80 backdrop-blur border border-red-500 p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
-               ⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns} mo)
-             </div>
-           )}
-           {pl.crises.deadstockOverhead > 0 && (
-             <div className="bg-orange-900/80 backdrop-blur border border-orange-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
-               📦 DEADSTOCK BURN (+${pl.crises.deadstockOverhead}/mo)
-             </div>
-           )}
-           {pl.crises.accountsFrozen && (
-             <div className="bg-red-600 border-2 border-white p-2 rounded text-[10px] font-black text-white uppercase text-center">
-               🚫 ACCOUNTS FROZEN
-             </div>
-           )}
-           {pl.crises.blacklistTurns > 0 && (
-             <div className="bg-slate-900 border border-slate-500 p-2 rounded text-[10px] font-black text-white uppercase text-center">
-               ❌ ELITE BLACKLIST ({pl.crises.blacklistTurns} mo)
-             </div>
-           )}
-           {pl.crises.laborStrikeTurns > 0 && (
-             <div className="bg-red-800/90 border border-white p-2 rounded text-[10px] font-black text-white uppercase text-center animate-pulse">
-               ⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns} mo)
-             </div>
-           )}
-        </div>
-      </div>
-
       {/* STEP 3: THE CENTER CORES (UNIFORM 2-COLUMN GRID) */}
       <main className="pt-32 pb-32 px-4 max-w-2xl mx-auto">
         {pl.crises.accountsFrozen && (
@@ -166,59 +166,99 @@ function App() {
 
         {activeHustleView === null ? (
           <>
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
-              <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
-                {marketType} MARKET
+            {tier < TAB_TIER_MAPPING[activeTab] ? (
+              <div className="mb-8 p-8 bg-slate-900/50 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center text-4xl shadow-inner">🔒</div>
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-tighter text-white mb-2 italic">Tier Locked: {activeTab}</h2>
+                  <p className="text-xs text-slate-500 font-bold max-w-xs mx-auto uppercase tracking-widest leading-relaxed">Establish your presence and meet the operational requirements to incorporate in this sector.</p>
+                </div>
+
+                <div className="w-full max-w-sm grid grid-cols-1 gap-3">
+                  {activeTab === 'STARTUP' && (
+                    <GraduationCheck
+                      reqs={{ cash: 15000, clout: 50, aura: 50, fee: 5000 }}
+                      current={{ cash: bag, clout: clout, aura: aura }}
+                      tierName="STARTUP"
+                      description="Startup Incorporation"
+                      onUnlock={() => state.setCurrentTier('STARTUP', 5000)}
+                      disabled={pl.crises.accountsFrozen}
+                    />
+                  )}
+                  {activeTab === 'CORPORATE' && (
+                    <GraduationCheck
+                      reqs={{ cash: 100000, clout: 100, aura: 100, fee: 25000 }}
+                      current={{ cash: bag, clout: clout, aura: aura }}
+                      tierName="CORPORATE"
+                      description="Institutional Compliance"
+                      onUnlock={() => state.setCurrentTier('CORPORATE', 25000)}
+                      disabled={pl.crises.accountsFrozen}
+                    />
+                  )}
+                  {!['STARTUP', 'CORPORATE'].includes(activeTab) && (
+                    <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Requires {activeTab} Graduation</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
+                  <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase">
+                    {marketType} MARKET
+                  </div>
+                </div>
 
-            <div className="mb-2">
-              <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Business & Active Operations</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-8 w-full">
-              {(() => {
-                const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
-                const operations = currentTabHustles.filter(h => !h.id.startsWith('r_') || h.isPassive);
-                return operations.map(h => {
-                  return (
-                    <HustleCard
-                      key={h.id}
-                      title={h.name}
-                      locked={tier < TAB_TIER_MAPPING[h.tier]}
-                      lockText={`LOCKED: ${activeTab} TIER`}
-                      onClick={() => setActiveHustleView(h.id)}
-                      icon={h.icon}
-                    />
-                  );
-                });
-              })()}
-            </div>
+                <div className="mb-2">
+                  <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Business & Active Operations</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-8 w-full">
+                  {(() => {
+                    const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
+                    const operations = currentTabHustles.filter(h => !h.id.startsWith('r_') || h.isPassive);
+                    return operations.map(h => {
+                      return (
+                        <HustleCard
+                          key={h.id}
+                          title={h.name}
+                          locked={tier < TAB_TIER_MAPPING[h.tier]}
+                          lockText={`LOCKED: ${activeTab} TIER`}
+                          onClick={() => setActiveHustleView(h.id)}
+                          icon={h.icon}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
 
-            <hr className="border-slate-800 my-6" />
+                <hr className="border-slate-800 my-6" />
 
-            <div className="mb-2">
-              <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Lifestyle & Empire Logistics</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-3 w-full">
-              {(() => {
-                const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
-                const logistics = currentTabHustles.filter(h => h.id.startsWith('r_') && !h.isPassive);
-                return logistics.map(h => {
-                  return (
-                    <HustleCard
-                      key={h.id}
-                      title={h.name}
-                      locked={tier < TAB_TIER_MAPPING[h.tier]}
-                      lockText={`LOCKED: ${activeTab} TIER`}
-                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => setActiveHustleView(h.id)}
-                      icon={h.icon}
-                    />
-                  );
-                });
-              })()}
-            </div>
+                <div className="mb-2">
+                  <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Lifestyle & Empire Logistics</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  {(() => {
+                    const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
+                    const logistics = currentTabHustles.filter(h => h.id.startsWith('r_') && !h.isPassive);
+                    return logistics.map(h => {
+                      return (
+                        <HustleCard
+                          key={h.id}
+                          title={h.name}
+                          locked={tier < TAB_TIER_MAPPING[h.tier]}
+                          lockText={`LOCKED: ${activeTab} TIER`}
+                          disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
+                          onClick={() => setActiveHustleView(h.id)}
+                          icon={h.icon}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
+              </>
+            )}
           </>
         ) : (
           <SubGamePanel
@@ -263,6 +303,47 @@ function App() {
           {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
         </div>
       </footer>
+    </div>
+  );
+}
+
+function GraduationCheck({ reqs, current, tierName, description, onUnlock, disabled }: {
+  reqs: { cash: number, clout: number, aura: number, fee: number },
+  current: { cash: number, clout: number, aura: number },
+  tierName: string,
+  description: string,
+  onUnlock: () => void,
+  disabled?: boolean
+}) {
+  const meetsCash = current.cash >= reqs.cash;
+  const meetsClout = current.clout >= reqs.clout;
+  const meetsAura = current.aura >= reqs.aura;
+  const canUnlock = meetsCash && meetsClout && meetsAura && !disabled;
+
+  return (
+    <div className="p-6 bg-slate-800/80 border border-slate-700 rounded-2xl flex flex-col gap-4 shadow-xl">
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{description} Requirements</div>
+      <div className="grid grid-cols-3 gap-2">
+         <div className={`flex flex-col p-2 rounded border ${meetsCash ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
+            <span className="text-[8px] font-black uppercase text-slate-500">Capital</span>
+            <span className={`text-[10px] font-mono font-bold ${meetsCash ? 'text-emerald-400' : 'text-red-400'}`}>${current.cash.toLocaleString()}/${(reqs.cash/1000)}k</span>
+         </div>
+         <div className={`flex flex-col p-2 rounded border ${meetsClout ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
+            <span className="text-[8px] font-black uppercase text-slate-500">Clout</span>
+            <span className={`text-[10px] font-mono font-bold ${meetsClout ? 'text-emerald-400' : 'text-red-400'}`}>{current.clout}/{reqs.clout}</span>
+         </div>
+         <div className={`flex flex-col p-2 rounded border ${meetsAura ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/5 border-red-500/20'}`}>
+            <span className="text-[8px] font-black uppercase text-slate-500">Aura</span>
+            <span className={`text-[10px] font-mono font-bold ${meetsAura ? 'text-emerald-400' : 'text-red-400'}`}>{current.aura}/{reqs.aura}</span>
+         </div>
+      </div>
+      <button
+        onClick={onUnlock}
+        disabled={!canUnlock}
+        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 disabled:grayscale text-white text-[10px] font-black rounded-xl uppercase tracking-[0.1em] transition-all shadow-lg shadow-emerald-900/40"
+      >
+        {canUnlock ? `⚡ Incorporate & Unlock Tier ${tierName} (-$${reqs.fee.toLocaleString()})` : "Requirements Not Met"}
+      </button>
     </div>
   );
 }
