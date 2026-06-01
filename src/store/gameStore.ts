@@ -210,7 +210,8 @@ export const useGameStore = create<GameState>()(
 
       setCurrentTier: (tierName, fee = 0) => set((state) => {
         const newTier = TAB_TIER_MAPPING[tierName];
-        return {
+        const nextState = {
+          ...state,
           pl: {
             ...state.pl,
             bag: state.pl.bag - fee,
@@ -218,6 +219,7 @@ export const useGameStore = create<GameState>()(
           },
           news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news]
         };
+        return clampStats(nextState);
       }),
 
       upgradeHustle: (hustleId: string) =>
