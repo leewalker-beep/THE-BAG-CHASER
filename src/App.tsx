@@ -5,7 +5,10 @@ import { TAB_TIER_MAPPING } from './store/types';
 import type { GameState, GameTab } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 
+const TIER_ORDER: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL', 'PRESIDENT', 'OPEN'];
+
 const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: number, fee: number, description: string }> = {
+  STREET: { cash: 5000, clout: 20, aura: 20, fee: 3000, description: "HQ Lease & Street Cred" },
   STARTUP: { cash: 15000, clout: 50, aura: 50, fee: 5000, description: "Startup Incorporation" },
   CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
 };
@@ -18,8 +21,7 @@ function App() {
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
   const {
-    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth,
-    tier
+    bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth
   } = pl;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -170,33 +172,39 @@ function App() {
         )}
 
         {activeHustleView === null ? (
-          <>
-            {tier < TAB_TIER_MAPPING[activeTab] ? (
-              <div className="mb-8 p-8 bg-slate-900 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
-                <div className="w-20 h-20 bg-emerald-600/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-emerald-500/30">🏛️</div>
-                <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2 italic">The Incorporation & Advancement Bureau</h2>
-                  <p className="text-xs text-slate-400 font-bold max-w-md mx-auto uppercase tracking-widest leading-relaxed">Official registration and compliance checks are required to unlock {activeTab} operations. meet the milestones below to advance.</p>
-                </div>
+          (() => {
+            const currentIdx = TIER_ORDER.indexOf(state.pl.currentTier);
+            const activeTabIdx = TIER_ORDER.indexOf(activeTab);
 
-                <div className="w-full max-w-sm grid grid-cols-1 gap-3">
-                  {TIER_REQUIREMENTS[activeTab] ? (
-                    <GraduationCheck
-                      reqs={TIER_REQUIREMENTS[activeTab]}
-                      current={{ cash: bag, clout: clout, aura: aura }}
-                      tierName={activeTab}
-                      description={TIER_REQUIREMENTS[activeTab].description}
-                      onUnlock={() => state.setCurrentTier(activeTab, TIER_REQUIREMENTS[activeTab].fee)}
-                      disabled={pl.crises.accountsFrozen}
-                    />
-                  ) : (
-                    <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Requires {activeTab} Graduation</span>
-                    </div>
-                  )}
+            if (activeTabIdx > currentIdx) {
+              return (
+                <div className="mb-8 p-8 bg-slate-900 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-emerald-600/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-emerald-500/30">🏛️</div>
+                  <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2 italic">The Incorporation & Advancement Bureau</h2>
+                    <p className="text-xs text-slate-400 font-bold max-w-md mx-auto uppercase tracking-widest leading-relaxed">Official registration and compliance checks are required to unlock {activeTab} operations. meet the milestones below to advance.</p>
+                  </div>
+
+                  <div className="w-full max-w-sm grid grid-cols-1 gap-3">
+                    {TIER_REQUIREMENTS[activeTab] ? (
+                      <GraduationCheck
+                        reqs={TIER_REQUIREMENTS[activeTab]}
+                        current={{ cash: bag, clout: clout, aura: aura }}
+                        description={TIER_REQUIREMENTS[activeTab].description}
+                        onUnlock={() => state.setCurrentTier(activeTab, TIER_REQUIREMENTS[activeTab].fee)}
+                        disabled={pl.crises.accountsFrozen}
+                      />
+                    ) : (
+                      <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Requires {activeTab} Graduation</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            }
+
+            return (
               <>
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Active Hustles: {activeTab}</h2>
@@ -217,8 +225,6 @@ function App() {
                         <HustleCard
                           key={h.id}
                           title={h.name}
-                          locked={tier < TAB_TIER_MAPPING[h.tier]}
-                          lockText={`LOCKED: ${activeTab} TIER`}
                           onClick={() => setActiveHustleView(h.id)}
                           icon={h.icon}
                         />
@@ -241,8 +247,6 @@ function App() {
                         <HustleCard
                           key={h.id}
                           title={h.name}
-                          locked={tier < TAB_TIER_MAPPING[h.tier]}
-                          lockText={`LOCKED: ${activeTab} TIER`}
                           disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
                           onClick={() => setActiveHustleView(h.id)}
                           icon={h.icon}
@@ -252,8 +256,8 @@ function App() {
                   })()}
                 </div>
               </>
-            )}
-          </>
+            );
+          })()
         ) : (
           <SubGamePanel
             hustleId={activeHustleView}
@@ -262,23 +266,6 @@ function App() {
           />
         )}
 
-        {tier === 0 && activeTab === 'MUD' && (
-           <div className="mt-8 p-6 bg-gradient-to-br from-yellow-900/10 to-transparent border border-yellow-900/30 rounded-2xl flex flex-col items-center gap-4">
-              <div className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em]">HQ Graduation</div>
-              <div className="flex gap-4 text-[10px] font-mono">
-                 <span className={bag >= 5000 ? 'text-emerald-400' : 'text-slate-600'}>${bag.toLocaleString()}/5K</span>
-                 <span className={clout >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{clout}/20 CLT</span>
-                 <span className={aura >= 20 ? 'text-emerald-400' : 'text-slate-600'}>{aura}/20 AUR</span>
-              </div>
-              <button
-                onClick={state.escapeTheMud}
-                disabled={bag < 5000 || clout < 20 || aura < 20 || pl.crises.accountsFrozen}
-                className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-20 text-white text-xs font-black rounded uppercase tracking-widest transition-all shadow-lg shadow-yellow-900/20"
-              >
-                Sign HQ Lease ($3,000)
-              </button>
-           </div>
-        )}
 
         <div className="mt-8 flex justify-center gap-6">
            <button onClick={() => state.setPh('PROLOGUE_INTRO')} className="text-[9px] text-slate-700 hover:text-slate-400 uppercase font-bold tracking-tighter transition-colors">Terminate Run</button>
@@ -301,10 +288,9 @@ function App() {
   );
 }
 
-function GraduationCheck({ reqs, current, tierName, description, onUnlock, disabled }: {
+function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
   reqs: { cash: number, clout: number, aura: number, fee: number },
   current: { cash: number, clout: number, aura: number },
-  tierName: string,
   description: string,
   onUnlock: () => void,
   disabled?: boolean
@@ -399,34 +385,25 @@ interface HustleCardProps {
   title: string;
   onClick: () => void;
   disabled?: boolean;
-  locked?: boolean;
-  lockText?: string;
   icon: string;
   className?: string;
 }
 
-function HustleCard({ title, onClick, disabled, locked, lockText, icon, className }: HustleCardProps) {
+function HustleCard({ title, onClick, disabled, icon, className }: HustleCardProps) {
   const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-6 text-center transition-all active:scale-[0.95] group";
   const colorClass = "hover:border-emerald-500/50";
-  const disabledClass = (disabled || locked) ? 'cursor-not-allowed' : 'cursor-pointer';
+  const disabledClass = disabled ? 'cursor-not-allowed' : 'cursor-pointer';
 
   return (
     <button
-      onClick={locked ? undefined : onClick}
+      onClick={onClick}
       disabled={disabled}
-      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${locked ? 'pointer-events-none' : ''} ${className || ''}`}
+      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${className || ''}`}
     >
-      <div className={`relative z-10 flex flex-col items-center justify-center gap-3 ${locked ? 'opacity-20 blur-[2px]' : ''}`}>
+      <div className={`relative z-10 flex flex-col items-center justify-center gap-3`}>
         <div className="text-4xl mb-1">{icon}</div>
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors leading-tight">{title}</div>
       </div>
-      {locked && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
-          <div className="bg-slate-950/90 border border-slate-700 px-3 py-1 rounded text-[8px] font-black text-slate-200 uppercase tracking-widest flex items-center gap-1 shadow-2xl">
-            {lockText || 'LOCKED'}
-          </div>
-        </div>
-      )}
     </button>
   );
 }

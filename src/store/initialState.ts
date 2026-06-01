@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'executeHustle' | 'upgradeHustle' | 'unfreezeAccounts' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'executeTechFlipDrop' | 'setPodcastInput' | 'executePodcastEpisode' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'executeFranchiseTurn' | 'setStreetwearInput' | 'executeStreetwearRun'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'adv' | 'executeHustle' | 'upgradeHustle' | 'unfreezeAccounts' | 'rLabor' | 'rDelivery' | 'rSurvey' | 'rPlasma' | 'rTechFlip' | 'rVintage' | 'rSmm' | 'rGig' | 'rSw' | 'rDrop' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'runCreatorContent' | 'runPodcastSyndicate' | 'runMusicSyndicate' | 'runDripLabel' | 'runNightPromo' | 'runMemeDev' | 'runSaasMvp' | 'runAgencyScale' | 'runEcomBrand' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'executeTechFlipDrop' | 'setPodcastInput' | 'executePodcastEpisode' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'executeFranchiseTurn' | 'setStreetwearInput' | 'executeStreetwearRun' | 'setCurrentTier'> => {
   const allHustles: string[] = [
     'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap', 'r_vending',
     'r_flyers', 'r_pr_campaign', 'r_ghost_mode',
@@ -64,6 +64,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       heat: 0,
       mo: 0,
       tier: startingTier,
+      currentTier: startingTier === 1 ? 'STREET' : 'MUD',
       hustleFatigue: initialFatigue,
       hustleLevels: initialLevels,
       plasmaUsedThisMonth: false,
