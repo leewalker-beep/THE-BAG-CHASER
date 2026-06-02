@@ -207,30 +207,80 @@ function App() {
           animation: molten-glow 2s ease-in-out infinite;
           border-width: 3px !important;
         }
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          14% { transform: scale(1.08); }
+          28% { transform: scale(1); }
+          42% { transform: scale(1.08); }
+          70% { transform: scale(1); }
+        }
+        .animate-heartbeat { animation: heartbeat 0.8s infinite ease-in-out; }
       `}</style>
 
       <div className="w-full flex flex-col shrink-0 bg-slate-950 border-b border-slate-900">
-        {/* ROW 1: METADATA SUB-BAR (TIGHT) */}
-        <div className="w-full flex justify-between items-center px-4 pt-2 pb-0.5 text-[11px] text-slate-400 uppercase tracking-wider">
-          <div>👤 OP: {pl.name || "LEE"} | AGE: {ageYears}y {ageMonths}m</div>
-          <div className="text-emerald-400 font-bold">RANK: {pl.currentTier}</div>
-        </div>
+        <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-950 border-b border-slate-900 shrink-0">
+          {/* LEFT COLUMN: THE OPERATOR ID FILE */}
+          <div className="flex flex-col text-left font-mono text-[11px] leading-tight select-none">
+            <span className="text-emerald-400 font-extrabold tracking-widest text-[12px] mb-0.5">RANK: {pl.currentTier}</span>
+            <span className="text-slate-400">👤 OP: {pl.name || "LEE"}</span>
+            <span className="text-slate-500 text-[10px]">⏳ AGE: {ageYears}y {ageMonths}m</span>
+          </div>
 
-        {/* ROW 2: LIQUID CAPITAL COUNT (VERTICAL COMPRESSION) */}
-        <div className="w-full flex flex-col items-center justify-center py-1">
-          <span className="text-[9px] tracking-widest text-slate-500 uppercase scale-90">LIQUID CAPITAL</span>
-          <span className="text-2xl font-black text-emerald-400 tracking-tight font-mono -mt-0.5">
-            ${displayedCash.toLocaleString()}
-          </span>
+          {/* RIGHT COLUMN: THE WEALTH TERMINAL */}
+          <div className="flex flex-col text-right font-mono select-none">
+            <span className="text-[9px] tracking-widest text-slate-500 uppercase font-bold scale-90 origin-right">LIQUID CAPITAL</span>
+            <span className="text-2xl font-black text-emerald-400 tracking-tight font-mono -mt-0.5">
+              ${displayedCash.toLocaleString()}
+            </span>
+          </div>
         </div>
 
         {/* ROW 3: SUB-STATS GRID (COMPACT) */}
         <div className="w-full px-4 pb-2">
           <div className="grid grid-cols-4 gap-1.5 bg-[#020817]/80 p-2 rounded-lg border border-slate-900 text-center">
-            <div><div className="text-[9px] text-slate-500 font-bold">CLT</div><div className="text-sm font-black text-blue-400">{clout}</div></div>
-            <div><div className="text-[9px] text-slate-500 font-bold">MNT</div><div className="text-sm font-black text-emerald-400">{mentalHealth}%</div></div>
-            <div><div className="text-[9px] text-slate-500 font-bold">AUR</div><div className="text-sm font-black text-purple-400">{aura}</div></div>
-            <div><div className="text-[9px] text-slate-500 font-bold">HT</div><div className="text-sm font-black text-orange-400">{heat}%</div></div>
+            {/* CLOUT */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="text-[9px] text-slate-500 font-bold">CLT</div>
+              <div className="flex items-center">
+                <span className="text-sm font-black text-blue-400">{clout}</span>
+                <svg className="w-6 h-3 inline-block ml-1" viewBox="0 0 24 10">
+                  <path d="M0,8 Q6,4 12,7 T24,2" fill="none" stroke="#60a5fa" strokeWidth="1.5"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* MENTAL HEALTH */}
+            <div className={`flex flex-col items-center justify-center transition-all ${mentalHealth <= 20 ? 'animate-heartbeat text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : ''}`}>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">MNT</div>
+              <div className="flex items-center">
+                <span className={`text-sm font-black ${mentalHealth <= 20 ? 'text-rose-500' : 'text-emerald-400'}`}>{mentalHealth}%</span>
+                <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
+                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </div>
+            </div>
+
+            {/* AURA */}
+            <div className={`flex flex-col items-center justify-center transition-all ${aura <= 10 ? 'animate-heartbeat text-rose-500' : ''}`}>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">AUR</div>
+              <div className="flex items-center">
+                <span className={`text-sm font-black ${aura <= 10 ? 'text-rose-500' : 'text-purple-400'}`}>{aura}</span>
+                <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
+                  <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "currentColor" : "#a855f7"} strokeWidth="1.5" />
+                </svg>
+              </div>
+            </div>
+
+            {/* HEAT */}
+            <div className={`flex flex-col items-center justify-center transition-all ${heat >= 80 ? 'animate-heartbeat text-red-500 font-bold' : ''}`}>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">HT</div>
+              <div className="flex items-center">
+                <span className={`text-sm font-black ${heat >= 80 ? 'text-red-500' : 'text-orange-400'}`}>{heat}%</span>
+                <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
+                  <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
