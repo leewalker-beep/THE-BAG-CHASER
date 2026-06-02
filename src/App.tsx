@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from './store/gameStore';
 import { VFXManager } from './components/juice/VFXManager';
@@ -26,6 +26,10 @@ function App() {
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
 
+  const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
+  const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
+  const isAnimating = useRef(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,6 +37,69 @@ function App() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [news]);
+
+  useEffect(() => {
+    if (!isAnimating.current && pl) {
+      setDisplayedCash(pl.bag);
+    }
+  }, [pl?.bag]);
+
+  const handleExecuteHustle = async (id: string, forceSuccess?: boolean) => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
+
+    const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
+    if (!config) {
+      isAnimating.current = false;
+      return;
+    }
+
+    // Phase 1: Cost Tick Down
+    const upfrontCost = (id === 'audio' && pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
+    const startCash = pl.bag;
+    const floorCash = startCash - upfrontCost;
+
+    if (upfrontCost > 0) {
+      const steps = 20;
+      const stepVal = upfrontCost / steps;
+      for (let i = 1; i <= steps; i++) {
+        setDisplayedCash(Math.floor(startCash - (stepVal * i)));
+        await new Promise(r => setTimeout(r, 20));
+      }
+    }
+    setDisplayedCash(floorCash);
+
+    // Phase 2: Splash Impact
+    await new Promise(r => setTimeout(r, 150));
+    state.deductCostAndRollOutcome(id, forceSuccess);
+
+    // Capture state immediately after dispatch
+    const newState = useGameStore.getState();
+    const finalCash = newState.pl.bag;
+    const netPayout = finalCash - floorCash;
+
+    if (netPayout > 0) {
+      setCashSplash({ text: `+$${netPayout.toLocaleString()}`, isWin: true });
+    } else {
+      setCashSplash({ text: `-$${Math.abs(netPayout).toLocaleString()}`, isWin: false });
+    }
+
+    setTimeout(() => setCashSplash(null), 600);
+
+    // Phase 3: Outcome Roll
+    const steps = 30;
+    const currentDisplayed = floorCash;
+    const totalDelta = finalCash - currentDisplayed;
+    const stepVal = totalDelta / steps;
+
+    for (let i = 1; i <= steps; i++) {
+      setDisplayedCash(Math.floor(currentDisplayed + (stepVal * i)));
+      await new Promise(r => setTimeout(r, 15));
+    }
+
+    setDisplayedCash(finalCash);
+    isAnimating.current = false;
+  };
 
   const resetGame = (d: 1 | 2 | 3) => {
     const currentName = useGameStore.getState().pl?.name || "";
@@ -151,7 +218,7 @@ function App() {
         <div className="w-full flex flex-col items-center justify-center py-1">
           <span className="text-[9px] tracking-widest text-slate-500 uppercase scale-90">LIQUID CAPITAL</span>
           <span className="text-2xl font-black text-emerald-400 tracking-tight font-mono -mt-0.5">
-            ${pl.bag.toLocaleString()}
+            ${displayedCash.toLocaleString()}
           </span>
         </div>
 
@@ -197,6 +264,17 @@ function App() {
       </div>
 
       <HeatDrizzle heat={heat} />
+
+      {/* CENTER IMPACT SPLASH */}
+      {cashSplash && (
+        <div className="fixed inset-0 pointer-events-none z-[999] flex items-center justify-center animate-[ping_0.4s_ease-out_1]">
+          <span className={`text-4xl font-black font-mono tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.75)] transition-all duration-700 ease-in ${
+            cashSplash.isWin ? 'text-emerald-400 scale-110' : 'text-rose-500 scale-100'
+          }`}>
+            {cashSplash.text}
+          </span>
+        </div>
+      )}
 
       {/* GLOBAL ALERTS TRAY */}
       <div className="w-full flex flex-col gap-1 px-4 py-2 pointer-events-none">
@@ -272,7 +350,7 @@ function App() {
                       title={h.name}
                       icon={h.icon}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isLifestyle ? state.executeHustle(h.id) : setActiveHustleView(h.id)}
+                      onClick={() => isLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id)}
                     />
                   );
                 })}
@@ -284,6 +362,7 @@ function App() {
             hustleId={activeHustleView}
             onBack={() => setActiveHustleView(null)}
             state={state}
+            onExecute={handleExecuteHustle}
           />
         )}
 
@@ -433,25 +512,25 @@ function HustleCard({ title, onClick, disabled, icon, className }: HustleCardPro
   );
 }
 
-function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: () => void, state: GameState }) {
+function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string, onBack: () => void, state: GameState, onExecute: (id: string, forceSuccess?: boolean) => Promise<void> }) {
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
   const currentLvl = state.pl.hustleLevels[hustleId] || 1;
 
   // INTERACTIVE MATCH LAYERS
   if (hustleId === 'drop') {
-    return <SneakerDropMatch onResult={(s) => { state.executeHustle('drop', s); onBack(); }} />;
+    return <SneakerDropMatch onResult={(s) => { onExecute('drop', s).then(() => onBack()); }} />;
   }
   if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
-    return <PalletFlippingMatch onResult={(s) => { state.executeHustle(hustleId, s); onBack(); }} />;
+    return <PalletFlippingMatch onResult={(s) => { onExecute(hustleId, s).then(() => onBack()); }} />;
   }
   if (hustleId === 'meme') {
-    return <MemeCoinMatch onResult={(s) => { state.executeHustle('meme', s); onBack(); }} />;
+    return <MemeCoinMatch onResult={(s) => { onExecute('meme', s).then(() => onBack()); }} />;
   }
   if (hustleId === 'cc') {
-    return <ViralStreamMatch onResult={(s) => { state.executeHustle('cc', s); onBack(); }} />;
+    return <ViralStreamMatch onResult={(s) => { onExecute('cc', s).then(() => onBack()); }} />;
   }
   if (hustleId === 'real_estate_empire') {
-    return <RealEstateMatch onResult={(s) => { state.executeHustle('real_estate_empire', s); onBack(); }} />;
+    return <RealEstateMatch onResult={(s) => { onExecute('real_estate_empire', s).then(() => onBack()); }} />;
   }
 
   if (hustleId === 'global_franchise') {
@@ -545,7 +624,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeFranchiseTurn()}
+          onClick={() => onExecute('global_franchise')}
           disabled={!canAfford}
           className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/20 active:scale-[0.98]"
         >
@@ -589,8 +668,8 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
     }
   };
 
-  const executeHustle = () => {
-    state.executeHustle(hustleId);
+  const executeHustleInternal = () => {
+    onExecute(hustleId);
   };
 
   if (!config) return <div className="text-red-500">Hustle Config Not Found</div>;
@@ -677,7 +756,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeSaaSProject()}
+          onClick={() => onExecute('saas_mvp')}
           disabled={!canAfford}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
@@ -767,7 +846,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeConcertFestival()}
+          onClick={() => onExecute('festival')}
           disabled={!canAfford}
           className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
         >
@@ -850,7 +929,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeEcomBrand()}
+          onClick={() => onExecute('ecom_brand')}
           disabled={!canAfford}
           className="w-full py-4 bg-orange-600 hover:bg-orange-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-[0.98]"
         >
@@ -924,7 +1003,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeAgencyRetainer()}
+          onClick={() => onExecute('agency_scale')}
           disabled={!canAfford}
           className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
         >
@@ -1013,7 +1092,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeTechFlipDrop()}
+          onClick={() => onExecute(hustleId)}
           disabled={!canAfford}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
@@ -1095,7 +1174,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executePodcastEpisode()}
+          onClick={() => onExecute('pod')}
           disabled={!canAfford || state.pl.crises.shadowbanTurns > 0}
           className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
         >
@@ -1169,7 +1248,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeStreetwearRun()}
+          onClick={() => onExecute('vintage')}
           disabled={!canAfford || !meetsReqs || state.pl.swCooldownTurns > 0}
           className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
         >
@@ -1255,7 +1334,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
         </div>
 
         <button
-          onClick={() => state.executeStreetwearDrop()}
+          onClick={() => onExecute('drop')}
           disabled={!canAfford || state.pl.swCooldownTurns > 0}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
@@ -1346,7 +1425,7 @@ function SubGamePanel({ hustleId, onBack, state }: { hustleId: string, onBack: (
           </button>
         )}
         <button
-          onClick={executeHustle}
+          onClick={executeHustleInternal}
           className={`${rankInfo ? '' : 'md:col-span-2'} py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]`}
         >
           {hustleId === 'audio'
