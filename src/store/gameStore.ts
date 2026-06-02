@@ -19,10 +19,10 @@ const clampStats = (state: GameState): GameState => {
   else if (tier === 1) ceiling = 50; // STREET
   else if (tier === 2) ceiling = 100; // STARTUP
   else if (tier === 3) ceiling = 200; // CORPORATE
-  else if (tier === 5) ceiling = 300; // ELITE
-  else if (tier === 6) ceiling = 500; // MOGUL
-  else if (tier === 8) ceiling = 1000; // PRESIDENT
-  else if (tier >= 9) ceiling = Infinity; // OPEN
+  else if (tier === 4) ceiling = 500; // ELITE
+  else if (tier === 5) ceiling = 800; // MOGUL
+  else if (tier === 6) ceiling = 1000; // PRESIDENT
+  else if (tier >= 7) ceiling = Infinity; // OPEN
 
   const news = [...state.news];
   let reached = false;

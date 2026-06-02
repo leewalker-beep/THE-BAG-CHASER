@@ -110,13 +110,13 @@ export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   STREET: 1,
   STARTUP: 2,
   CORPORATE: 3,
-  FLEX1: 4,
-  ELITE: 5,
-  MOGUL: 6,
-  FLEX2: 7,
-  PRESIDENT: 8,
-  OPEN: 9,
-  EXP: 10,
+  ELITE: 4,
+  MOGUL: 5,
+  FLEX1: 99, // Non-blocking sandbox
+  FLEX2: 100,
+  PRESIDENT: 6,
+  OPEN: 7,
+  EXP: 8,
 };
 
 export interface GameState {
