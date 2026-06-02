@@ -10,12 +10,14 @@ import { SneakerDropMatch, PalletFlippingMatch } from './components/hustles/Tier
 import { MemeCoinMatch, ViralStreamMatch } from './components/hustles/Tier2Match';
 import { RealEstateMatch } from './components/hustles/Tier3Match';
 
-const TIER_ORDER: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE', 'MOGUL', 'FLEX2', 'PRESIDENT', 'OPEN', 'EXP'];
+const PROGRESSION_TIERS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL'];
+const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
 
 const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: number, fee: number, description: string }> = {
   STREET: { cash: 5000, clout: 20, aura: 20, fee: 3000, description: "HQ Lease & Street Cred" },
   STARTUP: { cash: 15000, clout: 50, aura: 50, fee: 5000, description: "Startup Incorporation" },
   CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
+  ELITE: { cash: 5000000, clout: 200, aura: 200, fee: 1000000, description: "Sovereign Elite Syndicate" },
 };
 
 function App() {
@@ -234,11 +236,16 @@ function App() {
 
         {/* ROW 4: FIXED HORIZONTAL SCROLL NAV TABS */}
         <div className="w-full flex flex-nowrap overflow-x-auto gap-2 px-4 py-2.5 bg-slate-950 border-t border-slate-900/40 scrollbar-none touch-pan-x">
-          {TIER_ORDER.map((tier) => {
+          {NAV_TABS.map((tier) => {
             const isActive = activeTab === tier;
-            const currentIdx = TIER_ORDER.indexOf(pl.currentTier);
-            const tabIdx = TIER_ORDER.indexOf(tier as GameTab);
-            const isLocked = tabIdx > currentIdx + 1;
+            const currentRankIdx = PROGRESSION_TIERS.indexOf(pl.currentTier);
+            const tabRankIdx = PROGRESSION_TIERS.indexOf(tier as GameTab);
+
+            // FLEX1 is a non-blocking sandbox, unlocked if CORPORATE (index 3) is reached
+            const isFlex1 = tier === 'FLEX1';
+            const isLocked = isFlex1
+              ? currentRankIdx < 3
+              : tabRankIdx > currentRankIdx + 1;
 
             return (
               <button
@@ -308,10 +315,22 @@ function App() {
 
         {activeHustleView === null ? (
           (() => {
-            const currentIdx = TIER_ORDER.indexOf(state.pl.currentTier);
-            const activeTabIdx = TIER_ORDER.indexOf(activeTab);
+            if (activeTab === 'FLEX1') {
+              return (
+                <div className="mb-8 p-12 bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center text-center gap-6 opacity-60">
+                  <div className="text-4xl opacity-40">⚙️</div>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-black uppercase tracking-[0.3em] text-slate-500">FLEX ACQUISITIONS MARKET</h3>
+                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest max-w-xs">DECK UNDER CONSTRUCTION (YACHTS / REAL ESTATE / LIQUIDITY TRADING)</p>
+                  </div>
+                </div>
+              );
+            }
 
-            if (activeTabIdx > currentIdx) {
+            const currentRankIdx = PROGRESSION_TIERS.indexOf(state.pl.currentTier);
+            const targetTabIdx = PROGRESSION_TIERS.indexOf(activeTab);
+
+            if (targetTabIdx > currentRankIdx) {
               return (
                 <div className="mb-8 p-8 bg-slate-900 border-2 border-slate-800 rounded-3xl backdrop-blur-sm flex flex-col items-center text-center gap-6 animate-in fade-in zoom-in duration-300">
                   <div className="w-20 h-20 bg-emerald-600/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-emerald-500/30">🏛️</div>
@@ -326,8 +345,13 @@ function App() {
                         reqs={TIER_REQUIREMENTS[activeTab]}
                         current={{ cash: bag, clout: clout, aura: aura }}
                         description={TIER_REQUIREMENTS[activeTab].description}
-                        onUnlock={() => state.setCurrentTier(activeTab, TIER_REQUIREMENTS[activeTab].fee)}
+                        onUnlock={() => {
+                          state.setCurrentTier(activeTab, TIER_REQUIREMENTS[activeTab].fee);
+                          setActiveTab(activeTab);
+                          setActiveHustleView(null);
+                        }}
                         disabled={pl.crises.accountsFrozen}
+                        unlockLabel={activeTab === 'ELITE' ? "⚡ Establish Sovereign Elite Syndicate (-$1,000,000)" : undefined}
                       />
                     ) : (
                       <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -388,12 +412,13 @@ function App() {
   );
 }
 
-function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
+function GraduationCheck({ reqs, current, description, onUnlock, disabled, unlockLabel }: {
   reqs: { cash: number, clout: number, aura: number, fee: number },
   current: { cash: number, clout: number, aura: number },
   description: string,
   onUnlock: () => void,
-  disabled?: boolean
+  disabled?: boolean,
+  unlockLabel?: string
 }) {
   const meetsCash = current.cash >= reqs.cash;
   const meetsClout = current.clout >= reqs.clout;
@@ -464,7 +489,7 @@ function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
           }`}
       >
         {canUnlock
-          ? `⚡ File Incorporation Documents & Unlock Tier (-$${reqs.fee.toLocaleString()})`
+          ? (unlockLabel || `⚡ File Incorporation Documents & Unlock Tier (-$${reqs.fee.toLocaleString()})`)
           : "Insufficient Verification Metrics"
         }
       </button>
