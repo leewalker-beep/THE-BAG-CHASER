@@ -126,7 +126,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
+    <div className="w-full flex flex-col bg-[#020817] text-white font-mono selection:bg-emerald-500 min-h-screen">
       <VFXManager />
 
       <style>{`
@@ -140,58 +140,61 @@ function App() {
         }
       `}</style>
 
-      <header className="w-full flex flex-col p-4 bg-[#020817] border-b border-slate-900 gap-3">
-        {/* ROW 1 (METADATA SUB-BAR) */}
-        <div className="flex justify-between text-[11px] font-mono text-slate-400 uppercase tracking-wider">
-          <div>👤 OP: {pl.name || "LEE"} | AGE: {ageYears}y {ageMonths}m</div>
-          <div className="text-emerald-400 font-bold">RANK: {pl.currentTier}</div>
-        </div>
+      {/* ROW 1: COMPACT METADATA STATUS BAR */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-950 border-b border-slate-900 text-[11px] tracking-wider text-slate-400 uppercase">
+        <div>👤 OP: {pl.name || "LEE"} | AGE: {ageYears}y {ageMonths}m</div>
+        <div className="text-emerald-400 font-bold tracking-normal">RANK: {pl.currentTier}</div>
+      </div>
 
-        {/* ROW 2 (LIQUID CAPITAL TICKER) */}
-        <div className="flex flex-col items-center my-1">
-          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">LIQUID CAPITAL</span>
-          <span className="text-3xl font-extrabold text-emerald-400 tracking-tight font-mono">${pl.bag.toLocaleString()}</span>
-        </div>
+      {/* ROW 2: LIQUID CAPITAL COUNT (CLEAN TYPOGRAPHY) */}
+      <div className="w-full flex flex-col items-center justify-center py-4 bg-gradient-to-b from-slate-950 to-[#020817] border-b border-slate-900/50">
+        <span className="text-[10px] tracking-widest text-slate-500 uppercase mb-1">LIQUID CAPITAL</span>
+        <span className="text-3xl font-black text-emerald-400 tracking-tight font-mono">
+          ${pl.bag.toLocaleString()}
+        </span>
+      </div>
 
-        {/* ROW 3 (SECONDARY METRICS GRID) */}
-        <div className="grid grid-cols-4 gap-1 bg-slate-950/60 p-2 rounded border border-slate-900 text-center">
-          <div><div className="text-[9px] text-slate-500 font-mono">CLT</div><div className="text-sm font-bold text-blue-400">{clout}</div></div>
-          <div><div className="text-[9px] text-slate-500 font-mono">MNT</div><div className="text-sm font-bold text-emerald-400">{mentalHealth}%</div></div>
-          <div><div className="text-[9px] text-slate-500 font-mono">AUR</div><div className="text-sm font-bold text-purple-400">{aura}</div></div>
-          <div><div className="text-[9px] text-slate-500 font-mono">HT</div><div className="text-sm font-bold text-orange-400">{heat}%</div></div>
+      {/* ROW 3: UNIFORM 4-COLUMN SUB-STATS PANEL */}
+      <div className="w-full px-4 py-2 bg-[#020817]">
+        <div className="grid grid-cols-4 gap-2 bg-slate-950/80 p-2.5 rounded-lg border border-slate-900 text-center">
+          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">CLT</div><div className="text-sm font-extrabold text-blue-400">{clout}</div></div>
+          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">MNT</div><div className="text-sm font-extrabold text-emerald-400">{mentalHealth}%</div></div>
+          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">AUR</div><div className="text-sm font-extrabold text-purple-400">{aura}</div></div>
+          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">HT</div><div className="text-sm font-extrabold text-orange-400">{heat}%</div></div>
         </div>
-      </header>
+      </div>
 
       <HeatDrizzle heat={heat} />
 
-      {/* STEP 2: ENFORCE HIGH-VISIBILITY NAVIGATION TABS DOCK */}
-      <nav className="w-full flex flex-nowrap overflow-x-auto gap-2 px-4 py-3 bg-[#020817]/80 backdrop-blur sticky top-0 z-50 shadow-md border-b border-slate-900 scrollbar-none">
-        {['MUD', 'STREET', 'STARTUP', 'CORPORATE'].map((t) => {
+      {/* ROW 4: EXPLICIT VISIBILITY NAVIGATION TAB PILOLS */}
+      <div className="w-full flex flex-nowrap overflow-x-auto gap-2 px-4 py-3 bg-[#020817] border-b border-slate-900 sticky top-0 z-50">
+        {['MUD', 'STREET', 'STARTUP', 'CORPORATE'].map((tier) => {
+          const isActive = activeTab === tier;
           const currentIdx = TIER_ORDER.indexOf(pl.currentTier);
-          const tabIdx = TIER_ORDER.indexOf(t as GameTab);
+          const tabIdx = TIER_ORDER.indexOf(tier as GameTab);
           const isLocked = tabIdx > currentIdx + 1;
 
           return (
             <button
-              key={t}
+              key={tier}
               disabled={pl.crises.accountsFrozen || isLocked}
               onClick={() => {
-                setActiveTab(t as GameTab);
+                setActiveTab(tier as GameTab);
                 setActiveHustleView(null);
               }}
-              className={`px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap border
-                ${activeTab === t
-                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
+              className={`px-4 py-1.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-150 shrink-0 ${
+                isActive
+                  ? 'bg-emerald-500 text-slate-950 shadow shadow-emerald-500/20'
                   : isLocked
                     ? 'bg-slate-900 border-slate-800 text-slate-700 opacity-50 cursor-not-allowed'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
-                }`}
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 active:scale-95'
+              }`}
             >
-              {t}
+              {tier}
             </button>
           );
         })}
-      </nav>
+      </div>
 
       {/* GLOBAL ALERTS TRAY */}
       <div className="w-full flex flex-col gap-1 px-4 py-2 pointer-events-none">
@@ -384,15 +387,6 @@ function GraduationCheck({ reqs, current, description, onUnlock, disabled }: {
           : "Insufficient Verification Metrics"
         }
       </button>
-    </div>
-  );
-}
-
-function StatSmall({ label, value, color }: { label: string, value: string | number, color: string }) {
-  return (
-    <div className="flex flex-col">
-      <div className="text-[9px] font-black text-slate-600 uppercase tracking-tighter">{label}</div>
-      <div className={`text-sm font-black ${color}`}>{value}</div>
     </div>
   );
 }
