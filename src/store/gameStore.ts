@@ -124,11 +124,14 @@ export const useGameStore = create<GameState>()(
           currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
         }
 
+        const nextBag = state.pl.bag - totalCost + yieldCash;
+        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
+
         const nextState = {
           ...state,
           pl: {
             ...state.pl,
-            bag: state.pl.bag - totalCost + yieldCash,
+            bag: nextBag,
             clout: state.pl.clout + yieldClout,
             aura: state.pl.aura + yieldAura,
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
@@ -183,11 +186,14 @@ export const useGameStore = create<GameState>()(
           currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
         }
 
+        const nextBag = state.pl.bag - guestCosts[selectedGuest] + finalYieldCash;
+        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, !isCrisis ? 'SURGE' : 'CASCADE');
+
         const nextState = {
           ...state,
           pl: {
             ...state.pl,
-            bag: state.pl.bag - guestCosts[selectedGuest] + finalYieldCash,
+            bag: nextBag,
             clout: state.pl.clout + finalYieldClout,
             mentalHealth: Math.max(0, state.pl.mentalHealth + finalHitMental),
             crises: nextCrises,
@@ -364,7 +370,6 @@ export const useGameStore = create<GameState>()(
           const nextCrises = { ...state.pl.crises };
 
           if (isSuccess) {
-            useJuiceStore.getState().triggerSurge();
             // Anti-Spam Filter
             if (hustleId === state.pl.lastExecutedHustleId) {
               finalYieldCash *= 0.5;
@@ -403,7 +408,6 @@ export const useGameStore = create<GameState>()(
 
             currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
           } else {
-            useJuiceStore.getState().triggerCascade();
             // FAILURE & AURA ARMOR MITIGATION
             if (state.pl.aura >= 100) {
               finalYieldAura = -30;
@@ -483,6 +487,8 @@ export const useGameStore = create<GameState>()(
             nextPl.assetsOwned = nextAssets;
           }
 
+          useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextPl.bag, isSuccess ? 'SURGE' : 'CASCADE');
+
           const nextState: GameState = {
             ...state,
             pl: nextPl,
@@ -555,9 +561,12 @@ export const useGameStore = create<GameState>()(
           currentNews.unshift("SYNERGY COMBO: Content hype applied! Business payouts doubled.");
         }
 
+        const nextBag = state.pl.bag - cost + yieldCash;
+        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, 'SURGE');
+
         const nextPl = {
           ...state.pl,
-          bag: state.pl.bag - cost + yieldCash,
+          bag: nextBag,
           clout: Math.min(state.pl.maxClout, state.pl.clout + yieldClout),
           aura: Math.min(state.pl.maxAura, state.pl.aura + yieldAura),
           hypeIsActive: false,
@@ -639,11 +648,14 @@ export const useGameStore = create<GameState>()(
           }
         }
 
+        const nextBag = state.pl.bag - totalSetupCost + finalYieldCash;
+        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
+
         const nextState = {
           ...state,
           pl: {
             ...state.pl,
-            bag: state.pl.bag - totalSetupCost + finalYieldCash,
+            bag: nextBag,
             clout: Math.min(200, state.pl.clout + finalYieldClout),
             aura: Math.min(200, state.pl.aura + finalYieldAura),
             mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),

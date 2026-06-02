@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { applyAdvancement } from '../engine';
+import { useJuiceStore } from '../juiceStore';
 
 export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   setSwInput: (field: string, value: any) => _set((state) => ({
@@ -105,6 +106,8 @@ export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameS
 
     const summaryMessage = `DROP SUMMARY: ${selectedQuality} Drop of ${selectedBatchSize} units. Sold ${unitsSold} @ $${retailPrice} (${(demandRatio * 100).toFixed(1)}% Demand). Revenue: $${grossRevenue.toLocaleString()}. Bricked: ${unitsBricked}.`;
     currentNews.unshift(summaryMessage);
+
+    useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextPl.bag, 'SURGE');
 
     const nextState: GameState = {
       ...state,

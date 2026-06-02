@@ -1,94 +1,112 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import { useEffect } from 'react';
 
 interface CashReelProps {
   value: number;
 }
 
+const COLORS = {
+  COPPER: '#B87333',
+  NEON_MINT: '#39FF14',
+  ICE_CYAN: '#00F3FF',
+  LIQUID_GOLD: '#FFD700',
+  PRISMATIC_START: '#FFFFFF',
+};
+
+const getNetWorthStyle = (val: number) => {
+  if (val < 10000) {
+    return { color: COLORS.COPPER, textShadow: 'none' };
+  } else if (val < 100000) {
+    return { color: COLORS.NEON_MINT, textShadow: '0 0 10px rgba(57, 255, 20, 0.5)' };
+  } else if (val < 1000000) {
+    return { color: COLORS.ICE_CYAN, textShadow: '0 0 15px rgba(0, 243, 255, 0.6)' };
+  } else if (val < 10000000) {
+    return {
+      background: 'linear-gradient(to bottom, #FFD700, #FDB931)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      display: 'inline-block'
+    };
+  } else {
+    return {
+      background: 'linear-gradient(45deg, #FFFFFF, #FF00FF, #8A2BE2)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      display: 'inline-block',
+      animation: 'prismatic 3s linear infinite'
+    };
+  }
+};
+
+const formatValue = (val: number) => {
+  if (val >= 1000000000) return { num: (val / 1000000000).toFixed(1), suffix: 'B' };
+  if (val >= 1000000) return { num: (val / 1000000).toFixed(1), suffix: 'M' };
+  if (val >= 10000) return { num: (val / 1000).toFixed(1), suffix: 'K' };
+  return { num: val.toString(), suffix: '' };
+};
+
 export function CashReel({ value }: CashReelProps) {
-  const [phase, setPhase] = useState<'IDLE' | 'SLOW_DROP' | 'LOCK_IN' | 'RAPID_RISE'>('IDLE');
-  const [spinEmoji] = useState(() => ['💵', '💰', '💎', '💳'][Math.floor(Math.random() * 4)]);
-  const prevValue = useRef(value);
+  const { num, suffix } = formatValue(value);
 
-  const startAnimation = () => {
-    setPhase('SLOW_DROP');
-
-    // Phase 1: Slow Drop (Vertical Reel Spin)
-    setTimeout(() => {
-      setPhase('LOCK_IN');
-
-      // Phase 2: Lock-In (Snap + Flash)
-      setTimeout(() => {
-        setPhase('RAPID_RISE');
-
-        // Phase 3: Rapid Rise (Vacuum)
-        setTimeout(() => {
-          setPhase('IDLE');
-        }, 400);
-      }, 500);
-    }, 1500);
-  };
+  // Use motion values for smooth color lerping
+  const colorValue = useMotionValue(value);
+  const color = useTransform(
+    colorValue,
+    [0, 10000, 100000, 1000000, 10000000],
+    [COLORS.COPPER, COLORS.NEON_MINT, COLORS.ICE_CYAN, COLORS.LIQUID_GOLD, COLORS.PRISMATIC_START]
+  );
 
   useEffect(() => {
-    if (value !== prevValue.current) {
-      startAnimation();
-      prevValue.current = value;
-    }
-  }, [value]);
+    animate(colorValue, value, { duration: 1 });
+  }, [value, colorValue]);
+
+  const style = getNetWorthStyle(value);
+  // Merge lerped color into style if not in gradient/prismatic territory
+  const lerpStyle = value < 1000000 ? { ...style, color } : style;
 
   return (
-    <div className="relative overflow-visible flex items-center justify-end">
-      <AnimatePresence mode="wait">
-        {phase === 'IDLE' ? (
-          <motion.div
-            key="idle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-sm font-black text-emerald-400"
-          >
-            ${value.toLocaleString()}
-          </motion.div>
-        ) : phase === 'SLOW_DROP' ? (
-          <motion.div
-            key="slow_drop"
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ scale: 1.2, filter: "brightness(2)" }}
-            transition={{ duration: 0.2, repeat: 5, repeatType: "loop", ease: "linear" }}
-            className="text-sm font-black text-emerald-500 italic"
-          >
-            {spinEmoji} SPINNING...
-          </motion.div>
-        ) : phase === 'LOCK_IN' ? (
-          <motion.div
-            key="lock_in"
-            initial={{ scale: 0.8, filter: "brightness(0)" }}
-            animate={{ scale: [1.2, 1], filter: "brightness(1.5)" }}
-            className="text-sm font-black text-white bg-emerald-600 px-2 py-0.5 rounded shadow-[0_0_15px_rgba(16,185,129,0.8)]"
-          >
-            ${value.toLocaleString()} ⚡
-          </motion.div>
-        ) : (
-          <motion.div
-            key="rapid_rise"
-            initial={{ y: 0, opacity: 1, scale: 1 }}
-            animate={{ y: -100, opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.3, ease: "backIn" }}
-            className="text-lg font-black text-emerald-400"
-          >
-            ${value.toLocaleString()} 💸
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Screen Shake & Flash Overlay (only during Lock-In) */}
-      {phase === 'LOCK_IN' && (
-        <motion.div
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 0 }}
-          className="fixed inset-0 bg-white z-[200] pointer-events-none"
-        />
+    <div className="flex items-center">
+      <style>{`
+        @keyframes prismatic {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
+        }
+      `}</style>
+      <motion.span className="mr-1" style={lerpStyle as any}>$</motion.span>
+      <div className="flex overflow-hidden h-[1em] leading-none">
+        {num.split('').map((char, i) => (
+          <Digit key={`${i}-${num.length}`} char={char} style={lerpStyle} />
+        ))}
+      </div>
+      {suffix && (
+        <span className="ml-0.5 text-[#FF007F] drop-shadow-[0_0_8px_#FF007F]">
+          {suffix}
+        </span>
       )}
+    </div>
+  );
+}
+
+function Digit({ char, style }: { char: string, style: any }) {
+  if (isNaN(parseInt(char))) {
+    return <motion.span style={style} className="px-[1px]">{char}</motion.span>;
+  }
+
+  return (
+    <div className="relative w-[0.6em] h-[1em] overflow-hidden">
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={char}
+          initial={{ y: '-100%' }}
+          animate={{ y: '0%' }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+          style={style}
+          className="absolute inset-0 flex justify-center"
+        >
+          {char}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
