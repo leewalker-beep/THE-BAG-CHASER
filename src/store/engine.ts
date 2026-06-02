@@ -1,5 +1,6 @@
 import type { GameState, HustleID, MarketType } from './types';
 import { MARKET_CONFIGS } from '../engine/worldMarkets';
+import { useJuiceStore } from './juiceStore';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
   const currentPl = { ...state.pl };
@@ -127,6 +128,8 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
       currentFatalCause = 'CANCELLATION: Permanently erased from the cultural matrix.';
     }
   }
+
+  useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, currentPl.bag);
 
   return {
     pl: currentPl,

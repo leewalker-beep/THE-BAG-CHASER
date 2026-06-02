@@ -1,5 +1,6 @@
 import { applyAdvancement } from '../engine';
 import type { GameState } from '../types';
+import { useJuiceStore } from '../juiceStore';
 
 export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   setSaaSInput: (field: string, value: any) => set((state) => ({
@@ -45,11 +46,14 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
       currentNews.unshift(`SUCCESS: SaaS platform scaled. Added ${newUsers.toLocaleString()} users. Revenue: $${yieldCash.toLocaleString()}.`);
     }
 
+    const nextBag = state.pl.bag - cost + yieldCash;
+    useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, !isOutage ? 'SURGE' : 'CASCADE');
+
     const nextState = {
       ...state,
       pl: {
         ...state.pl,
-        bag: state.pl.bag - cost + yieldCash,
+        bag: nextBag,
         clout: Math.max(0, state.pl.clout + yieldClout),
         mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
         startupStats: nextStartupStats,
@@ -111,11 +115,14 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
       }
     }
 
+    const nextBag = nextPl.bag - totalUpfront + finalYieldCash;
+    useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
+
     const nextState = {
       ...state,
       pl: {
         ...nextPl,
-        bag: nextPl.bag - totalUpfront + finalYieldCash,
+        bag: nextBag,
         aura: Math.max(0, nextPl.aura + finalYieldAura),
         mentalHealth: Math.max(0, nextPl.mentalHealth + finalHitMental),
         streak: isSuccess ? state.pl.streak + 1 : 0,
@@ -164,11 +171,14 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
       currentNews.unshift(`CONGLOMERATE SUCCESS: Generated ${conversions.toLocaleString()} high-margin orders. Net profit: $${yieldCash.toLocaleString()}.`);
     }
 
+    const nextBag = state.pl.bag - totalCost + yieldCash;
+    useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, !isSeizure ? 'SURGE' : 'CASCADE');
+
     const nextState = {
       ...state,
       pl: {
         ...state.pl,
-        bag: state.pl.bag - totalCost + yieldCash,
+        bag: nextBag,
         startupStats: nextStartupStats,
         crises: nextCrises,
         mentalHealth: Math.max(0, state.pl.mentalHealth - 10),
@@ -214,11 +224,14 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
       currentNews.unshift(`LITIGATION: The ${client} client is suing for gross negligence. Accounts frozen.`);
     }
 
+    const nextBag = state.pl.bag - payrollCost + finalYield;
+    useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
+
     const nextState = {
       ...state,
       pl: {
         ...state.pl,
-        bag: state.pl.bag - payrollCost + finalYield,
+        bag: nextBag,
         startupStats: nextStartupStats,
         crises: nextCrises,
         mentalHealth: Math.max(0, state.pl.mentalHealth - 20),

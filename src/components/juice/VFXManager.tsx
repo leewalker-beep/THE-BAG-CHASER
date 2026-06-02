@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useJuiceStore } from '../../store/juiceStore';
 
-const SURGE_ELEMENTS = ['👑', '🔥', '💵', '💰', '✨'];
-const CASCADE_ELEMENTS = ['🤡', '❌', '📉', '💀', '👎'];
+const SURGE_ELEMENTS = ['👟📦', '🚀', '🏆'];
+const CASCADE_ELEMENTS = ['🏷️💨', 'TOXIC', '📉'];
 
 export function VFXManager() {
   const { events, removeEvent } = useJuiceStore();
@@ -91,19 +91,21 @@ function VFXParticle({ char, isSurge, startX, duration, delay, rotate }: {
   delay: number,
   rotate: number
 }) {
+  const isToxic = char === 'TOXIC';
+
   return (
     <motion.div
       initial={{
         opacity: 0,
         x: `${startX}vw`,
         y: isSurge ? '110vh' : '-10vh',
-        scale: 0.5,
+        scale: isToxic ? 0.3 : 0.5,
         rotate: 0
       }}
       animate={{
         opacity: [0, 1, 1, 0],
         y: isSurge ? '-10vh' : '110vh',
-        scale: [0.5, 1.5, 1.5, 0.5],
+        scale: isToxic ? [0.3, 1, 1, 0.3] : [0.5, 1.5, 1.5, 0.5],
         rotate: rotate
       }}
       transition={{
@@ -111,7 +113,7 @@ function VFXParticle({ char, isSurge, startX, duration, delay, rotate }: {
         delay,
         ease: isSurge ? "easeOut" : "easeIn"
       }}
-      className="absolute text-4xl select-none"
+      className={`absolute select-none ${isToxic ? 'text-red-600 font-black text-2xl' : 'text-4xl'}`}
     >
       {char}
     </motion.div>

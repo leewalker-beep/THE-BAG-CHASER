@@ -134,9 +134,21 @@ function App() {
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30">
       <VFXManager />
 
+      <style>{`
+        @keyframes molten-glow {
+          0%, 100% { border-color: #f97316; box-shadow: 0 0 15px #f97316, inset 0 0 15px #f97316; }
+          50% { border-color: #ef4444; box-shadow: 0 0 25px #ef4444, inset 0 0 25px #ef4444; }
+        }
+        .molten-streak-glow {
+          animation: molten-glow 2s ease-in-out infinite;
+          border-width: 3px !important;
+        }
+      `}</style>
+
       {/* TOP HUD SCOREBOARD BANNER (15% Viewport Height) */}
       <header
         className={`fixed top-0 left-0 right-0 h-[15vh] z-50 transition-all duration-500 border-b-2 shadow-2xl overflow-visible
+          ${streak >= 5 ? "molten-streak-glow" : ""}
           ${isHighHeat
             ? "bg-gradient-to-r from-orange-600 to-red-600 border-yellow-400 shadow-[0_10px_40px_rgba(239,68,68,0.5)]"
             : "bg-slate-900/95 backdrop-blur-md border-cyan-500/50 shadow-[0_4px_30px_rgba(34,211,238,0.2)]"
