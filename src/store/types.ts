@@ -56,6 +56,7 @@ export interface PlayerStats {
     activeMemeTokens: number;
     studioOwned: boolean;
   };
+  passiveLaborYield: number;
   assetsOwned: {
     vendingMachines: number;
     masterTracks: number;
@@ -90,6 +91,19 @@ export interface PlayerStats {
   };
   streetwearPanel: {
     brandTier: 'UNDERGROUND_IP' | 'SOHO_STORE' | 'PARIS_RUNWAY';
+  };
+  laborPanel: {
+    activeTab: 1 | 2 | 3;
+    weeks: 1 | 2 | 3 | 4;
+    propertyType: 'STUDIO' | 'DUPLEX' | 'LOFT';
+    budget: 'ECONOMY' | 'PREMIUM' | 'LUXURY';
+    action: 'FLIP' | 'RENT';
+  };
+  deliveryPanel: {
+    activeTab: 1 | 2 | 3;
+    weeks: 1 | 2 | 3 | 4;
+    fleetType: 'E-BIKE' | 'SPRINTER' | 'FREIGHT';
+    wageLevel: 'LOW' | 'BALANCED' | 'PREMIUM';
   };
   hypeIsActive: boolean;
   lastExecutedHustleId: string | null;
@@ -173,5 +187,7 @@ export interface GameState {
   executeFranchiseTurn: () => void;
   setStreetwearInput: (field: string, value: any) => void;
   executeStreetwearRun: () => void;
+  setLaborInput: (field: keyof PlayerStats['laborPanel'], value: any) => void;
+  setDeliveryInput: (field: keyof PlayerStats['deliveryPanel'], value: any) => void;
   setCurrentTier: (tierName: GameTab, fee?: number) => void;
 }

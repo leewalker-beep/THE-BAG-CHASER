@@ -100,6 +100,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         activeMemeTokens: 0,
         studioOwned: false,
       },
+      passiveLaborYield: 0,
       assetsOwned: {
         vendingMachines: 0,
         masterTracks: 0,
@@ -134,6 +135,19 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       },
       streetwearPanel: {
         brandTier: 'UNDERGROUND_IP',
+      },
+      laborPanel: {
+        activeTab: 1,
+        weeks: 1,
+        propertyType: 'STUDIO',
+        budget: 'ECONOMY',
+        action: 'FLIP',
+      },
+      deliveryPanel: {
+        activeTab: 1,
+        weeks: 1,
+        fleetType: 'E-BIKE',
+        wageLevel: 'BALANCED',
       },
       hypeIsActive: false,
       lastExecutedHustleId: null,
