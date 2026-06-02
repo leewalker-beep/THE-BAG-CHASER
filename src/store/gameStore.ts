@@ -277,7 +277,7 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
-      executeHustle: (hustleId: string, forceSuccess?: boolean) =>
+      deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) =>
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
