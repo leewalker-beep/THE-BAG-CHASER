@@ -10,7 +10,7 @@ import { SneakerDropMatch, PalletFlippingMatch } from './components/hustles/Tier
 import { MemeCoinMatch, ViralStreamMatch } from './components/hustles/Tier2Match';
 import { RealEstateMatch } from './components/hustles/Tier3Match';
 
-const TIER_ORDER: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL', 'PRESIDENT', 'OPEN'];
+const TIER_ORDER: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE', 'MOGUL', 'FLEX2', 'PRESIDENT', 'OPEN', 'EXP'];
 
 const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: number, fee: number, description: string }> = {
   STREET: { cash: 5000, clout: 20, aura: 20, fee: 3000, description: "HQ Lease & Street Cred" },
@@ -126,7 +126,7 @@ function App() {
   }
 
   return (
-    <div className="w-full flex flex-col bg-[#020817] text-white font-mono selection:bg-emerald-500 min-h-screen">
+    <div className="h-screen w-full flex flex-col bg-[#020817] text-white font-mono overflow-hidden select-none selection:bg-emerald-500">
       <VFXManager />
 
       <style>{`
@@ -140,61 +140,63 @@ function App() {
         }
       `}</style>
 
-      {/* ROW 1: COMPACT METADATA STATUS BAR */}
-      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-950 border-b border-slate-900 text-[11px] tracking-wider text-slate-400 uppercase">
-        <div>👤 OP: {pl.name || "LEE"} | AGE: {ageYears}y {ageMonths}m</div>
-        <div className="text-emerald-400 font-bold tracking-normal">RANK: {pl.currentTier}</div>
-      </div>
+      <div className="w-full flex flex-col shrink-0 bg-slate-950 border-b border-slate-900">
+        {/* ROW 1: METADATA SUB-BAR (TIGHT) */}
+        <div className="w-full flex justify-between items-center px-4 pt-2 pb-0.5 text-[11px] text-slate-400 uppercase tracking-wider">
+          <div>👤 OP: {pl.name || "LEE"} | AGE: {ageYears}y {ageMonths}m</div>
+          <div className="text-emerald-400 font-bold">RANK: {pl.currentTier}</div>
+        </div>
 
-      {/* ROW 2: LIQUID CAPITAL COUNT (CLEAN TYPOGRAPHY) */}
-      <div className="w-full flex flex-col items-center justify-center py-4 bg-gradient-to-b from-slate-950 to-[#020817] border-b border-slate-900/50">
-        <span className="text-[10px] tracking-widest text-slate-500 uppercase mb-1">LIQUID CAPITAL</span>
-        <span className="text-3xl font-black text-emerald-400 tracking-tight font-mono">
-          ${pl.bag.toLocaleString()}
-        </span>
-      </div>
+        {/* ROW 2: LIQUID CAPITAL COUNT (VERTICAL COMPRESSION) */}
+        <div className="w-full flex flex-col items-center justify-center py-1">
+          <span className="text-[9px] tracking-widest text-slate-500 uppercase scale-90">LIQUID CAPITAL</span>
+          <span className="text-2xl font-black text-emerald-400 tracking-tight font-mono -mt-0.5">
+            ${pl.bag.toLocaleString()}
+          </span>
+        </div>
 
-      {/* ROW 3: UNIFORM 4-COLUMN SUB-STATS PANEL */}
-      <div className="w-full px-4 py-2 bg-[#020817]">
-        <div className="grid grid-cols-4 gap-2 bg-slate-950/80 p-2.5 rounded-lg border border-slate-900 text-center">
-          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">CLT</div><div className="text-sm font-extrabold text-blue-400">{clout}</div></div>
-          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">MNT</div><div className="text-sm font-extrabold text-emerald-400">{mentalHealth}%</div></div>
-          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">AUR</div><div className="text-sm font-extrabold text-purple-400">{aura}</div></div>
-          <div><div className="text-[9px] text-slate-500 font-bold tracking-wider">HT</div><div className="text-sm font-extrabold text-orange-400">{heat}%</div></div>
+        {/* ROW 3: SUB-STATS GRID (COMPACT) */}
+        <div className="w-full px-4 pb-2">
+          <div className="grid grid-cols-4 gap-1.5 bg-[#020817]/80 p-2 rounded-lg border border-slate-900 text-center">
+            <div><div className="text-[9px] text-slate-500 font-bold">CLT</div><div className="text-sm font-black text-blue-400">{clout}</div></div>
+            <div><div className="text-[9px] text-slate-500 font-bold">MNT</div><div className="text-sm font-black text-emerald-400">{mentalHealth}%</div></div>
+            <div><div className="text-[9px] text-slate-500 font-bold">AUR</div><div className="text-sm font-black text-purple-400">{aura}</div></div>
+            <div><div className="text-[9px] text-slate-500 font-bold">HT</div><div className="text-sm font-black text-orange-400">{heat}%</div></div>
+          </div>
+        </div>
+
+        {/* ROW 4: FIXED HORIZONTAL SCROLL NAV TABS */}
+        <div className="w-full flex flex-nowrap overflow-x-auto gap-2 px-4 py-2.5 bg-slate-950 border-t border-slate-900/40 scrollbar-none touch-pan-x">
+          {TIER_ORDER.map((tier) => {
+            const isActive = activeTab === tier;
+            const currentIdx = TIER_ORDER.indexOf(pl.currentTier);
+            const tabIdx = TIER_ORDER.indexOf(tier as GameTab);
+            const isLocked = tabIdx > currentIdx + 1;
+
+            return (
+              <button
+                key={tier}
+                disabled={pl.crises.accountsFrozen || isLocked}
+                onClick={() => {
+                  setActiveTab(tier as GameTab);
+                  setActiveHustleView(null);
+                }}
+                className={`px-4 py-1.5 rounded text-xs font-bold tracking-widest uppercase transition-all shrink-0 select-none ${
+                  isActive
+                    ? 'bg-emerald-500 text-slate-950 shadow shadow-emerald-500/10'
+                    : isLocked
+                      ? 'bg-slate-900 border-slate-800 text-slate-700 opacity-50 cursor-not-allowed'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800 active:scale-95'
+                }`}
+              >
+                {tier}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <HeatDrizzle heat={heat} />
-
-      {/* ROW 4: EXPLICIT VISIBILITY NAVIGATION TAB PILOLS */}
-      <div className="w-full flex flex-nowrap overflow-x-auto gap-2 px-4 py-3 bg-[#020817] border-b border-slate-900 sticky top-0 z-50">
-        {['MUD', 'STREET', 'STARTUP', 'CORPORATE'].map((tier) => {
-          const isActive = activeTab === tier;
-          const currentIdx = TIER_ORDER.indexOf(pl.currentTier);
-          const tabIdx = TIER_ORDER.indexOf(tier as GameTab);
-          const isLocked = tabIdx > currentIdx + 1;
-
-          return (
-            <button
-              key={tier}
-              disabled={pl.crises.accountsFrozen || isLocked}
-              onClick={() => {
-                setActiveTab(tier as GameTab);
-                setActiveHustleView(null);
-              }}
-              className={`px-4 py-1.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-150 shrink-0 ${
-                isActive
-                  ? 'bg-emerald-500 text-slate-950 shadow shadow-emerald-500/20'
-                  : isLocked
-                    ? 'bg-slate-900 border-slate-800 text-slate-700 opacity-50 cursor-not-allowed'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 active:scale-95'
-              }`}
-            >
-              {tier}
-            </button>
-          );
-        })}
-      </div>
 
       {/* GLOBAL ALERTS TRAY */}
       <div className="w-full flex flex-col gap-1 px-4 py-2 pointer-events-none">
@@ -212,7 +214,7 @@ function App() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <main className="pt-4 pb-32 px-4 max-w-4xl mx-auto min-h-screen">
+      <main className="flex-1 overflow-y-auto p-4 pb-28 space-y-4 touch-pan-y max-w-4xl mx-auto w-full">
         {pl.crises.accountsFrozen && (
            <div className="mb-8 p-6 bg-red-900/20 border-2 border-red-600 rounded-2xl flex flex-col items-center gap-4 text-center">
               <div className="text-sm font-black text-white uppercase tracking-widest">Legal Crisis Detected</div>
