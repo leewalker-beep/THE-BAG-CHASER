@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from './store/gameStore';
 import { VFXManager } from './components/juice/VFXManager';
 import { HeatDrizzle } from './components/juice/HeatDrizzle';
@@ -104,7 +105,33 @@ function canAffordHustle(id: string, pl: PlayerStats): { can: boolean; reason?: 
 }
 
 function App() {
-  const state = useGameStore();
+  const state = useGameStore(
+    useShallow((s: GameState) => ({
+      pl: s.pl,
+      ph: s.ph,
+      fatalCause: s.fatalCause,
+      news: s.news,
+      activeTab: s.activeTab,
+      setActiveTab: s.setActiveTab,
+      activeHustleView: s.activeHustleView,
+      setActiveHustleView: s.setActiveHustleView,
+      deductCostAndRollOutcome: s.deductCostAndRollOutcome,
+      setPlayerName: s.setPlayerName,
+      setPh: s.setPh,
+      unfreezeAccounts: s.unfreezeAccounts,
+      setCurrentTier: s.setCurrentTier,
+      setLaborInput: s.setLaborInput,
+      setDeliveryInput: s.setDeliveryInput,
+      setPodcastInput: s.setPodcastInput,
+      upgradeHustle: s.upgradeHustle,
+      setStreetwearInput: s.setStreetwearInput,
+      setFranchiseInput: s.setFranchiseInput,
+      setSaaSInput: s.setSaaSInput,
+      setFestivalInput: s.setFestivalInput,
+      setEcomBrandInput: s.setEcomBrandInput,
+      setAgencyInput: s.setAgencyInput,
+    }))
+  );
 
   const {
     pl, ph, fatalCause, news,
