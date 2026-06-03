@@ -15,6 +15,8 @@ export interface HustleConfig {
   successChance: number;
   icon: string;
   passiveYieldModifier?: string; // For special conditional handling like REIT or Audio track passive checks
+  ranks?: string[];
+  rankUpCosts?: number[];
 }
 
 export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [

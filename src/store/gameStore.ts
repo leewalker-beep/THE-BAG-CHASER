@@ -315,12 +315,12 @@ export const useGameStore = create<GameState>()(
               lineageFatigue = config.fatigueCost * mult;
               lineageHitMental = config.hitMental * mult;
             } else if (activeTab === 2) {
-              if (state.pl.clout < 40) {
-                return { news: ["LACK OF CLOUT: Need 40 Clout for Fleet Dispatch operations.", ...state.news] };
-              }
               const baseCosts = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
               const budgetMults = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
-              effectiveUpfrontCost = baseCosts[propertyType] * budgetMults[budget];
+              effectiveUpfrontCost = baseCosts[propertyType as keyof typeof baseCosts] * (budgetMults[budget as keyof typeof budgetMults] || 1);
+              if (state.pl.bag < effectiveUpfrontCost) {
+                return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} for Property Flip.`, ...state.news] };
+              }
               lineageFatigue = 60;
               if (action === 'FLIP') {
                 const margin = effectiveUpfrontCost * (0.1 + Math.random() * 0.4); // 10% to 50% profit
@@ -335,6 +335,9 @@ export const useGameStore = create<GameState>()(
               }
             } else if (activeTab === 3) {
               effectiveUpfrontCost = 1500000;
+              if (state.pl.bag < effectiveUpfrontCost) {
+                return { news: [`INSUFFICIENT FUNDS: Need $1.5M for Commercial Syndicate.`, ...state.news] };
+              }
               lineageYieldCash = 2500000;
               lineageYieldClout = 150;
               lineageYieldAura = 100;
@@ -351,9 +354,15 @@ export const useGameStore = create<GameState>()(
               lineageFatigue = config.fatigueCost * mult;
               lineageHitMental = config.hitMental * mult;
             } else if (activeTab === 2) {
+              if (state.pl.clout < 40) {
+                return { news: ["LACK OF CLOUT: Need 40 Clout for Fleet Dispatch operations.", ...state.news] };
+              }
               const fleetCosts = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
               const fleetYields = { 'E-BIKE': 6000, SPRINTER: 15000, FREIGHT: 35000 };
-              effectiveUpfrontCost = fleetCosts[fleetType];
+              effectiveUpfrontCost = fleetCosts[fleetType as keyof typeof fleetCosts];
+              if (state.pl.bag < effectiveUpfrontCost) {
+                return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} for Fleet Dispatch.`, ...state.news] };
+              }
               let wageMult = 1.0;
               let strikeRisk = 0.05;
               if (wageLevel === 'LOW') { wageMult = 1.5; strikeRisk = 0.4; }
@@ -376,6 +385,9 @@ export const useGameStore = create<GameState>()(
                 return { news: ["LACK OF CLOUT: Need 150 Clout for 3PL Automated Hub deployment.", ...state.news] };
               }
               effectiveUpfrontCost = 2000000;
+              if (state.pl.bag < effectiveUpfrontCost) {
+                return { news: [`INSUFFICIENT FUNDS: Need $2.0M for 3PL Automated Hub.`, ...state.news] };
+              }
               lineageYieldCash = 3500000;
               lineageYieldClout = 250;
               lineageYieldAura = 150;

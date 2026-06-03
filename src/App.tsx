@@ -4,7 +4,7 @@ import { useGameStore } from './store/gameStore';
 import { VFXManager } from './components/juice/VFXManager';
 import { HeatDrizzle } from './components/juice/HeatDrizzle';
 import { getInitialGameState } from './store/initialState';
-import type { GameState, GameTab } from './store/types';
+import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { SneakerDropMatch, PalletFlippingMatch } from './components/hustles/Tier1Match';
 import { MemeCoinMatch, ViralStreamMatch } from './components/hustles/Tier2Match';
@@ -64,7 +64,7 @@ function App() {
       if (activeTab === 2) {
         const baseCosts = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
         const budgetMults = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
-        upfrontCost = baseCosts[propertyType] * budgetMults[budget];
+        upfrontCost = baseCosts[propertyType] * (budgetMults[budget as keyof typeof budgetMults] || 1);
       } else if (activeTab === 3) {
         upfrontCost = 1500000;
       }
@@ -74,7 +74,7 @@ function App() {
       const { activeTab, fleetType } = pl.deliveryPanel;
       if (activeTab === 2) {
         const fleetCosts = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-        upfrontCost = fleetCosts[fleetType];
+        upfrontCost = fleetCosts[fleetType as keyof typeof fleetCosts] || 0;
       } else if (activeTab === 3) {
         upfrontCost = 2000000;
       }
@@ -439,14 +439,16 @@ function App() {
             return (
               <div className="grid grid-cols-2 gap-3 w-full">
                 {currentTabHustles.map(h => {
-                  const isLifestyle = h.id.startsWith('r_') && !h.isPassive && h.id !== 'r_labor' && h.id !== 'r_delivery';
+                  // Standard recovery/lifestyle grinds (e.g. sleep, chill) execute instantly.
+                  // Labor and Delivery are now lineage tech-trees that open sub-panels.
+                  const isInstantLifestyle = h.id.startsWith('r_') && !h.isPassive && !['r_labor', 'r_delivery'].includes(h.id);
                   return (
                     <HustleCard
                       key={h.id}
                       title={h.name}
                       icon={h.icon}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id)}
+                      onClick={() => isInstantLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id)}
                     />
                   );
                 })}
@@ -454,19 +456,41 @@ function App() {
             );
           })()
         ) : (
-          <SubGamePanel
-            hustleId={activeHustleView}
-            onBack={() => setActiveHustleView(null)}
-            state={state}
-            onExecute={handleExecuteHustle}
-          />
+          !['r_labor', 'r_delivery'].includes(activeHustleView) && (
+            <SubGamePanel
+              hustleId={activeHustleView}
+              onBack={() => setActiveHustleView(null)}
+              state={state}
+              onExecute={handleExecuteHustle}
+            />
+          )
         )}
-
 
         <div className="mt-8 flex justify-center gap-6">
            <button onClick={() => state.setPh('PROLOGUE_INTRO')} className="text-[9px] text-slate-700 hover:text-slate-400 uppercase font-bold tracking-tighter transition-colors">Terminate Run</button>
         </div>
       </main>
+
+      {/* LINEAGE MODAL OVERLAY */}
+      <AnimatePresence>
+        {activeHustleView && ['r_labor', 'r_delivery'].includes(activeHustleView) && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <SubGamePanel
+                hustleId={activeHustleView}
+                onBack={() => setActiveHustleView(null)}
+                state={state}
+                onExecute={handleExecuteHustle}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* STEP 2: THE FIXED BOTTOM ZONE (CONSOLE REGISTRY) */}
       <footer className="fixed bottom-0 left-0 right-0 h-12 bg-slate-950 border-t border-slate-800 p-2 overflow-hidden z-50 text-[11px] font-mono text-emerald-400">
@@ -611,7 +635,21 @@ function HustleCard({ title, onClick, disabled, icon, className }: HustleCardPro
 
 function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string, onBack: () => void, state: GameState, onExecute: (id: string, forceSuccess?: boolean) => Promise<void> }) {
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
+  if (!config) return null;
+
   const currentLvl = state.pl.hustleLevels[hustleId] || 1;
+
+  const rankInfo = config.ranks ? {
+    title: config.ranks[currentLvl - 1],
+    nextCost: currentLvl < 3 ? (config.rankUpCosts ? config.rankUpCosts[currentLvl - 1] : null) : null
+  } : null;
+
+  const isStartupHustle = config.tier === 'STARTUP';
+  const executeHustleInternal = () => onExecute(hustleId);
+
+  let metrics = null;
+  if (hustleId === 'saas_mvp') metrics = `Users: ${state.pl.startupStats.saasUsers.toLocaleString()}`;
+  if (hustleId === 'agency_scale') metrics = `Staff: ${state.pl.startupStats.agencyStaff}`;
 
   // INTERACTIVE MATCH LAYERS
   if (hustleId === 'drop') {
@@ -630,6 +668,306 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
     return <RealEstateMatch onResult={(s) => { onExecute('real_estate_empire', s).then(() => onBack()); }} />;
   }
 
+  if (hustleId === 'saas_mvp') {
+    const { infra, focus, subscriptionPrice } = state.pl.saasPanel;
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            STARTUP ENGINE
+          </div>
+        </div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Infrastructure Stack</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['AWS', 'DEVOPS', 'ENTERPRISE'] as const).map(i => (
+                <button
+                  key={i}
+                  onClick={() => state.setSaaSInput('infra', i)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${infra === i ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {i}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Strategic Focus</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['STABILITY', 'GROWTH'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => state.setSaaSInput('focus', f)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${focus === f ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Subscription Price: ${subscriptionPrice}/mo</label>
+             <input
+               type="range"
+               min="5"
+               max="100"
+               step="5"
+               value={subscriptionPrice}
+               onChange={(e) => state.setSaaSInput('subscriptionPrice', parseInt(e.target.value))}
+               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+             />
+          </div>
+        </div>
+        <button
+          onClick={() => state.executeSaaSProject()}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+        >
+          EXECUTE SPRINT CYCLE
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'festival') {
+    const { venue, insured, ticketPrice } = state.pl.festivalPanel;
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+            CORPORATE CIRCUIT
+          </div>
+        </div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Venue Scale</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['TOUR', 'CIRCUIT', 'SATURATION'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => state.setFestivalInput('venue', v)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${venue === v ? 'bg-purple-600 border-purple-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+             <div>
+                <div className="text-[10px] font-black text-white uppercase tracking-widest">Event Insurance</div>
+                <div className="text-[9px] text-slate-400 font-bold uppercase mt-1">Protects 80% capital on failure</div>
+             </div>
+             <button
+               onClick={() => state.setFestivalInput('insured', !insured)}
+               className={`w-12 h-6 rounded-full transition-all relative ${insured ? 'bg-emerald-500' : 'bg-slate-700'}`}
+             >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${insured ? 'left-7' : 'left-1'}`} />
+             </button>
+          </div>
+          <div>
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Ticket Price: ${ticketPrice}</label>
+             <input
+               type="range"
+               min="50"
+               max="1000"
+               step="50"
+               value={ticketPrice}
+               onChange={(e) => state.setFestivalInput('ticketPrice', parseInt(e.target.value))}
+               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+             />
+          </div>
+        </div>
+        <button
+          onClick={() => state.executeConcertFestival()}
+          className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
+        >
+          LAUNCH GLOBAL CIRCUIT
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'ecom_brand') {
+    const { runSize, adSpend } = state.pl.ecomBrandPanel;
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+            CONGLOMERATE MODE
+          </div>
+        </div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Manufacturing Run Size</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[5000, 25000].map(s => (
+                <button
+                  key={s}
+                  onClick={() => state.setEcomBrandInput('runSize', s)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${runSize === s ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {s.toLocaleString()} UNITS
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Global Ad Spend: ${adSpend.toLocaleString()}</label>
+             <input
+               type="range"
+               min="10000"
+               max="200000"
+               step="10000"
+               value={adSpend}
+               onChange={(e) => state.setEcomBrandInput('adSpend', parseInt(e.target.value))}
+               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+             />
+          </div>
+        </div>
+        <button
+          onClick={() => state.executeEcomBrand()}
+          className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
+        >
+          AUTHORIZE GLOBAL LOGISTICS
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'agency_scale') {
+    const { client, staff } = state.pl.agencyPanel;
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+            AGENCY SCALE
+          </div>
+        </div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Target Client Tier</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['SMB', 'MID', 'ENTERPRISE'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => state.setAgencyInput('client', c)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${client === c ? 'bg-orange-600 border-orange-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Staffing Strategy</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['INTERNS', 'FREELANCERS', 'FULLTIME'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => state.setAgencyInput('staff', s)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${staff === s ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => state.executeAgencyRetainer()}
+          className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-[0.98]"
+        >
+          NEGOTIATE RETAINER
+        </button>
+      </div>
+    );
+  }
+
+  if (hustleId === 'pod') {
+    const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+            Back to Dashboard
+          </button>
+          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            STUDIO MODE
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-black italic tracking-tighter uppercase">{config.name}</h2>
+          <p className="text-xs text-slate-500 mt-1">{config.description}</p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Guest Tier</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['LOCAL', 'MICRO', 'ICON'] as const).map(g => (
+                <button
+                  key={g}
+                  onClick={() => state.setPodcastInput('selectedGuest', g)}
+                  className={`py-2 rounded text-[10px] font-black transition-all border ${selectedGuest === g ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Unhinged Factor: {unhingedSlider}x</label>
+             <input
+               type="range"
+               min="1"
+               max="5"
+               step="1"
+               value={unhingedSlider}
+               onChange={(e) => state.setPodcastInput('unhingedSlider', parseInt(e.target.value))}
+               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+             />
+             <div className="flex justify-between text-[8px] font-black text-slate-600 mt-1 uppercase tracking-tighter">
+                <span>Safe</span>
+                <span>Viral</span>
+                <span>Canceled</span>
+             </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => state.executePodcastEpisode()}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+        >
+          RECORD EPISODE
+        </button>
+      </div>
+    );
+  }
+
   if (hustleId === 'r_labor') {
     const { activeTab, weeks, propertyType, budget, action } = state.pl.laborPanel;
     const currentRankIdx = PROGRESSION_TIERS.indexOf(state.pl.currentTier);
@@ -638,14 +976,21 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
       if (tab === 2) {
         const baseCosts = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
         const budgetMults = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
-        return state.pl.bag >= baseCosts[propertyType] * budgetMults[budget];
+        return state.pl.bag >= baseCosts[propertyType as keyof typeof baseCosts] * (budgetMults[budget as keyof typeof budgetMults] || 1);
       }
       if (tab === 3) return state.pl.bag >= 1500000;
       return false;
     };
 
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200 relative">
+        <button
+          onClick={onBack}
+          className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90"
+        >
+          ✖️
+        </button>
+
         <div className="flex items-center justify-between">
           <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
@@ -772,14 +1117,21 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
       if (tab === 1) return true;
       if (tab === 2) {
         const fleetCosts = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-        return state.pl.bag >= fleetCosts[fleetType] && state.pl.clout >= 40;
+        return state.pl.bag >= (fleetCosts[fleetType as keyof typeof fleetCosts] || 0) && state.pl.clout >= 40;
       }
       if (tab === 3) return state.pl.bag >= 2000000 && state.pl.clout >= 150;
       return false;
     };
 
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200 relative">
+        <button
+          onClick={onBack}
+          className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90"
+        >
+          ✖️
+        </button>
+
         <div className="flex items-center justify-between">
           <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
@@ -895,7 +1247,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
   if (hustleId === 'global_franchise') {
     const { sector, footprint, supplyChain } = state.pl.franchisePanel;
     const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
-    const totalSetupCost = baseSetupCosts[sector] * footprint;
+    const totalSetupCost = baseSetupCosts[sector as keyof typeof baseSetupCosts] * footprint;
     const canAfford = state.pl.bag >= totalSetupCost;
 
     return (
@@ -993,724 +1345,12 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
     );
   }
 
-  const getRankInfo = (id: string, lvl: number) => {
-    if (id === 'drop') {
-      if (lvl === 1) return { title: "Trunk Phase: Viral Ad Tester", nextCost: 4000 };
-      if (lvl === 2) return { title: "Store Phase: Private Wholesaler", nextCost: 12000 };
-      return { title: "Chain Phase: Global E-Com Empire", nextCost: null };
-    }
-    if (id === 'techFlip' || id === 'tech_flip') {
-      if (lvl === 1) return { title: "Trunk Phase: Bedroom Repair Bench", nextCost: 2500 };
-      if (lvl === 2) return { title: "Store Phase: Strip-Mall Kiosk", nextCost: 8500 };
-      return { title: "Chain Phase: Automated Refurb Plant", nextCost: null };
-    }
-    if (id === 'vintage') {
-      if (lvl === 1) return { title: "Trunk Phase: Thrift Rack Hunter", nextCost: 2000 };
-      if (lvl === 2) return { title: "Store Phase: Consignment Boutique", nextCost: 7000 };
-      return { title: "Chain Phase: The Luxury Grail Archive", nextCost: null };
-    }
-    return null;
-  };
-
-  const getHustleMetrics = (id: string) => {
-    const { streetStats, startupStats } = state.pl;
-    switch (id) {
-      case 'cc': return `Subscribers: ${streetStats.ccSubs.toLocaleString()}`;
-      case 'pod': return `Episodes: ${streetStats.podEpisodes}`;
-      case 'audio': return `Active Tracks: ${state.pl.assetsOwned.masterTracks}`;
-      case 'drip': return `Inventory: ${streetStats.dripStock}`;
-      case 'meme': return `Active Tokens: ${streetStats.activeMemeTokens}`;
-      case 'saas_mvp': return `Active Users: ${startupStats.saasUsers.toLocaleString()}`;
-      case 'agency_scale': return `Agency Staff: ${startupStats.agencyStaff}`;
-      case 'ecom_brand': return `Monthly Orders: ${startupStats.ecomOrders.toLocaleString()}`;
-      default: return null;
-    }
-  };
-
-  const executeHustleInternal = () => {
-    onExecute(hustleId);
-  };
-
-  if (!config) return <div className="text-red-500">Hustle Config Not Found</div>;
-
-  const metrics = getHustleMetrics(hustleId);
-  const rankInfo = getRankInfo(hustleId, currentLvl);
-  const isStartupHustle = config.tier === 'STARTUP';
-
-  if (hustleId === 'saas_mvp') {
-    const { infra, focus, subscriptionPrice } = state.pl.saasPanel;
-    const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
-    const canAfford = state.pl.bag >= infraCosts[infra];
-    let outageRisk = 0;
-    if (focus === 'GROWTH') {
-      if (infra === 'AWS') outageRisk = 50;
-      else if (infra === 'DEVOPS') outageRisk = 20;
-    }
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-            ENGINEERING BAY
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-emerald-400">SAAS MVP DASHBOARD</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Infrastructure Stack</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['AWS', 'DEVOPS', 'ENTERPRISE'] as const).map(i => (
-                <button
-                  key={i}
-                  onClick={() => state.setSaaSInput('infra', i)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${infra === i ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Operational Focus</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['GROWTH', 'PATCH'] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => state.setSaaSInput('focus', f)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${focus === f ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Subscription Price ($)</label>
-            <input
-              type="number"
-              value={subscriptionPrice}
-              onChange={(e) => state.setSaaSInput('subscriptionPrice', parseInt(e.target.value) || 0)}
-              className="w-full bg-black border border-slate-800 rounded p-3 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-xl border ${outageRisk > 30 ? 'bg-red-900/20 border-red-900/50' : 'bg-slate-800/50 border-slate-700'}`}>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Monthly Infra Cost</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${infraCosts[infra].toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Server Crash Risk</span>
-            <span className={`font-mono font-bold ${outageRisk > 0 ? 'text-red-500' : 'text-emerald-400'}`}>{outageRisk}%</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('saas_mvp')}
-          disabled={!canAfford}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-        >
-          {canAfford ? "DEPLOY & SCALE PLATFORM" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'festival') {
-    const { venue, insured, ticketPrice } = state.pl.festivalPanel;
-    const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
-    const insuranceCost = 25000;
-    const totalCost = venueCosts[venue] + (insured ? insuranceCost : 0);
-    const canAfford = state.pl.bag >= totalCost;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-            CIRCUIT PROMOTER
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-purple-400">GLOBAL FESTIVAL CIRCUIT</h2>
-
-        {state.pl.crises.laborStrikeTurns > 0 && (
-          <div className="p-3 bg-red-900/30 border border-red-500 rounded text-xs font-bold text-red-500 uppercase tracking-tighter">
-            ⚠️ LABOR STRIKE ACTIVE: Corporate operations frozen for {state.pl.crises.laborStrikeTurns} months.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Circuit Reach Selection</label>
-            <div className="grid grid-cols-1 gap-2">
-              {([['TOUR', 'North American Tour'], ['CIRCUIT', 'European Circuit'], ['SATURATION', 'Global Saturation']] as const).map(([v, label]) => (
-                <button
-                  key={v}
-                  onClick={() => state.setFestivalInput('venue', v)}
-                  className={`py-3 px-4 rounded-xl text-left text-[10px] font-black transition-all border flex justify-between items-center ${venue === v ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  <span>{label}</span>
-                  <span className="font-mono opacity-60">${venueCosts[v].toLocaleString()}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-            <div>
-              <div className="text-[10px] font-black text-white uppercase">Corporate Event Insurance</div>
-              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Recover 80% on headliner breach ($25,000)</div>
-            </div>
-            <button
-              onClick={() => state.setFestivalInput('insured', !insured)}
-              className={`w-12 h-6 rounded-full transition-all relative ${insured ? 'bg-emerald-600' : 'bg-slate-700'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${insured ? 'left-7' : 'left-1'}`} />
-            </button>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Average Ticket Price ($)</label>
-            <input
-              type="number"
-              value={ticketPrice}
-              onChange={(e) => state.setFestivalInput('ticketPrice', parseInt(e.target.value) || 0)}
-              className="w-full bg-black border border-slate-800 rounded p-3 text-purple-400 font-mono font-bold focus:outline-none focus:border-purple-500 transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Upfront Production Capital</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Risk Factor: Headliner Breach of Contract / Municipal Cancellation.</span>
-            <span className="font-mono font-bold text-orange-400">25%</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('festival')}
-          disabled={!canAfford}
-          className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
-        >
-          {canAfford ? "AUTHORIZE CIRCUIT LAUNCH" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'ecom_brand') {
-    const { runSize, adSpend } = state.pl.ecomBrandPanel;
-    const baseCost = runSize === 5000 ? 50000 : 200000;
-    const totalCost = baseCost + adSpend;
-    const canAfford = state.pl.bag >= totalCost;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
-            CONGLOMERATE HQ
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-orange-400">DTC BRAND CONGLOMERATE</h2>
-
-        {state.pl.crises.laborStrikeTurns > 0 && (
-          <div className="p-3 bg-red-900/30 border border-red-500 rounded text-xs font-bold text-red-500 uppercase tracking-tighter">
-            ⚠️ LABOR STRIKE ACTIVE: Corporate operations frozen for {state.pl.crises.laborStrikeTurns} months.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Warehouse Automation Tiers</label>
-            <div className="grid grid-cols-2 gap-2">
-              {([5000, 25000] as const).map(s => (
-                <button
-                  key={s}
-                  onClick={() => state.setEcomBrandInput('runSize', s)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${runSize === s ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {s.toLocaleString()} UNIT DEPOT
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Cross-Border Tariff Strategy ($)</label>
-            <input
-              type="range"
-              min="10000"
-              max="200000"
-              step="10000"
-              value={adSpend}
-              onChange={(e) => state.setEcomBrandInput('adSpend', parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-500"
-            />
-            <div className="flex justify-between text-[8px] font-black text-slate-600 mt-1 uppercase tracking-tighter">
-              <span>$10,000</span>
-              <span>${adSpend.toLocaleString()}</span>
-              <span>$200,000</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Automation + Logistics Capital</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Risk Factor: Global Trade Embargo / Supply Chain Warfare.</span>
-            <span className="font-mono font-bold text-orange-400">15% Risk</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('ecom_brand')}
-          disabled={!canAfford}
-          className="w-full py-4 bg-orange-600 hover:bg-orange-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-[0.98]"
-        >
-          {canAfford ? "AUTHORIZE PRODUCTION CYCLE" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'agency_scale') {
-    const { client, staff } = state.pl.agencyPanel;
-    const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
-    const canAfford = staff === 'FREELANCERS' ? (state.pl.bag >= yields[client] * 0.5) : true;
-    const successChance = staff === 'INTERNS' ? 60 : 95;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-            AGENCY HQ
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-blue-400">AGENCY RETAINER LAB</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Target Client Tier</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['SMB', 'MID', 'ENTERPRISE'] as const).map(c => (
-                <button
-                  key={c}
-                  onClick={() => state.setAgencyInput('client', c)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${client === c ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Staffing Strategy</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['INTERNS', 'FREELANCERS'] as const).map(s => (
-                <button
-                  key={s}
-                  onClick={() => state.setAgencyInput('staff', s)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${staff === s ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Payroll / Execution Cost</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${(staff === 'FREELANCERS' ? yields[client] * 0.5 : 0).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Project Success Rate</span>
-            <span className={`font-mono font-bold ${successChance < 70 ? 'text-orange-500' : 'text-emerald-400'}`}>{successChance}%</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('agency_scale')}
-          disabled={!canAfford}
-          className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
-        >
-          {canAfford ? "PITCH & CLOSE RETAINER" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
-    const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
-    const lotCosts = { PHONES: 150, LAPTOPS: 400, RIGS: 1200 };
-    const toolCosts = { BUDGET: 50, PRECISION: 200 };
-    const totalCost = lotCosts[selectedLot] + toolCosts[toolQuality];
-    const canAfford = state.pl.bag >= totalCost;
-    const baseChances = { PHONES: 85, LAPTOPS: 70, RIGS: 55 };
-    const successChance = baseChances[selectedLot] + (toolQuality === 'PRECISION' ? 15 : 0);
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-right">
-            <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">Rank</div>
-            <div className="text-[11px] font-bold text-white italic">Level {currentLvl}</div>
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-emerald-400">TECH REFURBISHING LAB</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Hardware Lot Type</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['PHONES', 'LAPTOPS', 'RIGS'] as const).map(lot => (
-                <button
-                  key={lot}
-                  onClick={() => state.setTechFlipInput('selectedLot', lot)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${selectedLot === lot ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-900/40' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'}`}
-                >
-                  {lot}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Refurbishing Tools</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['BUDGET', 'PRECISION'] as const).map(tool => (
-                <button
-                  key={tool}
-                  onClick={() => state.setTechFlipInput('toolQuality', tool)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${toolQuality === tool ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'}`}
-                >
-                  {tool} {tool === 'PRECISION' ? '(+15% SUCCESS)' : ''}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Custom Listing Price ($)</label>
-          <input
-            type="number"
-            value={listingPrice}
-            onChange={(e) => state.setTechFlipInput('listingPrice', parseInt(e.target.value) || 0)}
-            className="w-full bg-black border border-slate-800 rounded p-3 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500 transition-colors"
-          />
-          <p className="text-[9px] text-slate-600 mt-1 uppercase font-bold tracking-tighter">MAX MARKUP: 2X LOT COST ($${(lotCosts[selectedLot] * 2).toLocaleString()})</p>
-        </div>
-
-        <div className={`p-4 rounded-xl border ${canAfford ? 'bg-slate-800/50 border-slate-700' : 'bg-red-900/20 border-red-900/50'}`}>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Sourcing & Tool Cost</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Success Probability</span>
-            <span className="font-mono font-bold text-blue-400">{successChance}%</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute(hustleId)}
-          disabled={!canAfford}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-        >
-          {canAfford ? "EXECUTE HARDWARE FLIP" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'pod') {
-    const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
-    const guestCosts = { LOCAL: 100, MICRO: 500, ICON: 2500 };
-    const canAfford = state.pl.bag >= guestCosts[selectedGuest];
-    const riskPercent = unhingedSlider * 20;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-            STUDIO MODE
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-blue-400">PODCAST SYNDICATE</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Book Guest Tier</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['LOCAL', 'MICRO', 'ICON'] as const).map(guest => (
-                <button
-                  key={guest}
-                  onClick={() => state.setPodcastInput('selectedGuest', guest)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${selectedGuest === guest ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'}`}
-                >
-                  {guest} (${guestCosts[guest].toLocaleString()})
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Unhinged Level</label>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded ${unhingedSlider === 3 ? 'bg-red-600 text-white' : unhingedSlider === 2 ? 'bg-orange-500 text-white' : 'bg-emerald-600 text-white'}`}>
-                {unhingedSlider === 1 ? 'FILTERED' : unhingedSlider === 2 ? 'EDGY' : 'CANCELABLE'}
-              </span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="1"
-              value={unhingedSlider}
-              onChange={(e) => state.setPodcastInput('unhingedSlider', parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
-            <div className="flex justify-between text-[8px] font-black text-slate-600 mt-1 uppercase tracking-tighter">
-              <span>Safe</span>
-              <span>Risky</span>
-              <span>Nuclear</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-xl border ${riskPercent >= 60 ? 'bg-red-900/20 border-red-900/50' : 'bg-slate-800/50 border-slate-700'}`}>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Controversy Risk</span>
-            <span className={`font-mono font-bold ${riskPercent >= 60 ? 'text-red-500' : 'text-orange-400'}`}>{riskPercent}% Explosion Chance</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Potential Yield</span>
-            <span className="font-mono font-bold text-emerald-400">{unhingedSlider}x Clout Multiplier</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('pod')}
-          disabled={!canAfford || state.pl.crises.shadowbanTurns > 0}
-          className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
-        >
-          {state.pl.crises.shadowbanTurns > 0
-            ? `SHADOWBANNED: ${state.pl.crises.shadowbanTurns} MO REMAINING`
-            : canAfford ? "RECORD & SYNDICATE EPISODE" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'vintage') {
-    const { brandTier } = state.pl.streetwearPanel;
-    const tierData = {
-      'UNDERGROUND_IP': { cost: 500, clReq: 0, auReq: 0, label: 'Underground IP Collection' },
-      'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30, label: 'Soho Retail Flagship' },
-      'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60, label: 'Paris Fashion Week' }
-    };
-    const currentTier = tierData[brandTier];
-    const canAfford = state.pl.bag >= currentTier.cost;
-    const meetsReqs = state.pl.clout >= currentTier.clReq && state.pl.aura >= currentTier.auReq;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20 uppercase">
-            DESIGN ATELIER
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-purple-400">STREETWEAR DRIP LAB</h2>
-
-        <div className="space-y-4">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Collection Tier Selection</label>
-          <div className="grid grid-cols-1 gap-2">
-            {(['UNDERGROUND_IP', 'SOHO_STORE', 'PARIS_RUNWAY'] as const).map(t => {
-              const data = tierData[t];
-              const locked = state.pl.clout < data.clReq || state.pl.aura < data.auReq;
-              return (
-                <button
-                  key={t}
-                  onClick={() => state.setStreetwearInput('brandTier', t)}
-                  className={`p-4 rounded-xl text-left transition-all border flex justify-between items-center ${brandTier === t ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'} ${locked ? 'opacity-50' : ''}`}
-                >
-                  <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest">{data.label}</div>
-                    <div className="text-[9px] font-bold opacity-60 uppercase">Cost: ${data.cost.toLocaleString()}</div>
-                  </div>
-                  {locked && (
-                    <div className="text-[8px] font-black text-red-400 uppercase">Req: {data.clReq} Clout / {data.auReq} Aura</div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl border bg-slate-800/50 border-slate-700">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Operational Cost</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${currentTier.cost.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Success Chance</span>
-            <span className="font-mono font-bold text-emerald-400">100% (IP RESTORED)</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('vintage')}
-          disabled={!canAfford || !meetsReqs || state.pl.swCooldownTurns > 0}
-          className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
-        >
-          {state.pl.swCooldownTurns > 0
-            ? `COOLDOWN: ${state.pl.swCooldownTurns} MO`
-            : meetsReqs ? (canAfford ? "EXECUTE DESIGN RUN" : "INSUFFICIENT FUNDS") : "REQUIREMENTS NOT MET"}
-        </button>
-      </div>
-    );
-  }
-
-  if (hustleId === 'drop') {
-    const { selectedBatchSize, selectedQuality, retailPrice } = state.pl.swPanelState;
-    const qualityCosts = { BUDGET: 10, PREMIUM: 30, LUXURY: 70 };
-    const totalCost = selectedBatchSize * qualityCosts[selectedQuality];
-    const canAfford = state.pl.bag >= totalCost;
-
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-            Back to Dashboard
-          </button>
-          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">
-            DISTRIBUTION CENTER
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-emerald-400">VIRAL DROPSHIPPING</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Batch Size Selection</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[50, 200, 500].map(size => (
-                <button
-                  key={size}
-                  onClick={() => state.setSwInput('selectedBatchSize', size)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${selectedBatchSize === size ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {size} units
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Item Quality Tier</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['BUDGET', 'PREMIUM', 'LUXURY'] as const).map(q => (
-                <button
-                  key={q}
-                  onClick={() => state.setSwInput('selectedQuality', q)}
-                  className={`py-2 rounded text-[10px] font-black transition-all border ${selectedQuality === q ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Retail Price ($)</label>
-          <input
-            type="number"
-            value={retailPrice}
-            onChange={(e) => state.setSwInput('retailPrice', parseInt(e.target.value) || 0)}
-            className="w-full bg-black border border-slate-800 rounded p-3 text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500 transition-colors"
-          />
-        </div>
-
-        <div className={`p-4 rounded-xl border ${canAfford ? 'bg-slate-800/50 border-slate-700' : 'bg-red-900/20 border-red-900/50'}`}>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Sourcing Cost</span>
-            <span className={`font-mono font-bold ${canAfford ? 'text-white' : 'text-red-500'}`}>${totalCost.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-slate-500 uppercase">Risk Level</span>
-            <span className="font-mono font-bold text-orange-400">MARKET VOLATILITY</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onExecute('drop')}
-          disabled={!canAfford || state.pl.swCooldownTurns > 0}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-        >
-          {state.pl.swCooldownTurns > 0
-            ? `COOLDOWN: ${state.pl.swCooldownTurns} MO`
-            : canAfford ? "LAUNCH VIRAL CAMPAIGN" : "INSUFFICIENT FUNDS"}
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          {isStartupHustle ? 'Back to Startup Operations' : 'Back to Operations Panel'}
+          {isStartupHustle ? 'Back to Dashboard' : 'Back to Dashboard'}
         </button>
         <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
           OPERATIONAL MODE
