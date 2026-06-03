@@ -5,8 +5,9 @@ import { getInitialGameState } from './initialState';
 import { createMudSlice } from './slices/mudSlice';
 import { createStreetSlice } from './slices/streetSlice';
 import { createStartupSlice } from './slices/startupSlice';
-import { applyAdvancement } from './engine';
+import { applyAdvancement } from '../engine/advancement';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
+import { MARKET_CONFIGS } from '../config/marketConfig';
 import { useJuiceStore } from './juiceStore';
 import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, UPGRADE_COSTS } from '../config/balanceConfig';
 
@@ -75,6 +76,8 @@ export const useGameStore = create<GameState>()(
       setActiveTab: (activeTab) => set({ activeTab }),
 
       setActiveHustleView: (activeHustleView) => set({ activeHustleView }),
+
+      setMarket: (currentMarket) => set({ currentMarket }),
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
@@ -229,13 +232,18 @@ export const useGameStore = create<GameState>()(
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
 
+          const market = MARKET_CONFIGS[state.currentMarket];
+
           // 0. Lineage Cost/Yield Override
           let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned)
             ? HUSTLE_BALANCE.audio.studioOwnedProductionCost
             : config.upfrontCost;
-          let lineageYieldCash = config.yieldCash;
-          let lineageYieldClout = config.yieldClout;
-          let lineageYieldAura = config.yieldAura;
+
+          effectiveUpfrontCost *= market.expenseMultiplier;
+
+          let lineageYieldCash = config.yieldCash * market.yieldMultiplier;
+          let lineageYieldClout = config.yieldClout * market.yieldMultiplier;
+          let lineageYieldAura = config.yieldAura * market.yieldMultiplier;
           let lineageHitMental = config.hitMental;
           let lineageFatigue = config.fatigueCost;
           let lineageSuccessChance = config.successChance;
@@ -501,7 +509,7 @@ export const useGameStore = create<GameState>()(
           let finalYieldClout = isSuccess ? lineageYieldClout : 0;
           let finalYieldAura = isSuccess ? lineageYieldAura : 0;
           let finalHitMental = lineageHitMental;
-          let finalHitHeat = config.hitHeat;
+          let finalHitHeat = config.hitHeat * market.heatMultiplier;
 
           const currentNews = [...lineageNews, ...state.news];
 

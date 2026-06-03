@@ -1,4 +1,4 @@
-import { applyAdvancement } from '../engine';
+import { applyAdvancement } from '../../engine/advancement';
 import type { GameState } from '../types';
 import { useJuiceStore } from '../juiceStore';
 import { HUSTLE_BALANCE } from '../../config/balanceConfig';

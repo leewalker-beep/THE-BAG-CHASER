@@ -168,7 +168,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     news: [],
     lastProcessedTimestamp: Date.now(),
     unlockedHustles: initialUnlocked,
-    marketType: 'NORMAL',
+    currentMarket: 'NORMAL',
     fatalCause: null,
   };
 };

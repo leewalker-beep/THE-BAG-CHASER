@@ -147,7 +147,7 @@ export interface GameState {
   news: string[];
   lastProcessedTimestamp: number;
   unlockedHustles: Record<string, boolean>;
-  marketType: MarketType;
+  currentMarket: MarketType;
   fatalCause: string | null;
 
   // Base Actions
@@ -156,6 +156,7 @@ export interface GameState {
   setTab: (tab: string) => void;
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
+  setMarket: (market: MarketType) => void;
   adv: (intervals?: number) => void;
   deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
   upgradeHustle: (hustleId: string) => void;
