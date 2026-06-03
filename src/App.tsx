@@ -4,7 +4,7 @@ import { useGameStore } from './store/gameStore';
 import { VFXManager } from './components/juice/VFXManager';
 import { HeatDrizzle } from './components/juice/HeatDrizzle';
 import { getInitialGameState } from './store/initialState';
-import type { GameState, GameTab } from './store/types';
+import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
@@ -18,6 +18,103 @@ const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: num
   CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
   ELITE: { cash: 5000000, clout: 200, aura: 200, fee: 1000000, description: "Sovereign Elite Syndicate" },
 };
+
+function canAffordHustle(id: string, pl: PlayerStats): { can: boolean; reason?: string; cost: number } {
+  const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
+  if (!config) return { can: false, reason: "INVALID HUSTLE", cost: 0 };
+
+  let cost = config.upfrontCost;
+  let cloutReq = config.cloutReq;
+  let auraReq = 0;
+
+  // Crises & Cooldowns
+  if (pl.crises.blacklistTurns > 0 && (config.tier === 'ELITE' || config.tier === 'MOGUL')) {
+    return { can: false, reason: "BLACKLISTED", cost: 0 };
+  }
+  if (id === 'r_plasma' && pl.plasmaUsedThisMonth) {
+    return { can: false, reason: "RECOVERY NEEDED", cost: 0 };
+  }
+  if ((id === 'sw' || id === 'drop' || id === 'vintage') && pl.swCooldownTurns > 0) {
+    return { can: false, reason: "COOLDOWN ACTIVE", cost: 0 };
+  }
+
+  // Cost & Req Overrides (aligned with gameStore.ts and Panels)
+  if (id === 'audio' && pl.streetStats.studioOwned) cost = 500;
+
+  if (id === 'r_labor') {
+    const { activeTab, propertyType, budget } = pl.laborPanel;
+    if (activeTab === 2) {
+      cloutReq = 40;
+      const baseCosts: Record<string, number> = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
+      const budgetMults: Record<string, number> = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
+      cost = baseCosts[propertyType] * budgetMults[budget];
+    } else if (activeTab === 3) {
+      cloutReq = 100;
+      auraReq = 100;
+      cost = 1500000;
+    }
+  }
+
+  if (id === 'r_delivery') {
+    const { activeTab, fleetType } = pl.deliveryPanel;
+    if (activeTab === 2) {
+      cloutReq = 40;
+      const fleetCosts: Record<string, number> = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
+      cost = fleetCosts[fleetType];
+    } else if (activeTab === 3) {
+      cloutReq = 150;
+      auraReq = 100;
+      cost = 2000000;
+    }
+  }
+
+  if (id === 'vintage') {
+    const { brandTier } = pl.streetwearPanel;
+    const tierData = {
+      'UNDERGROUND_IP': { cost: 500, clReq: 0, auReq: 0 },
+      'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30 },
+      'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60 }
+    };
+    cost = tierData[brandTier].cost;
+    cloutReq = tierData[brandTier].clReq;
+    auraReq = tierData[brandTier].auReq;
+  }
+
+  if (id === 'saas_mvp') {
+    const { infra } = pl.saasPanel;
+    const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
+    cost = infraCosts[infra];
+  }
+
+  if (id === 'festival') {
+    const { venue, insured } = pl.festivalPanel;
+    const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
+    cost = venueCosts[venue] + (insured ? 25000 : 0);
+  }
+
+  if (id === 'ecom_brand') {
+    const { runSize, adSpend } = pl.ecomBrandPanel;
+    cost = (runSize === 5000 ? 50000 : 200000) + adSpend;
+  }
+
+  if (id === 'agency_scale') {
+    const { client, staff } = pl.agencyPanel;
+    const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
+    cost = staff === 'FREELANCERS' ? yields[client] * 0.5 : 0;
+  }
+
+  if (id === 'global_franchise') {
+    const { sector, footprint } = pl.franchisePanel;
+    const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
+    cost = baseSetupCosts[sector] * footprint;
+  }
+
+  if (pl.bag < cost) return { can: false, reason: "INSUFFICIENT FUNDS", cost };
+  if (pl.clout < cloutReq) return { can: false, reason: "LACK OF CLOUT", cost };
+  if (pl.aura < auraReq) return { can: false, reason: "LACK OF AURA", cost };
+
+  return { can: true, cost };
+}
 
 function App() {
   const state = useGameStore();
@@ -49,36 +146,15 @@ function App() {
     if (isAnimating.current) return;
     isAnimating.current = true;
 
-    const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
-    if (!config) {
+    const { can, reason, cost: upfrontCost } = canAffordHustle(id, pl);
+    if (!can) {
+      setCashSplash({ text: reason || "LOCKED", isWin: false });
+      setTimeout(() => setCashSplash(null), 1000);
       isAnimating.current = false;
       return;
     }
 
     // Phase 1: Cost Tick Down
-    let upfrontCost = (id === 'audio' && pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
-
-    if (id === 'r_labor') {
-      const { activeTab, propertyType, budget } = pl.laborPanel;
-      if (activeTab === 2) {
-        const baseCosts: Record<string, number> = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
-        const budgetMults: Record<string, number> = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
-        upfrontCost = baseCosts[propertyType] * budgetMults[budget];
-      } else if (activeTab === 3) {
-        upfrontCost = 1500000;
-      }
-    }
-
-    if (id === 'r_delivery') {
-      const { activeTab, fleetType } = pl.deliveryPanel;
-      if (activeTab === 2) {
-        const fleetCosts: Record<string, number> = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-        upfrontCost = fleetCosts[fleetType];
-      } else if (activeTab === 3) {
-        upfrontCost = 2000000;
-      }
-    }
-
     const startCash = pl.bag;
     const floorCash = startCash - upfrontCost;
 
