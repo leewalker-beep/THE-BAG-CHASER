@@ -28,6 +28,15 @@ function App() {
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
 
+  const setSelectedLineageHustleId = setActiveHustleView;
+  const executeHustle = (id: string) => {
+    const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
+    if (!config) return;
+    const isInstant = id.startsWith('r_') && !config.isPassive;
+    if (isInstant) handleExecuteHustle(id);
+    else setActiveHustleView(id);
+  };
+
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
   const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
   const isAnimating = useRef(false);
@@ -309,33 +318,39 @@ function App() {
 
             {/* MENTAL HEALTH */}
             <div className={`flex flex-col items-center justify-center transition-all ${mentalHealth <= 20 ? 'animate-heartbeat text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : ''}`}>
-              <div className={`text-[9px] text-slate-500 font-bold uppercase ${mentalHealth <= 20 ? 'font-black scale-105' : ''}`}>MNT</div>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">MNT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${mentalHealth <= 20 ? 'text-rose-500 scale-105' : 'text-emerald-400'}`}>{mentalHealth}%</span>
+                <span className={mentalHealth <= 20 ? "text-base font-black tracking-tight text-rose-500 scale-105 animate-pulse" : "text-sm font-black text-emerald-400"}>
+                  {mentalHealth}%
+                </span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke={mentalHealth <= 20 ? '#f43f5e' : 'currentColor'} strokeWidth={mentalHealth <= 20 ? "2.5" : "1.5"} />
+                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke={mentalHealth <= 20 ? '#f43f5e' : 'currentColor'} strokeWidth={mentalHealth <= 20 ? 2.5 : 1.5} />
                 </svg>
               </div>
             </div>
 
             {/* AURA */}
             <div className={`flex flex-col items-center justify-center transition-all ${aura <= 10 ? 'animate-heartbeat text-rose-500' : ''}`}>
-              <div className={`text-[9px] text-slate-500 font-bold uppercase ${aura <= 10 ? 'font-black scale-105' : ''}`}>AUR</div>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">AUR</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${aura <= 10 ? 'text-rose-500 scale-105' : 'text-purple-400'}`}>{aura}</span>
+                <span className={aura <= 10 ? "text-base font-black tracking-tight text-rose-500 scale-105" : "text-sm font-black text-purple-400"}>
+                  {aura}
+                </span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "#f43f5e" : "#a855f7"} strokeWidth={aura <= 10 ? "2.5" : "1.5"} />
+                  <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "#f43f5e" : "#a855f7"} strokeWidth={aura <= 10 ? 2.5 : 1.5} />
                 </svg>
               </div>
             </div>
 
             {/* HEAT */}
             <div className={`flex flex-col items-center justify-center transition-all ${heat >= 80 ? 'animate-heartbeat text-red-500 font-bold' : ''}`}>
-              <div className={`text-[9px] text-slate-500 font-bold uppercase ${heat >= 80 ? 'font-black scale-105' : ''}`}>HT</div>
+              <div className="text-[9px] text-slate-500 font-bold uppercase">HT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${heat >= 80 ? 'text-red-500 scale-105' : 'text-orange-400'}`}>{heat}%</span>
+                <span className={heat >= 80 ? "text-base font-black tracking-tight text-red-500 animate-pulse" : "text-sm font-black text-orange-400"}>
+                  {heat}%
+                </span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke={heat >= 80 ? '#f43f5e' : 'currentColor'} strokeWidth={heat >= 80 ? "2.5" : "1.5"} />
+                  <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke={heat >= 80 ? '#f43f5e' : 'currentColor'} strokeWidth={heat >= 80 ? 2.5 : 1.5} />
                 </svg>
               </div>
             </div>
@@ -474,18 +489,20 @@ function App() {
             const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
             return (
               <div className="grid grid-cols-2 gap-3 w-full">
-                {currentTabHustles.map(h => {
-                  // Standard recovery/lifestyle grinds (e.g. sleep, chill) execute instantly.
-                  // Labor and Delivery are now lineage tech-trees that open sub-panels.
-                  const isLineage = ['r_labor', 'r_delivery'].includes(h.id);
-                  const isInstantLifestyle = h.id.startsWith('r_') && !h.isPassive && !isLineage;
+                {currentTabHustles.map(hustle => {
                   return (
                     <HustleCard
-                      key={h.id}
-                      title={h.name}
-                      icon={h.icon}
-                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isLineage ? setActiveHustleView(h.id) : (isInstantLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id))}
+                      key={hustle.id}
+                      title={hustle.name}
+                      icon={hustle.icon}
+                      disabled={hustle.id === 'r_plasma' && plasmaUsedThisMonth}
+                      onClick={() => {
+                        if (hustle.id === 'r_labor' || hustle.id === 'r_delivery') {
+                          setSelectedLineageHustleId(hustle.id); // Toggle the SubGamePanel open
+                        } else {
+                          executeHustle(hustle.id);
+                        }
+                      }}
                     />
                   );
                 })}
