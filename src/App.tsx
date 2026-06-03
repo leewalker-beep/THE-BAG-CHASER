@@ -14,7 +14,8 @@ import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE } from './config/balan
 import { PROGRESSION_TIERS } from './store/types';
 const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
 
-function canAffordHustle(id: string, pl: PlayerStats): { can: boolean; reason?: string; cost: number } {
+function canAffordHustle(id: string, pl: PlayerStats | null): { can: boolean; reason?: string; cost: number } {
+  if (!pl) return { can: false, reason: "INITIALIZING", cost: 0 };
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
   if (!config) return { can: false, reason: "INVALID HUSTLE", cost: 0 };
 
@@ -157,6 +158,8 @@ function App() {
   }, [pl?.bag]);
 
   const executeHustle = async (id: string, forceSuccess?: boolean) => {
+    if (!pl) return;
+
     // Cooldown Guards
     if ((id === 'drop' || id === 'vintage' || id === 'sw') && pl?.swCooldownTurns > 0) {
       setCashSplash({ text: `COOLDOWN: ${pl.swCooldownTurns} MO`, isWin: false });
@@ -226,7 +229,9 @@ function App() {
     });
   };
 
-  if (!pl || !pl.name || pl.name.trim() === "") {
+  if (!pl) return null;
+
+  if (!pl.name || pl.name.trim() === "") {
     return (
       <div className="fixed inset-0 bg-[#020817] z-[9999] flex flex-col items-center justify-center p-6 text-center select-none">
         <div className="max-w-md w-full space-y-8">
@@ -490,7 +495,7 @@ function App() {
               );
             }
 
-            const currentRankIdx = PROGRESSION_TIERS.indexOf(state.pl.currentTier);
+            const currentRankIdx = PROGRESSION_TIERS.indexOf(state.pl?.currentTier);
             const targetTabIdx = PROGRESSION_TIERS.indexOf(activeTab);
 
             if (targetTabIdx > currentRankIdx) {
