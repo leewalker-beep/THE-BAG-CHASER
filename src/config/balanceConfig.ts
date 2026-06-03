@@ -10,6 +10,13 @@ export const RESOLVE_SHADOWBAN_COST = 10000;
 export const RESOLVE_BLACKLIST_COST = 50000;
 export const RESOLVE_STRIKE_COST = 150000;
 
+export const UPGRADE_COSTS: Record<string, Record<number, number>> = {
+  techFlip: { 1: 2500, 2: 8500 },
+  tech_flip: { 1: 2500, 2: 8500 },
+  drop: { 1: 4000, 2: 12000 },
+  vintage: { 1: 2000, 2: 7000 }
+};
+
 export const HUSTLE_BALANCE = {
   audio: {
     studioOwnedProductionCost: 500
@@ -18,14 +25,12 @@ export const HUSTLE_BALANCE = {
     lotCosts: { PHONES: 150, LAPTOPS: 400, RIGS: 1200 } as Record<string, number>,
     toolCosts: { BUDGET: 50, PRECISION: 200 } as Record<string, number>,
     baseChances: { PHONES: 0.85, LAPTOPS: 0.70, RIGS: 0.55 } as Record<string, number>,
-    upgradeCosts: { 1: 2500, 2: 8500 } as Record<number, number>
   },
   pod: {
     guestCosts: { LOCAL: 100, MICRO: 500, ICON: 2500 } as Record<string, number>,
     baseCloutYields: { LOCAL: 10, MICRO: 40, ICON: 200 } as Record<string, number>
   },
   drop: {
-    upgradeCosts: { 1: 4000, 2: 12000 } as Record<number, number>
   },
   r_labor: {
     level2: {
@@ -57,7 +62,6 @@ export const HUSTLE_BALANCE = {
       'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30 },
       'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60 }
     } as Record<string, { cost: number, clReq: number, auReq: number }>,
-    upgradeCosts: { 1: 2000, 2: 7000 } as Record<number, number>
   },
   saas_mvp: {
     infraCosts: { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 } as Record<string, number>

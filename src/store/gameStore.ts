@@ -8,7 +8,7 @@ import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from './engine';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
 import { useJuiceStore } from './juiceStore';
-import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE } from '../config/balanceConfig';
+import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, UPGRADE_COSTS } from '../config/balanceConfig';
 
 const SAVE_KEY = 'bag-chaser-state';
 
@@ -195,17 +195,16 @@ export const useGameStore = create<GameState>()(
           let cost = 0;
           let rankName = "";
 
+          const upgradeTable = UPGRADE_COSTS[hustleId];
+          if (!upgradeTable || !upgradeTable[currentLvl]) return {};
+          cost = upgradeTable[currentLvl];
+
           if (hustleId === 'drop') {
-            cost = HUSTLE_BALANCE.drop.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Private Wholesaler" : "Chain Phase: Global E-Com Empire";
           } else if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
-            cost = HUSTLE_BALANCE.techFlip.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Strip-Mall Kiosk" : "Chain Phase: Automated Refurb Plant";
           } else if (hustleId === 'vintage') {
-            cost = HUSTLE_BALANCE.vintage.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Consignment Boutique" : "Chain Phase: The Luxury Grail Archive";
-          } else {
-            return {};
           }
 
           if (state.pl.bag < cost) {
@@ -231,7 +230,9 @@ export const useGameStore = create<GameState>()(
           if (!config) return {};
 
           // 0. Lineage Cost/Yield Override
-          let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
+          let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned)
+            ? HUSTLE_BALANCE.audio.studioOwnedProductionCost
+            : config.upfrontCost;
           let lineageYieldCash = config.yieldCash;
           let lineageYieldClout = config.yieldClout;
           let lineageYieldAura = config.yieldAura;
@@ -249,11 +250,10 @@ export const useGameStore = create<GameState>()(
               lineageFatigue = config.fatigueCost * mult;
               lineageHitMental = config.hitMental * mult;
             } else if (activeTab === 2) {
-              if (state.pl.clout < 40) {
-                return { news: ["LACK OF CLOUT: Need 40 Clout for Fleet Dispatch operations.", ...state.news] };
+              const { baseCosts, budgetMults, cloutReq: laborCloutReq2 } = HUSTLE_BALANCE.r_labor.level2;
+              if (state.pl.clout < laborCloutReq2) {
+                return { news: [`LACK OF CLOUT: Need ${laborCloutReq2} Clout for Property Flip operations.`, ...state.news] };
               }
-              const baseCosts = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
-              const budgetMults = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
               effectiveUpfrontCost = baseCosts[propertyType] * budgetMults[budget];
               lineageFatigue = 60;
               if (action === 'FLIP') {
@@ -268,7 +268,14 @@ export const useGameStore = create<GameState>()(
                 lineageNews.push(`PROPERTY RENT: The ${propertyType} has been added to your rental portfolio. +$2,500/mo passive flow.`);
               }
             } else if (activeTab === 3) {
-              effectiveUpfrontCost = 1500000;
+              const { cost: laborCost3, cloutReq: laborCloutReq3, auraReq: laborAuraReq3 } = HUSTLE_BALANCE.r_labor.level3;
+              if (state.pl.clout < laborCloutReq3) {
+                return { news: [`LACK OF CLOUT: Need ${laborCloutReq3} Clout for Commercial Syndicate operations.`, ...state.news] };
+              }
+              if (state.pl.aura < laborAuraReq3) {
+                return { news: [`LACK OF AURA: Need ${laborAuraReq3} Aura for Commercial Syndicate operations.`, ...state.news] };
+              }
+              effectiveUpfrontCost = laborCost3;
               lineageYieldCash = 2500000;
               lineageYieldClout = 150;
               lineageYieldAura = 100;
@@ -366,6 +373,7 @@ export const useGameStore = create<GameState>()(
           if (hustleId === 'vintage') {
             const { brandTier } = state.pl.streetwearPanel;
             const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
+            if (!tierData) return {};
             effectiveUpfrontCost = tierData.cost;
 
             if (state.pl.clout < tierData.clReq || state.pl.aura < tierData.auReq) {
@@ -392,9 +400,9 @@ export const useGameStore = create<GameState>()(
           if (hustleId === 'global_franchise') {
             const { sector, footprint, supplyChain } = state.pl.franchisePanel;
             const { baseSetupCosts, baseCashYields, baseCloutYields } = HUSTLE_BALANCE.global_franchise;
-            effectiveUpfrontCost = baseSetupCosts[sector] * footprint;
+            effectiveUpfrontCost = (baseSetupCosts[sector] || 0) * footprint;
 
-            lineageYieldCash = baseCashYields[sector] * footprint;
+            lineageYieldCash = (baseCashYields[sector] || 0) * footprint;
             lineageYieldClout = baseCloutYields[sector] * footprint;
             lineageYieldAura = 20 * footprint;
             lineageHitMental = -20;
@@ -427,8 +435,6 @@ export const useGameStore = create<GameState>()(
               news: ["ASSET ACQUIRED: Added 1 Vending Machine to your portfolio.", ...state.news]
             };
             const advancedState = applyAdvancement(clampStats(nextState as GameState), 1) as GameState;
-            finalCash = advancedState.pl.bag;
-            netPayout = finalCash - (state.pl.bag - config.upfrontCost);
             return advancedState;
           }
 
@@ -447,15 +453,14 @@ export const useGameStore = create<GameState>()(
                 },
                 news: ["ASSET ACQUIRED: Music Studio is now operational. You can now produce Master Tracks.", ...state.news]
               };
-              finalCash = nextState.pl.bag;
-              netPayout = 0;
               return nextState;
             }
             // If already owned, it costs $500 per track and advances time
-            if (state.pl.bag < 500) {
-              return { news: ["INSUFFICIENT FUNDS: Need $500 for studio time and production costs.", ...state.news] };
+            const studioCost = HUSTLE_BALANCE.audio.studioOwnedProductionCost;
+            if (state.pl.bag < studioCost) {
+              return { news: [`INSUFFICIENT FUNDS: Need $${studioCost.toLocaleString()} for studio time and production costs.`, ...state.news] };
             }
-            effectiveUpfrontCost = 500;
+            effectiveUpfrontCost = studioCost;
           }
 
           // 3. Validation Logic

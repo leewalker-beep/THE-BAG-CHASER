@@ -1,6 +1,7 @@
 import { applyAdvancement } from '../engine';
 import type { GameState } from '../types';
 import { useJuiceStore } from '../juiceStore';
+import { HUSTLE_BALANCE } from '../../config/balanceConfig';
 
 export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   setSaaSInput: (field: string, value: any) => set((state) => ({
@@ -12,7 +13,7 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeSaaSProject: () => set((state) => {
     const { infra, focus, subscriptionPrice } = state.pl.saasPanel;
-    const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
+    const { infraCosts } = HUSTLE_BALANCE.saas_mvp;
     const cost = infraCosts[infra];
 
     if (state.pl.bag < cost) {
@@ -74,8 +75,7 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeConcertFestival: () => set((state) => {
     const { venue, insured, ticketPrice } = state.pl.festivalPanel;
-    const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
-    const insuranceCost = 25000;
+    const { venueCosts, insuranceFee: insuranceCost } = HUSTLE_BALANCE.festival;
     const totalUpfront = venueCosts[venue] + (insured ? insuranceCost : 0);
 
     if (state.pl.bag < totalUpfront) {
@@ -142,7 +142,8 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeEcomBrand: () => set((state) => {
     const { runSize, adSpend } = state.pl.ecomBrandPanel;
-    const baseCost = runSize === 5000 ? 50000 : 200000;
+    const { runSizeCosts, DEFAULT_RUN_SIZE_COST } = HUSTLE_BALANCE.ecom_brand;
+    const baseCost = runSizeCosts[runSize] || DEFAULT_RUN_SIZE_COST;
     const totalCost = baseCost + adSpend;
 
     if (state.pl.bag < totalCost) {
@@ -199,11 +200,11 @@ export const createStartupSlice = (set: (fn: (state: GameState) => Partial<GameS
 
   executeAgencyRetainer: () => set((state) => {
     const { client, staff } = state.pl.agencyPanel;
-    const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
+    const { clientYields: yields, freelancerCostMult } = HUSTLE_BALANCE.agency_scale;
     const baseYield = yields[client];
 
     let successChance = staff === 'INTERNS' ? 0.6 : 0.95;
-    let payrollCost = staff === 'FREELANCERS' ? baseYield * 0.5 : 0;
+    let payrollCost = staff === 'FREELANCERS' ? baseYield * freelancerCostMult : 0;
 
     if (state.pl.bag < payrollCost) {
       return { news: [`INSUFFICIENT FUNDS: Need $${payrollCost.toLocaleString()} to pay freelancers.`, ...state.news] };
