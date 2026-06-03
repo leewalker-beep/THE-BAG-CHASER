@@ -28,6 +28,7 @@ function App() {
     activeTab, setActiveTab, activeHustleView, setActiveHustleView
   } = state;
 
+  const [selectedLineageHustleId, setSelectedLineageHustleId] = useState<string | null>(null);
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
   const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
   const isAnimating = useRef(false);
@@ -46,7 +47,7 @@ function App() {
     }
   }, [pl?.bag]);
 
-  const handleExecuteHustle = async (id: string, forceSuccess?: boolean) => {
+  const executeHustle = async (id: string, forceSuccess?: boolean) => {
     if (isAnimating.current) return;
     isAnimating.current = true;
 
@@ -275,9 +276,9 @@ function App() {
             <div className={`flex flex-col items-center justify-center transition-all ${mentalHealth <= 20 ? 'animate-heartbeat text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : ''}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">MNT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${mentalHealth <= 20 ? 'text-rose-500' : 'text-emerald-400'}`}>{mentalHealth}%</span>
+                <span className={`${mentalHealth <= 20 ? 'text-base font-black tracking-tight text-rose-500 scale-105 animate-pulse' : 'text-sm font-black text-emerald-400'}`}>{mentalHealth}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth={mentalHealth <= 20 ? "2.5" : "1.5"} />
                 </svg>
               </div>
             </div>
@@ -286,7 +287,7 @@ function App() {
             <div className={`flex flex-col items-center justify-center transition-all ${aura <= 10 ? 'animate-heartbeat text-rose-500' : ''}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">AUR</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${aura <= 10 ? 'text-rose-500' : 'text-purple-400'}`}>{aura}</span>
+                <span className={`${aura <= 10 ? 'text-base font-black tracking-tight text-rose-500 scale-105' : 'text-sm font-black text-purple-400'}`}>{aura}</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
                   <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "currentColor" : "#a855f7"} strokeWidth="1.5" />
                 </svg>
@@ -297,7 +298,7 @@ function App() {
             <div className={`flex flex-col items-center justify-center transition-all ${heat >= 80 ? 'animate-heartbeat text-red-500 font-bold' : ''}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">HT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${heat >= 80 ? 'text-red-500' : 'text-orange-400'}`}>{heat}%</span>
+                <span className={`${heat >= 80 ? 'text-base font-black tracking-tight text-red-500 animate-pulse' : 'text-sm font-black text-orange-400'}`}>{heat}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
                   <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
@@ -435,21 +436,25 @@ function App() {
               );
             }
 
-            const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(h => h.tier === activeTab);
+            const currentTabHustles = MASTER_HUSTLE_REGISTRY.filter(hustle => hustle.tier === activeTab);
             return (
               <div className="grid grid-cols-2 gap-3 w-full">
-                {currentTabHustles.map(h => {
-                  const isLifestyle = h.id.startsWith('r_') && !h.isPassive && h.id !== 'r_labor' && h.id !== 'r_delivery';
-                  return (
-                    <HustleCard
-                      key={h.id}
-                      title={h.name}
-                      icon={h.icon}
-                      disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id)}
-                    />
-                  );
-                })}
+                {currentTabHustles.map(hustle => (
+                  <HustleCard
+                    key={hustle.id}
+                    title={hustle.name}
+                    icon={hustle.icon}
+                    disabled={hustle.id === 'r_plasma' && plasmaUsedThisMonth}
+                    onClick={() => {
+                      if (hustle.id === 'r_labor' || hustle.id === 'r_delivery') {
+                        // Intercept default execution and open the newly built SubGamePanel lineage menu
+                        setSelectedLineageHustleId(hustle.id);
+                      } else {
+                        executeHustle(hustle.id);
+                      }
+                    }}
+                  />
+                ))}
               </div>
             );
           })()
@@ -458,7 +463,7 @@ function App() {
             hustleId={activeHustleView}
             onBack={() => setActiveHustleView(null)}
             state={state}
-            onExecute={handleExecuteHustle}
+            onExecute={executeHustle}
           />
         )}
 
@@ -480,6 +485,63 @@ function App() {
           {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
         </div>
       </footer>
+
+      {selectedLineageHustleId && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col p-6 font-mono text-white overflow-y-auto">
+          <div className="flex justify-between items-center border-b border-slate-900 pb-3 mb-4 shrink-0">
+            <h2 className="text-sm font-black tracking-widest text-emerald-400 uppercase">
+              🚀 {selectedLineageHustleId === 'r_labor' ? 'MANUAL LABOR LINEAGE' : 'APP DELIVERY LOGISTICS'}
+            </h2>
+            <button
+              onClick={() => setSelectedLineageHustleId(null)}
+              className="px-3 py-1 bg-slate-900 border border-slate-800 rounded text-xs font-bold text-rose-400 active:scale-95 transition-all"
+            >
+              ✖ CLOSE
+            </button>
+          </div>
+          <div className="flex-1">
+            <div className="grid grid-cols-1 gap-4">
+              {[1, 2, 3].map((lvl) => {
+                const currentRankIdx = PROGRESSION_TIERS.indexOf(pl.currentTier);
+                const isLocked = (lvl === 2 && currentRankIdx < 1) || (lvl === 3 && currentRankIdx < 3);
+                const label = selectedLineageHustleId === 'r_labor'
+                  ? (lvl === 1 ? 'LVL 1: DAY LABOR' : lvl === 2 ? 'LVL 2: PROPERTY FLIPS' : 'LVL 3: COMMERCIAL SYNDICATE')
+                  : (lvl === 1 ? 'LVL 1: COURIER SPRINT' : lvl === 2 ? 'LVL 2: FLEET DISPATCH' : 'LVL 3: 3PL AUTOMATED HUB');
+                const reqLabel = lvl === 2 ? '[REQUIRES STREET]' : lvl === 3 ? '[REQUIRES CORPORATE]' : '';
+
+                return (
+                  <button
+                    key={lvl}
+                    disabled={isLocked}
+                    onClick={() => {
+                      if (selectedLineageHustleId === 'r_labor') {
+                        state.setLaborInput('activeTab', lvl);
+                      } else {
+                        state.setDeliveryInput('activeTab', lvl);
+                      }
+                      executeHustle(selectedLineageHustleId);
+                      setSelectedLineageHustleId(null);
+                    }}
+                    className={`p-6 rounded-xl border-2 text-left transition-all ${
+                      isLocked
+                        ? 'bg-slate-900/50 border-slate-800 text-slate-600 opacity-50 cursor-not-allowed'
+                        : 'bg-slate-900 border-slate-800 hover:border-emerald-500/50 active:scale-95'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-black tracking-tighter">{label}</span>
+                      {isLocked && <span className="text-[10px] text-rose-500 font-bold">{reqLabel}</span>}
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2 uppercase font-bold tracking-widest">
+                      {isLocked ? 'Verification Required' : 'Authorize Mission Cycle'}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
