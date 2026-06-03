@@ -157,6 +157,13 @@ function App() {
   }, [pl?.bag]);
 
   const executeHustle = async (id: string, forceSuccess?: boolean) => {
+    // Cooldown Guards
+    if ((id === 'drop' || id === 'vintage' || id === 'sw') && pl?.swCooldownTurns > 0) {
+      setCashSplash({ text: `COOLDOWN: ${pl.swCooldownTurns} MO`, isWin: false });
+      setTimeout(() => setCashSplash(null), 1000);
+      return;
+    }
+
     if (isAnimating.current) return;
     isAnimating.current = true;
 
