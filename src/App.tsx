@@ -80,6 +80,42 @@ function App() {
       }
     }
 
+    if (id === 'saas_mvp') {
+      const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
+      upfrontCost = infraCosts[pl.saasPanel.infra as keyof typeof infraCosts] || 0;
+    }
+
+    if (id === 'festival') {
+      const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
+      upfrontCost = (venueCosts[pl.festivalPanel.venue as keyof typeof venueCosts] || 0) + (pl.festivalPanel.insured ? 25000 : 0);
+    }
+
+    if (id === 'ecom_brand') {
+      upfrontCost = (pl.ecomBrandPanel.runSize === 5000 ? 50000 : 200000) + pl.ecomBrandPanel.adSpend;
+    }
+
+    if (id === 'agency_scale') {
+      const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
+      const baseYield = yields[pl.agencyPanel.client as keyof typeof yields] || 0;
+      upfrontCost = pl.agencyPanel.staff === 'FREELANCERS' ? baseYield * 0.5 : 0;
+    }
+
+    if (id === 'global_franchise') {
+      const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
+      upfrontCost = (baseSetupCosts[pl.franchisePanel.sector as keyof typeof baseSetupCosts] || 0) * pl.franchisePanel.footprint;
+    }
+
+    if (id === 'pod') {
+      const guestCosts = { LOCAL: 100, MICRO: 500, ICON: 2500 };
+      upfrontCost = guestCosts[pl.podcastPanel.selectedGuest as keyof typeof guestCosts] || 0;
+    }
+
+    if (id === 'techFlip' || id === 'tech_flip') {
+      const lotCosts = { PHONES: 150, LAPTOPS: 400, RIGS: 1200 };
+      const toolCosts = { BUDGET: 50, PRECISION: 200 };
+      upfrontCost = (lotCosts[pl.techFlipPanel.selectedLot as keyof typeof lotCosts] || 0) + toolCosts[pl.techFlipPanel.toolQuality as keyof typeof toolCosts];
+    }
+
     const startCash = pl.bag;
     const floorCash = startCash - upfrontCost;
 
@@ -239,7 +275,7 @@ function App() {
         .animate-heartbeat { animation: heartbeat 0.8s infinite ease-in-out; }
       `}</style>
 
-      <div className="w-full flex flex-col shrink-0 bg-slate-950 border-b border-slate-900">
+      <div className="w-full flex flex-col shrink-0 bg-slate-950 border-b border-slate-900 relative z-[110]">
         <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-950 border-b border-slate-900 shrink-0">
           {/* LEFT COLUMN: THE OPERATOR ID FILE */}
           <div className="flex flex-col text-left font-mono text-[11px] leading-tight select-none">
@@ -385,7 +421,7 @@ function App() {
            </div>
         )}
 
-        {activeHustleView === null ? (
+        {(activeHustleView === null || ['r_labor', 'r_delivery'].includes(activeHustleView)) ? (
           (() => {
             if (activeTab === 'FLEX1') {
               return (
@@ -441,14 +477,15 @@ function App() {
                 {currentTabHustles.map(h => {
                   // Standard recovery/lifestyle grinds (e.g. sleep, chill) execute instantly.
                   // Labor and Delivery are now lineage tech-trees that open sub-panels.
-                  const isInstantLifestyle = h.id.startsWith('r_') && !h.isPassive && !['r_labor', 'r_delivery'].includes(h.id);
+                  const isLineage = ['r_labor', 'r_delivery'].includes(h.id);
+                  const isInstantLifestyle = h.id.startsWith('r_') && !h.isPassive && !isLineage;
                   return (
                     <HustleCard
                       key={h.id}
                       title={h.name}
                       icon={h.icon}
                       disabled={h.id === 'r_plasma' && plasmaUsedThisMonth}
-                      onClick={() => isInstantLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id)}
+                      onClick={() => isLineage ? setActiveHustleView(h.id) : (isInstantLifestyle ? handleExecuteHustle(h.id) : setActiveHustleView(h.id))}
                     />
                   );
                 })}
@@ -645,7 +682,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
   } : null;
 
   const isStartupHustle = config.tier === 'STARTUP';
-  const executeHustleInternal = () => onExecute(hustleId);
+  const executeHustleInternal = () => onExecute(hustleId).then(() => onBack());
 
   let metrics = null;
   if (hustleId === 'saas_mvp') metrics = `Users: ${state.pl.startupStats.saasUsers.toLocaleString()}`;
@@ -700,13 +737,13 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           <div>
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Strategic Focus</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['STABILITY', 'GROWTH'] as const).map(f => (
+              {(['PATCH', 'GROWTH'] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => state.setSaaSInput('focus', f)}
                   className={`py-2 rounded text-[10px] font-black transition-all border ${focus === f ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
                 >
-                  {f}
+                  {f === 'PATCH' ? 'STABILITY' : 'GROWTH'}
                 </button>
               ))}
             </div>
@@ -725,7 +762,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           </div>
         </div>
         <button
-          onClick={() => state.executeSaaSProject()}
+          onClick={() => onExecute('saas_mvp').then(() => onBack())}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
           EXECUTE SPRINT CYCLE
@@ -789,7 +826,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           </div>
         </div>
         <button
-          onClick={() => state.executeConcertFestival()}
+          onClick={() => onExecute('festival').then(() => onBack())}
           className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-purple-900/20 active:scale-[0.98]"
         >
           LAUNCH GLOBAL CIRCUIT
@@ -841,7 +878,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           </div>
         </div>
         <button
-          onClick={() => state.executeEcomBrand()}
+          onClick={() => onExecute('ecom_brand').then(() => onBack())}
           className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
         >
           AUTHORIZE GLOBAL LOGISTICS
@@ -881,8 +918,8 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           </div>
           <div>
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Staffing Strategy</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['INTERNS', 'FREELANCERS', 'FULLTIME'] as const).map(s => (
+            <div className="grid grid-cols-2 gap-2">
+              {(['INTERNS', 'FREELANCERS'] as const).map(s => (
                 <button
                   key={s}
                   onClick={() => state.setAgencyInput('staff', s)}
@@ -895,7 +932,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
           </div>
         </div>
         <button
-          onClick={() => state.executeAgencyRetainer()}
+          onClick={() => onExecute('agency_scale').then(() => onBack())}
           className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-[0.98]"
         >
           NEGOTIATE RETAINER
@@ -959,7 +996,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
         </div>
 
         <button
-          onClick={() => state.executePodcastEpisode()}
+          onClick={() => onExecute('pod').then(() => onBack())}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
           RECORD EPISODE
@@ -986,9 +1023,9 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200 relative">
         <button
           onClick={onBack}
-          className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90"
+          className="absolute -top-3 -right-3 px-3 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90 text-[10px] font-black uppercase tracking-widest gap-1"
         >
-          ✖️
+          <span>✖</span> <span>Close</span>
         </button>
 
         <div className="flex items-center justify-between">
@@ -1100,7 +1137,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
         )}
 
         <button
-          onClick={() => onExecute('r_labor')}
+          onClick={() => onExecute('r_labor').then(() => onBack())}
           disabled={!canAfford(activeTab)}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
@@ -1127,9 +1164,9 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200 relative">
         <button
           onClick={onBack}
-          className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90"
+          className="absolute -top-3 -right-3 px-3 h-8 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10 transition-all active:scale-90 text-[10px] font-black uppercase tracking-widest gap-1"
         >
-          ✖️
+          <span>✖</span> <span>Close</span>
         </button>
 
         <div className="flex items-center justify-between">
@@ -1234,7 +1271,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
         )}
 
         <button
-          onClick={() => onExecute('r_delivery')}
+          onClick={() => onExecute('r_delivery').then(() => onBack())}
           disabled={!canAfford(activeTab)}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
         >
@@ -1335,7 +1372,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
         </div>
 
         <button
-          onClick={() => onExecute('global_franchise')}
+          onClick={() => onExecute('global_franchise').then(() => onBack())}
           disabled={!canAfford}
           className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/20 active:scale-[0.98]"
         >
@@ -1350,7 +1387,7 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          {isStartupHustle ? 'Back to Dashboard' : 'Back to Dashboard'}
+          Back to Dashboard
         </button>
         <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
           OPERATIONAL MODE
