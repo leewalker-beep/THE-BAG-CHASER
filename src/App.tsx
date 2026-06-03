@@ -8,16 +8,10 @@ import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
+import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE } from './config/balanceConfig';
 
 import { PROGRESSION_TIERS } from './store/types';
 const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
-
-const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, aura: number, fee: number, description: string }> = {
-  STREET: { cash: 5000, clout: 20, aura: 20, fee: 3000, description: "HQ Lease & Street Cred" },
-  STARTUP: { cash: 15000, clout: 50, aura: 50, fee: 5000, description: "Startup Incorporation" },
-  CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
-  ELITE: { cash: 5000000, clout: 200, aura: 200, fee: 1000000, description: "Sovereign Elite Syndicate" },
-};
 
 function canAffordHustle(id: string, pl: PlayerStats): { can: boolean; reason?: string; cost: number } {
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
@@ -39,74 +33,67 @@ function canAffordHustle(id: string, pl: PlayerStats): { can: boolean; reason?: 
   }
 
   // Cost & Req Overrides (aligned with gameStore.ts and Panels)
-  if (id === 'audio' && pl.streetStats.studioOwned) cost = 500;
+  if (id === 'audio' && pl.streetStats.studioOwned) {
+    cost = HUSTLE_BALANCE.audio.studioOwnedProductionCost;
+  }
 
   if (id === 'r_labor') {
     const { activeTab, propertyType, budget } = pl.laborPanel;
     if (activeTab === 2) {
-      cloutReq = 40;
-      const baseCosts: Record<string, number> = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
-      const budgetMults: Record<string, number> = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
+      cloutReq = HUSTLE_BALANCE.r_labor.level2.cloutReq;
+      const { baseCosts, budgetMults } = HUSTLE_BALANCE.r_labor.level2;
       cost = baseCosts[propertyType] * budgetMults[budget];
     } else if (activeTab === 3) {
-      cloutReq = 100;
-      auraReq = 100;
-      cost = 1500000;
+      cloutReq = HUSTLE_BALANCE.r_labor.level3.cloutReq;
+      auraReq = HUSTLE_BALANCE.r_labor.level3.auraReq;
+      cost = HUSTLE_BALANCE.r_labor.level3.cost;
     }
   }
 
   if (id === 'r_delivery') {
     const { activeTab, fleetType } = pl.deliveryPanel;
     if (activeTab === 2) {
-      cloutReq = 40;
-      const fleetCosts: Record<string, number> = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-      cost = fleetCosts[fleetType];
+      cloutReq = HUSTLE_BALANCE.r_delivery.level2.cloutReq;
+      cost = HUSTLE_BALANCE.r_delivery.level2.fleetCosts[fleetType];
     } else if (activeTab === 3) {
-      cloutReq = 150;
-      auraReq = 100;
-      cost = 2000000;
+      cloutReq = HUSTLE_BALANCE.r_delivery.level3.cloutReq;
+      auraReq = HUSTLE_BALANCE.r_delivery.level3.auraReq;
+      cost = HUSTLE_BALANCE.r_delivery.level3.cost;
     }
   }
 
   if (id === 'vintage') {
     const { brandTier } = pl.streetwearPanel;
-    const tierData = {
-      'UNDERGROUND_IP': { cost: 500, clReq: 0, auReq: 0 },
-      'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30 },
-      'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60 }
-    };
-    cost = tierData[brandTier].cost;
-    cloutReq = tierData[brandTier].clReq;
-    auraReq = tierData[brandTier].auReq;
+    const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
+    cost = tierData.cost;
+    cloutReq = tierData.clReq;
+    auraReq = tierData.auReq;
   }
 
   if (id === 'saas_mvp') {
     const { infra } = pl.saasPanel;
-    const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
-    cost = infraCosts[infra];
+    cost = HUSTLE_BALANCE.saas_mvp.infraCosts[infra];
   }
 
   if (id === 'festival') {
     const { venue, insured } = pl.festivalPanel;
-    const venueCosts = { TOUR: 50000, CIRCUIT: 150000, SATURATION: 500000 };
-    cost = venueCosts[venue] + (insured ? 25000 : 0);
+    cost = HUSTLE_BALANCE.festival.venueCosts[venue] + (insured ? HUSTLE_BALANCE.festival.insuranceFee : 0);
   }
 
   if (id === 'ecom_brand') {
     const { runSize, adSpend } = pl.ecomBrandPanel;
-    cost = (runSize === 5000 ? 50000 : 200000) + adSpend;
+    cost = (HUSTLE_BALANCE.ecom_brand.runSizeCosts[runSize] || HUSTLE_BALANCE.ecom_brand.DEFAULT_RUN_SIZE_COST) + adSpend;
   }
 
   if (id === 'agency_scale') {
     const { client, staff } = pl.agencyPanel;
-    const yields = { SMB: 3000, MID: 9000, ENTERPRISE: 25000 };
-    cost = staff === 'FREELANCERS' ? yields[client] * 0.5 : 0;
+    const { clientYields, freelancerCostMult } = HUSTLE_BALANCE.agency_scale;
+    cost = staff === 'FREELANCERS' ? clientYields[client] * freelancerCostMult : 0;
   }
 
   if (id === 'global_franchise') {
     const { sector, footprint } = pl.franchisePanel;
-    const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
-    cost = baseSetupCosts[sector] * footprint;
+    cost = HUSTLE_BALANCE.global_franchise.baseSetupCosts[sector] * footprint;
   }
 
   if (pl.bag < cost) return { can: false, reason: "INSUFFICIENT FUNDS", cost };
@@ -450,7 +437,7 @@ function App() {
                 onClick={() => state.unfreezeAccounts()}
                 className="w-full py-4 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded uppercase tracking-widest transition-all shadow-xl shadow-red-900/40"
               >
-                Pay $5,000 Corporate Legal Retainer to Unfreeze Accounts
+                Pay ${UNFREEZE_COST.toLocaleString()} Corporate Legal Retainer to Unfreeze Accounts
               </button>
            </div>
         )}
