@@ -7,6 +7,7 @@ import { createStreetSlice } from './slices/streetSlice';
 import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from '../engine/advancement';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
+import { HUSTLE_PROGRESSIONS } from '../config/hustleProgression';
 import { MARKET_CONFIGS } from '../config/marketConfig';
 import { useJuiceStore } from './juiceStore';
 import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, UPGRADE_COSTS } from '../config/balanceConfig';
@@ -227,6 +228,36 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
+      upgradeHustleNode: (hustleId, nodeId) => set((state) => {
+        if (state.pl.crises.accountsFrozen) {
+          return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
+        }
+        const tree = HUSTLE_PROGRESSIONS[hustleId];
+        if (!tree) return {};
+        const node = tree[nodeId];
+        if (!node) return {};
+
+        if (state.pl.bag < node.cost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} to unlock ${node.name}.`, ...state.news] };
+        }
+
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - node.cost,
+            hustleNodeIds: {
+              ...state.pl.hustleNodeIds,
+              [hustleId]: nodeId
+            },
+            treePassiveYields: {
+              ...state.pl.treePassiveYields,
+              [hustleId]: node.passiveMonthlyYield
+            }
+          },
+          news: [`SYSTEM: ${hustleId.toUpperCase()} upgraded to ${node.name}.`, ...state.news]
+        };
+      }),
+
       deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => {
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
@@ -239,14 +270,32 @@ export const useGameStore = create<GameState>()(
             ? HUSTLE_BALANCE.audio.studioOwnedProductionCost
             : config.upfrontCost;
 
-          effectiveUpfrontCost *= market.expenseMultiplier;
-
-          let lineageYieldCash = config.yieldCash * market.yieldMultiplier;
-          let lineageYieldClout = config.yieldClout * market.yieldMultiplier;
-          let lineageYieldAura = config.yieldAura * market.yieldMultiplier;
+          let lineageYieldCash = config.yieldCash;
+          let lineageYieldClout = config.yieldClout;
+          let lineageYieldAura = config.yieldAura;
           let lineageHitMental = config.hitMental;
           let lineageFatigue = config.fatigueCost;
           let lineageSuccessChance = config.successChance;
+
+          const tree = HUSTLE_PROGRESSIONS[hustleId];
+          if (tree) {
+            const currentNodeId = state.pl.hustleNodeIds[hustleId] || 'l1';
+            const node = tree[currentNodeId];
+            if (node) {
+              effectiveUpfrontCost = 0; // The per-execution cost for tree-based hustles is typically 0 unless otherwise stated, cost is in the upgrade.
+              lineageYieldCash = node.yieldCash;
+              lineageYieldClout = node.yieldClout;
+              lineageYieldAura = node.yieldAura;
+              lineageHitMental = node.hitMental;
+              lineageSuccessChance = node.successChance;
+            }
+          }
+
+          effectiveUpfrontCost *= market.expenseMultiplier;
+
+          lineageYieldCash *= market.yieldMultiplier;
+          lineageYieldClout *= market.yieldMultiplier;
+          lineageYieldAura *= market.yieldMultiplier;
           const lineageNews: string[] = [];
           const nextPlOverrides: Partial<typeof state.pl> = {};
 

@@ -19,6 +19,16 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     return acc;
   }, {} as Record<string, number>);
 
+  const initialNodeIds = allHustles.reduce((acc, hustle) => {
+    acc[hustle] = 'l1';
+    return acc;
+  }, {} as Record<string, string>);
+
+  const initialTreePassiveYields = allHustles.reduce((acc, hustle) => {
+    acc[hustle] = 0;
+    return acc;
+  }, {} as Record<string, number>);
+
   const initialUnlocked = allHustles.reduce((acc, hustle) => {
     acc[hustle] = false;
     return acc;
@@ -69,6 +79,8 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       currentTier: startingTier === 1 ? 'STREET' : 'MUD',
       hustleFatigue: initialFatigue,
       hustleLevels: initialLevels,
+      hustleNodeIds: initialNodeIds,
+      treePassiveYields: initialTreePassiveYields,
       plasmaUsedThisMonth: false,
       techInventory: { raw: 0, refined: 0 },
       vintageInventoryValue: 0,

@@ -2,9 +2,9 @@ import React from 'react';
 import type { PanelProps } from './types';
 import { HUSTLE_PROGRESSIONS } from '../../../config/hustleProgression';
 
-export function LaborPanel({ onBack, state, onExecute }: PanelProps) {
-  const hustleId = 'r_labor';
+export function GenericTreePanel({ hustleId, onBack, state, onExecute }: PanelProps & { hustleId: string }) {
   const tree = HUSTLE_PROGRESSIONS[hustleId];
+  if (!tree) return null;
   const currentNodeId = state.pl.hustleNodeIds[hustleId] || 'l1';
   const currentNode = tree[currentNodeId];
 
@@ -23,13 +23,14 @@ export function LaborPanel({ onBack, state, onExecute }: PanelProps) {
       <div className="space-y-4">
         <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
           <h3 className="text-sm font-black text-white uppercase tracking-widest">{currentNode.name}</h3>
-          <p className="text-[10px] text-slate-500 mt-1">Current operation tier in the Labor Lineage.</p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
             <div className="text-emerald-400 font-bold">Yield: ${currentNode.yieldCash.toLocaleString()}</div>
             <div className="text-blue-400 font-bold">Mental: {currentNode.hitMental}</div>
+            <div className="text-indigo-400 font-bold">Clout: +{currentNode.yieldClout}</div>
+            <div className="text-purple-400 font-bold">Aura: +{currentNode.yieldAura}</div>
             <div className="text-orange-400 font-bold">Success: {Math.round(currentNode.successChance * 100)}%</div>
             {currentNode.passiveMonthlyYield > 0 && (
-              <div className="text-purple-400 font-bold col-span-2">Passive: ${currentNode.passiveMonthlyYield.toLocaleString()}/mo</div>
+              <div className="text-amber-400 font-bold">Passive: ${currentNode.passiveMonthlyYield.toLocaleString()}/mo</div>
             )}
           </div>
         </div>
