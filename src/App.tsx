@@ -9,7 +9,7 @@ import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
-import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE } from './config/balanceConfig';
+import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
 
 import { PROGRESSION_TIERS } from './store/types';
 const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
@@ -120,6 +120,9 @@ function App() {
       setPlayerName: s.setPlayerName,
       setPh: s.setPh,
       unfreezeAccounts: s.unfreezeAccounts,
+      resolveBlacklist: s.resolveBlacklist,
+      resolveShadowban: s.resolveShadowban,
+      resolveLaborStrike: s.resolveLaborStrike,
       setCurrentTier: s.setCurrentTier,
       setLaborInput: s.setLaborInput,
       setDeliveryInput: s.setDeliveryInput,
@@ -194,7 +197,9 @@ function App() {
 
     // Phase 2: Splash Impact
     await new Promise(r => setTimeout(r, 150));
-    const { finalCash, netPayout } = state.deductCostAndRollOutcome(id, forceSuccess);
+    state.deductCostAndRollOutcome(id, forceSuccess);
+    const bagAfter = useGameStore.getState().pl.bag;
+    const netPayout = bagAfter - floorCash;
 
     if (netPayout > 0) {
       setCashSplash({ text: `+$${netPayout.toLocaleString()}`, isWin: true });
@@ -207,7 +212,7 @@ function App() {
     // Phase 3: Outcome Roll
     const steps = 30;
     const currentDisplayed = floorCash;
-    const totalDelta = finalCash - currentDisplayed;
+    const totalDelta = bagAfter - currentDisplayed;
     const stepVal = totalDelta / steps;
 
     for (let i = 1; i <= steps; i++) {
@@ -215,7 +220,7 @@ function App() {
       await new Promise(r => setTimeout(r, 15));
     }
 
-    setDisplayedCash(finalCash);
+    setDisplayedCash(bagAfter);
     isAnimating.current = false;
   };
 
@@ -452,16 +457,43 @@ function App() {
       )}
 
       {/* GLOBAL ALERTS TRAY */}
-      <div className="w-full flex flex-col gap-1 px-4 py-2 pointer-events-none">
+      <div className="w-full flex flex-col gap-1 px-4 py-2 z-40">
         <AnimatePresence>
           {pl.crises.shadowbanTurns > 0 && (
-            <AlertPill color="bg-red-600">⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns}mo)</AlertPill>
+            <div className="flex flex-col gap-1">
+              <AlertPill color="bg-red-600">⚠️ SHADOWBANNED ({pl.crises.shadowbanTurns}mo)</AlertPill>
+              <button
+                onClick={() => state.resolveShadowban()}
+                className="mx-auto px-4 py-1 bg-white/10 hover:bg-white/20 text-[9px] font-black uppercase rounded border border-white/20 transition-all"
+              >
+                Clear Shadowban (${RESOLVE_SHADOWBAN_COST.toLocaleString()})
+              </button>
+            </div>
           )}
           {pl.crises.accountsFrozen && (
             <AlertPill color="bg-red-900 border-2 border-white">🚫 ACCOUNTS FROZEN</AlertPill>
           )}
           {pl.crises.laborStrikeTurns > 0 && (
-            <AlertPill color="bg-orange-600 animate-pulse">⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns}mo)</AlertPill>
+            <div className="flex flex-col gap-1">
+              <AlertPill color="bg-orange-600 animate-pulse">⚠️ LABOR STRIKE ({pl.crises.laborStrikeTurns}mo)</AlertPill>
+              <button
+                onClick={() => state.resolveLaborStrike()}
+                className="mx-auto px-4 py-1 bg-white/10 hover:bg-white/20 text-[9px] font-black uppercase rounded border border-white/20 transition-all"
+              >
+                Settle Strike (${RESOLVE_STRIKE_COST.toLocaleString()})
+              </button>
+            </div>
+          )}
+          {pl.crises.blacklistTurns > 0 && (
+            <div className="flex flex-col gap-1">
+              <AlertPill color="bg-slate-800 border border-red-500">🚫 BLACKLISTED ({pl.crises.blacklistTurns}mo)</AlertPill>
+              <button
+                onClick={() => state.resolveBlacklist()}
+                className="mx-auto px-4 py-1 bg-white/10 hover:bg-white/20 text-[9px] font-black uppercase rounded border border-white/20 transition-all"
+              >
+                Launder Reputation (${RESOLVE_BLACKLIST_COST.toLocaleString()})
+              </button>
+            </div>
           )}
         </AnimatePresence>
       </div>

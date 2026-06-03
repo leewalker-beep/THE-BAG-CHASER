@@ -1,8 +1,10 @@
 import type { PanelProps } from './types';
 
+import { HUSTLE_BALANCE } from '../../../config/balanceConfig';
+
 export function PodPanel({ onBack, state, onExecute }: PanelProps) {
   const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
-  const guestCosts = { LOCAL: 100, MICRO: 500, ICON: 2500 };
+  const { guestCosts } = HUSTLE_BALANCE.pod;
   const canAfford = state.pl.bag >= guestCosts[selectedGuest];
   const riskPercent = unhingedSlider * 20;
 

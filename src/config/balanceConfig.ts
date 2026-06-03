@@ -6,10 +6,26 @@ export const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, au
 };
 
 export const UNFREEZE_COST = 5000;
+export const RESOLVE_SHADOWBAN_COST = 10000;
+export const RESOLVE_BLACKLIST_COST = 50000;
+export const RESOLVE_STRIKE_COST = 150000;
 
 export const HUSTLE_BALANCE = {
   audio: {
     studioOwnedProductionCost: 500
+  },
+  techFlip: {
+    lotCosts: { PHONES: 150, LAPTOPS: 400, RIGS: 1200 } as Record<string, number>,
+    toolCosts: { BUDGET: 50, PRECISION: 200 } as Record<string, number>,
+    baseChances: { PHONES: 0.85, LAPTOPS: 0.70, RIGS: 0.55 } as Record<string, number>,
+    upgradeCosts: { 1: 2500, 2: 8500 } as Record<number, number>
+  },
+  pod: {
+    guestCosts: { LOCAL: 100, MICRO: 500, ICON: 2500 } as Record<string, number>,
+    baseCloutYields: { LOCAL: 10, MICRO: 40, ICON: 200 } as Record<string, number>
+  },
+  drop: {
+    upgradeCosts: { 1: 4000, 2: 12000 } as Record<number, number>
   },
   r_labor: {
     level2: {
@@ -26,6 +42,7 @@ export const HUSTLE_BALANCE = {
   r_delivery: {
     level2: {
       fleetCosts: { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 } as Record<string, number>,
+      fleetYields: { 'E-BIKE': 6000, SPRINTER: 15000, FREIGHT: 35000 } as Record<string, number>,
       cloutReq: 40
     },
     level3: {
@@ -39,7 +56,8 @@ export const HUSTLE_BALANCE = {
       'UNDERGROUND_IP': { cost: 500, clReq: 0, auReq: 0 },
       'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30 },
       'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60 }
-    } as Record<string, { cost: number, clReq: number, auReq: number }>
+    } as Record<string, { cost: number, clReq: number, auReq: number }>,
+    upgradeCosts: { 1: 2000, 2: 7000 } as Record<number, number>
   },
   saas_mvp: {
     infraCosts: { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 } as Record<string, number>
@@ -60,6 +78,8 @@ export const HUSTLE_BALANCE = {
     freelancerCostMult: 0.5
   },
   global_franchise: {
-    baseSetupCosts: { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 } as Record<string, number>
+    baseSetupCosts: { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 } as Record<string, number>,
+    baseCashYields: { FAST_FOOD: 12000, WELLNESS: 28000, LOGISTICS: 75000 } as Record<string, number>,
+    baseCloutYields: { FAST_FOOD: 40, WELLNESS: 150, LOGISTICS: 100 } as Record<string, number>
   }
 };

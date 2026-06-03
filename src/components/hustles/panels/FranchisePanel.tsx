@@ -1,8 +1,10 @@
 import type { PanelProps } from './types';
 
+import { HUSTLE_BALANCE } from '../../../config/balanceConfig';
+
 export function FranchisePanel({ onBack, state, onExecute }: PanelProps) {
   const { sector, footprint, supplyChain } = state.pl.franchisePanel;
-  const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
+  const { baseSetupCosts } = HUSTLE_BALANCE.global_franchise;
   const totalSetupCost = baseSetupCosts[sector] * footprint;
   const canAfford = state.pl.bag >= totalSetupCost;
 

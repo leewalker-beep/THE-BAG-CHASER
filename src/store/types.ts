@@ -157,9 +157,12 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
-  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => { finalCash: number; netPayout: number };
+  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
   upgradeHustle: (hustleId: string) => void;
   unfreezeAccounts: () => void;
+  resolveBlacklist: () => void;
+  resolveShadowban: () => void;
+  resolveLaborStrike: () => void;
 
   // Advanced Hustle Actions
   sourceTechPallet: () => void;
@@ -174,9 +177,7 @@ export interface GameState {
   setSwInput: (field: string, value: any) => void;
   executeStreetwearDrop: () => void;
   setTechFlipInput: (field: string, value: any) => void;
-  executeTechFlipDrop: () => void;
   setPodcastInput: (field: string, value: any) => void;
-  executePodcastEpisode: () => void;
   setSaaSInput: (field: string, value: any) => void;
   executeSaaSProject: () => void;
   setFestivalInput: (field: string, value: any) => void;
@@ -186,9 +187,7 @@ export interface GameState {
   setAgencyInput: (field: string, value: any) => void;
   executeAgencyRetainer: () => void;
   setFranchiseInput: (field: string, value: any) => void;
-  executeFranchiseTurn: () => void;
   setStreetwearInput: (field: string, value: any) => void;
-  executeStreetwearRun: () => void;
   setLaborInput: (field: keyof PlayerStats['laborPanel'], value: any) => void;
   setDeliveryInput: (field: keyof PlayerStats['deliveryPanel'], value: any) => void;
   setCurrentTier: (tierName: GameTab, fee?: number) => void;
