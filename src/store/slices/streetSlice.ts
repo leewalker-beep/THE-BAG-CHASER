@@ -1,5 +1,5 @@
 import type { GameState } from '../types';
-import { applyAdvancement } from '../engine';
+import { applyAdvancement } from '../../engine/advancement';
 import { useJuiceStore } from '../juiceStore';
 
 export const createStreetSlice = (_set: (fn: (state: GameState) => Partial<GameState>) => void) => ({

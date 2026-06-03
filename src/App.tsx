@@ -10,11 +10,12 @@ import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
 import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
+import { MARKET_CONFIGS } from './config/marketConfig';
 
-import { PROGRESSION_TIERS } from './store/types';
+import { PROGRESSION_TIERS, type MarketType } from './store/types';
 const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
 
-function canAffordHustle(id: string, pl: PlayerStats | null): { can: boolean; reason?: string; cost: number } {
+function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketType = 'NORMAL'): { can: boolean; reason?: string; cost: number } {
   if (!pl) return { can: false, reason: "INITIALIZING", cost: 0 };
   const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
   if (!config) return { can: false, reason: "INVALID HUSTLE", cost: 0 };
@@ -98,6 +99,8 @@ function canAffordHustle(id: string, pl: PlayerStats | null): { can: boolean; re
     cost = HUSTLE_BALANCE.global_franchise.baseSetupCosts[sector] * footprint;
   }
 
+  cost *= MARKET_CONFIGS[marketType].expenseMultiplier;
+
   if (pl.bag < cost) return { can: false, reason: "INSUFFICIENT FUNDS", cost };
   if (pl.clout < cloutReq) return { can: false, reason: "LACK OF CLOUT", cost };
   if (pl.aura < auraReq) return { can: false, reason: "LACK OF AURA", cost };
@@ -116,6 +119,7 @@ function App() {
       setActiveTab: s.setActiveTab,
       activeHustleView: s.activeHustleView,
       setActiveHustleView: s.setActiveHustleView,
+      currentMarket: s.currentMarket,
       deductCostAndRollOutcome: s.deductCostAndRollOutcome,
       setPlayerName: s.setPlayerName,
       setPh: s.setPh,
@@ -139,7 +143,8 @@ function App() {
 
   const {
     pl, ph, fatalCause, news,
-    activeTab, setActiveTab, activeHustleView, setActiveHustleView
+    activeTab, setActiveTab, activeHustleView, setActiveHustleView,
+    currentMarket
   } = state;
 
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
@@ -173,7 +178,7 @@ function App() {
     if (isAnimating.current) return;
     isAnimating.current = true;
 
-    const { can, reason, cost: upfrontCost } = canAffordHustle(id, pl);
+    const { can, reason, cost: upfrontCost } = canAffordHustle(id, pl, currentMarket);
     if (!can) {
       setCashSplash({ text: reason || "LOCKED", isWin: false });
       setTimeout(() => setCashSplash(null), 1000);
@@ -345,7 +350,12 @@ function App() {
           {/* LEFT COLUMN: THE OPERATOR ID FILE */}
           <div className="flex flex-col text-left font-mono text-[11px] leading-tight select-none">
             <span className="text-emerald-400 font-extrabold tracking-widest text-[12px] mb-0.5">RANK: {pl.currentTier}</span>
-            <span className="text-slate-400">👤 OP: {pl.name || "LEE"}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">👤 OP: {pl.name || "LEE"}</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 rounded text-slate-300 font-bold border border-slate-700" title={MARKET_CONFIGS[currentMarket].description}>
+                📈 {MARKET_CONFIGS[currentMarket].name}
+              </span>
+            </div>
             <span className="text-slate-500 text-[10px]">⏳ AGE: {ageYears}y {ageMonths}m</span>
           </div>
 

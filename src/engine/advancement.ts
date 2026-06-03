@@ -1,11 +1,11 @@
-import type { GameState, HustleID, MarketType } from './types';
-import { MARKET_CONFIGS } from '../engine/worldMarkets';
-import { useJuiceStore } from './juiceStore';
+import type { GameState, HustleID, MarketType } from '../store/types';
+import { MARKET_CONFIGS } from '../config/marketConfig';
+import { useJuiceStore } from '../store/juiceStore';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
   const currentPl = { ...state.pl };
   const currentNews = [...state.news];
-  let currentMarket = state.marketType;
+  let currentMarket = state.currentMarket;
   let currentPh = state.ph;
   let currentFatalCause = state.fatalCause;
 
@@ -95,10 +95,6 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     currentPl.plasmaUsedThisMonth = false;
 
     // Apply Global Crisis Filters
-    // Shadowban intercepts all clout gains.
-    // If clout increased this turn, and shadowban is active, we need to correct it.
-    // However, the current engine doesn't have passive clout gains yet.
-    // We add this as a structural safeguard for Phase 5.5 compliance.
     if (currentPl.crises.shadowbanTurns > 0) {
        const cloutGain = currentPl.clout - state.pl.clout;
        if (cloutGain > 0) {
@@ -134,7 +130,7 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
   return {
     pl: currentPl,
     news: currentNews.slice(0, 50), // Keep news log manageable
-    marketType: currentMarket,
+    currentMarket: currentMarket,
     ph: currentPh,
     fatalCause: currentFatalCause,
     lastProcessedTimestamp: Date.now()
