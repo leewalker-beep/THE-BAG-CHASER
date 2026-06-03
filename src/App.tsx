@@ -309,33 +309,33 @@ function App() {
 
             {/* MENTAL HEALTH */}
             <div className={`flex flex-col items-center justify-center transition-all ${mentalHealth <= 20 ? 'animate-heartbeat text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : ''}`}>
-              <div className="text-[9px] text-slate-500 font-bold uppercase">MNT</div>
+              <div className={`text-[9px] text-slate-500 font-bold uppercase ${mentalHealth <= 20 ? 'font-black scale-105' : ''}`}>MNT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${mentalHealth <= 20 ? 'text-rose-500' : 'text-emerald-400'}`}>{mentalHealth}%</span>
+                <span className={`text-sm font-black ${mentalHealth <= 20 ? 'text-rose-500 scale-105' : 'text-emerald-400'}`}>{mentalHealth}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke={mentalHealth <= 20 ? '#f43f5e' : 'currentColor'} strokeWidth={mentalHealth <= 20 ? "2.5" : "1.5"} />
                 </svg>
               </div>
             </div>
 
             {/* AURA */}
             <div className={`flex flex-col items-center justify-center transition-all ${aura <= 10 ? 'animate-heartbeat text-rose-500' : ''}`}>
-              <div className="text-[9px] text-slate-500 font-bold uppercase">AUR</div>
+              <div className={`text-[9px] text-slate-500 font-bold uppercase ${aura <= 10 ? 'font-black scale-105' : ''}`}>AUR</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${aura <= 10 ? 'text-rose-500' : 'text-purple-400'}`}>{aura}</span>
+                <span className={`text-sm font-black ${aura <= 10 ? 'text-rose-500 scale-105' : 'text-purple-400'}`}>{aura}</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "currentColor" : "#a855f7"} strokeWidth="1.5" />
+                  <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "#f43f5e" : "#a855f7"} strokeWidth={aura <= 10 ? "2.5" : "1.5"} />
                 </svg>
               </div>
             </div>
 
             {/* HEAT */}
             <div className={`flex flex-col items-center justify-center transition-all ${heat >= 80 ? 'animate-heartbeat text-red-500 font-bold' : ''}`}>
-              <div className="text-[9px] text-slate-500 font-bold uppercase">HT</div>
+              <div className={`text-[9px] text-slate-500 font-bold uppercase ${heat >= 80 ? 'font-black scale-105' : ''}`}>HT</div>
               <div className="flex items-center">
-                <span className={`text-sm font-black ${heat >= 80 ? 'text-red-500' : 'text-orange-400'}`}>{heat}%</span>
+                <span className={`text-sm font-black ${heat >= 80 ? 'text-red-500 scale-105' : 'text-orange-400'}`}>{heat}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke={heat >= 80 ? '#f43f5e' : 'currentColor'} strokeWidth={heat >= 80 ? "2.5" : "1.5"} />
                 </svg>
               </div>
             </div>
