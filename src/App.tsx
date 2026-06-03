@@ -7,6 +7,7 @@ import { HeatDrizzle } from './components/juice/HeatDrizzle';
 import { getInitialGameState } from './store/initialState';
 import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
+import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
 import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
@@ -99,6 +100,16 @@ function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketT
     cost = HUSTLE_BALANCE.global_franchise.baseSetupCosts[sector] * footprint;
   }
 
+  const tree = HUSTLE_PROGRESSIONS[id];
+  if (tree) {
+    const currentNodeId = pl.hustleNodeIds[id] || 'l1';
+    const node = tree[currentNodeId];
+    if (node) {
+      cost = 0; // Per-execution cost for tree hustles is handled by upgrades
+      cloutReq = 0; // We assume the requirements for the current node were met during upgrade
+    }
+  }
+
   cost *= MARKET_CONFIGS[marketType].expenseMultiplier;
 
   if (pl.bag < cost) return { can: false, reason: "INSUFFICIENT FUNDS", cost };
@@ -138,6 +149,7 @@ function App() {
       setFestivalInput: s.setFestivalInput,
       setEcomBrandInput: s.setEcomBrandInput,
       setAgencyInput: s.setAgencyInput,
+      upgradeHustleNode: s.upgradeHustleNode,
     }))
   );
 

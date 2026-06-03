@@ -1,5 +1,6 @@
 import type { GameState, HustleID, MarketType } from '../store/types';
 import { MARKET_CONFIGS } from '../config/marketConfig';
+import { HUSTLE_PROGRESSIONS } from '../config/hustleProgression';
 import { useJuiceStore } from '../store/juiceStore';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
@@ -30,7 +31,13 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
 
     const vendingYield = (currentPl.assetsOwned?.vendingMachines || 0) * 250;
     const musicYield = (currentPl.assetsOwned?.masterTracks || 0) * 150;
-    const totalPassiveYield = vendingYield + musicYield + (currentPl.passiveLaborYield || 0);
+
+    let treePassiveYield = 0;
+    Object.values(currentPl.treePassiveYields).forEach(val => {
+      treePassiveYield += val;
+    });
+
+    const totalPassiveYield = vendingYield + musicYield + (currentPl.passiveLaborYield || 0) + treePassiveYield;
 
     currentPl.bag += totalPassiveYield;
     currentPl.bag -= totalMonthlyRent;

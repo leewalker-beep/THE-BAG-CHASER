@@ -25,6 +25,8 @@ export interface PlayerStats {
   currentTier: GameTab;
   hustleFatigue: Record<HustleID, number>;
   hustleLevels: Record<HustleID, number>;
+  hustleNodeIds: Record<HustleID, string>;
+  treePassiveYields: Record<HustleID, number>;
   plasmaUsedThisMonth: boolean;
   techInventory: { raw: number; refined: number };
   vintageInventoryValue: number;
@@ -160,6 +162,7 @@ export interface GameState {
   adv: (intervals?: number) => void;
   deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
   upgradeHustle: (hustleId: string) => void;
+  upgradeHustleNode: (hustleId: string, nodeId: string) => void;
   unfreezeAccounts: () => void;
   resolveBlacklist: () => void;
   resolveShadowban: () => void;
