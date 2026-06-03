@@ -1,12 +1,15 @@
 import type { PanelProps } from './types';
 
+import { HUSTLE_BALANCE } from '../../../config/balanceConfig';
+
 export function StreetwearPanel({ onBack, state, onExecute }: PanelProps) {
   const { brandTier } = state.pl.streetwearPanel;
-  const tierData = {
-    'UNDERGROUND_IP': { cost: 500, clReq: 0, auReq: 0, label: 'Underground IP Collection' },
-    'SOHO_STORE': { cost: 8000, clReq: 40, auReq: 30, label: 'Soho Retail Flagship' },
-    'PARIS_RUNWAY': { cost: 35000, clReq: 80, auReq: 60, label: 'Paris Fashion Week' }
+  const labels: Record<string, string> = {
+    'UNDERGROUND_IP': 'Underground IP Collection',
+    'SOHO_STORE': 'Soho Retail Flagship',
+    'PARIS_RUNWAY': 'Paris Fashion Week'
   };
+  const tierData = HUSTLE_BALANCE.vintage.tiers;
   const currentTier = tierData[brandTier];
   const canAfford = state.pl.bag >= currentTier.cost;
   const meetsReqs = state.pl.clout >= currentTier.clReq && state.pl.aura >= currentTier.auReq;
@@ -38,7 +41,7 @@ export function StreetwearPanel({ onBack, state, onExecute }: PanelProps) {
                 className={`p-4 rounded-xl text-left transition-all border flex justify-between items-center ${brandTier === t ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'} ${locked ? 'opacity-50' : ''}`}
               >
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-widest">{data.label}</div>
+                  <div className="text-[11px] font-black uppercase tracking-widest">{labels[t]}</div>
                   <div className="text-[9px] font-bold opacity-60 uppercase">Cost: ${data.cost.toLocaleString()}</div>
                 </div>
                 {locked && (

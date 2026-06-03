@@ -8,6 +8,7 @@ import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from './engine';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
 import { useJuiceStore } from './juiceStore';
+import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE } from '../config/balanceConfig';
 
 const SAVE_KEY = 'bag-chaser-state';
 
@@ -98,66 +99,6 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      executeTechFlipDrop: () => set((state) => {
-        const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
-        const lotCosts = { PHONES: 150, LAPTOPS: 400, RIGS: 1200 };
-        const toolCosts = { BUDGET: 50, PRECISION: 200 };
-        const totalCost = lotCosts[selectedLot] + toolCosts[toolQuality];
-
-        if (state.pl.bag < totalCost) {
-          return { news: [`INSUFFICIENT FUNDS: Need $${totalCost} for this operation.`, ...state.news] };
-        }
-
-        const baseChances = { PHONES: 0.85, LAPTOPS: 0.70, RIGS: 0.55 };
-        let successChance = baseChances[selectedLot];
-        if (toolQuality === 'PRECISION') successChance += 0.15;
-
-        const isSuccess = Math.random() < successChance;
-        const currentNews = [...state.news];
-        let yieldCash = 0;
-        let yieldClout = 0;
-        let yieldAura = 0;
-        let hitMental = 5;
-
-        if (isSuccess) {
-          const maxPrice = lotCosts[selectedLot] * 2;
-          yieldCash = Math.min(listingPrice, maxPrice);
-          yieldClout = 5;
-          currentNews.unshift(`SUCCESS: Refurbished ${selectedLot} sold for $${yieldCash.toLocaleString()}.`);
-        } else {
-          yieldCash = 0;
-          yieldAura = -10;
-          hitMental = -20;
-          currentNews.unshift(`FAILURE: The hardware fried. Lost the lot and took a hit to your reputation.`);
-        }
-
-        // Anti-Spam Filter
-        if (state.pl.lastExecutedHustleId === 'techFlip' || state.pl.lastExecutedHustleId === 'tech_flip') {
-          yieldCash *= 0.5;
-          yieldClout *= 0.5;
-          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
-        }
-
-        const nextBag = state.pl.bag - totalCost + yieldCash;
-        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
-
-        const nextState = {
-          ...state,
-          pl: {
-            ...state.pl,
-            bag: nextBag,
-            clout: state.pl.clout + yieldClout,
-            aura: state.pl.aura + yieldAura,
-            mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
-            lastExecutedHustleId: selectedLot === 'PHONES' ? 'tech_flip' : 'techFlip',
-            streak: isSuccess ? state.pl.streak + 1 : 0,
-          },
-          news: currentNews
-        };
-
-        return applyAdvancement(clampStats(nextState), 1);
-      }),
-
       setPodcastInput: (field, value) => set((state) => ({
         pl: {
           ...state.pl,
@@ -165,77 +106,70 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      executePodcastEpisode: () => set((state) => {
-        const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
-        const guestCosts = { LOCAL: 100, MICRO: 500, ICON: 2500 };
-        const baseCloutYields = { LOCAL: 10, MICRO: 40, ICON: 200 };
-
-        if (state.pl.bag < guestCosts[selectedGuest]) {
-          return { news: [`INSUFFICIENT FUNDS: Need $${guestCosts[selectedGuest]} to book this guest.`, ...state.news] };
-        }
-
-        const controversyChance = unhingedSlider * 0.20;
-        const isCrisis = Math.random() < controversyChance;
-        const currentNews = [...state.news];
-
-        let finalYieldClout = 0;
-        let finalYieldCash = 0;
-        let finalHitMental = -5;
-        const nextCrises = { ...state.pl.crises };
-
-        if (isCrisis) {
-          finalHitMental = -25;
-          nextCrises.shadowbanTurns = 3;
-          currentNews.unshift(`CONTROVERSY: The episode exploded... in the wrong way. You've been shadowbanned.`);
-        } else {
-          finalYieldClout = baseCloutYields[selectedGuest] * unhingedSlider;
-          finalYieldCash = (guestCosts[selectedGuest] * 0.5) * unhingedSlider;
-          currentNews.unshift(`VIRAL: The episode with the ${selectedGuest} guest was a hit! (+${finalYieldClout} Clout)`);
-        }
-
-        // Anti-Spam Filter
-        if (state.pl.lastExecutedHustleId === 'pod') {
-          finalYieldCash *= 0.5;
-          finalYieldClout *= 0.5;
-          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
-        }
-
-        const nextBag = state.pl.bag - guestCosts[selectedGuest] + finalYieldCash;
-        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, !isCrisis ? 'SURGE' : 'CASCADE');
-
-        const nextState = {
-          ...state,
-          pl: {
-            ...state.pl,
-            bag: nextBag,
-            clout: state.pl.clout + finalYieldClout,
-            mentalHealth: Math.max(0, state.pl.mentalHealth + finalHitMental),
-            crises: nextCrises,
-            hypeIsActive: !isCrisis,
-            lastExecutedHustleId: 'pod',
-            streak: !isCrisis ? state.pl.streak + 1 : 0,
-          },
-          news: currentNews
-        };
-
-        return applyAdvancement(clampStats(nextState), 1);
-      }),
-
       unfreezeAccounts: () => set((state) => {
-        if (state.pl.bag < 5000) {
-          return { news: ["INSUFFICIENT FUNDS: Need $5,000 to retain legal counsel and unfreeze accounts.", ...state.news] };
+        if (state.pl.bag < UNFREEZE_COST) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${UNFREEZE_COST.toLocaleString()} to retain legal counsel and unfreeze accounts.`, ...state.news] };
         }
         return {
           pl: {
             ...state.pl,
-            bag: state.pl.bag - 5000,
+            bag: state.pl.bag - UNFREEZE_COST,
             crises: { ...state.pl.crises, accountsFrozen: false }
           },
           news: ["SYSTEM: Legal retainer paid. Corporate accounts have been UNFROZEN.", ...state.news]
         };
       }),
 
+      resolveBlacklist: () => set((state) => {
+        if (state.pl.bag < RESOLVE_BLACKLIST_COST) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${RESOLVE_BLACKLIST_COST.toLocaleString()} to clear your reputation and lift the blacklist.`, ...state.news] };
+        }
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - RESOLVE_BLACKLIST_COST,
+            crises: { ...state.pl.crises, blacklistTurns: 0 }
+          },
+          news: ["SYSTEM: Reputation laundered. You are no longer BLACKLISTED from elite circles.", ...state.news]
+        };
+      }),
+
+      resolveShadowban: () => set((state) => {
+        if (state.pl.bag < RESOLVE_SHADOWBAN_COST) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${RESOLVE_SHADOWBAN_COST.toLocaleString()} for a managed PR scrub to lift the shadowban.`, ...state.news] };
+        }
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - RESOLVE_SHADOWBAN_COST,
+            crises: { ...state.pl.crises, shadowbanTurns: 0 }
+          },
+          news: ["SYSTEM: Digital footprint scrubbed. The SHADOWBAN has been lifted.", ...state.news]
+        };
+      }),
+
+      resolveLaborStrike: () => set((state) => {
+        if (state.pl.bag < RESOLVE_STRIKE_COST) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${RESOLVE_STRIKE_COST.toLocaleString()} to settle union demands and end the strike.`, ...state.news] };
+        }
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - RESOLVE_STRIKE_COST,
+            crises: { ...state.pl.crises, laborStrikeTurns: 0 }
+          },
+          news: ["SYSTEM: Labor dispute settled. The STRIKE has ended.", ...state.news]
+        };
+      }),
+
       setCurrentTier: (tierName, fee = 0) => set((state) => {
+        const reqs = TIER_REQUIREMENTS[tierName];
+        if (reqs) {
+          if (state.pl.bag < reqs.cash || state.pl.clout < reqs.clout || state.pl.aura < reqs.aura) {
+            return { news: [`ADVANCEMENT DENIED: You do not meet the minimum requirements for ${tierName}.`, ...state.news] };
+          }
+        }
+
         const newTier = TAB_TIER_MAPPING[tierName];
         const nextState = {
           ...state,
@@ -262,13 +196,13 @@ export const useGameStore = create<GameState>()(
           let rankName = "";
 
           if (hustleId === 'drop') {
-            cost = currentLvl === 1 ? 4000 : 12000;
+            cost = HUSTLE_BALANCE.drop.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Private Wholesaler" : "Chain Phase: Global E-Com Empire";
           } else if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
-            cost = currentLvl === 1 ? 2500 : 8500;
+            cost = HUSTLE_BALANCE.techFlip.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Strip-Mall Kiosk" : "Chain Phase: Automated Refurb Plant";
           } else if (hustleId === 'vintage') {
-            cost = currentLvl === 1 ? 2000 : 7000;
+            cost = HUSTLE_BALANCE.vintage.upgradeCosts[currentLvl];
             rankName = currentLvl === 1 ? "Store Phase: Consignment Boutique" : "Chain Phase: The Luxury Grail Archive";
           } else {
             return {};
@@ -292,9 +226,6 @@ export const useGameStore = create<GameState>()(
         }),
 
       deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => {
-        let finalCash = useGameStore.getState().pl.bag;
-        let netPayout = 0;
-
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
@@ -354,8 +285,10 @@ export const useGameStore = create<GameState>()(
               lineageFatigue = config.fatigueCost * mult;
               lineageHitMental = config.hitMental * mult;
             } else if (activeTab === 2) {
-              const fleetCosts = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-              const fleetYields = { 'E-BIKE': 6000, SPRINTER: 15000, FREIGHT: 35000 };
+              const { fleetCosts, fleetYields, cloutReq: deliveryCloutReq2 } = HUSTLE_BALANCE.r_delivery.level2;
+              if (state.pl.clout < deliveryCloutReq2) {
+                return { news: [`LACK OF CLOUT: Need ${deliveryCloutReq2} Clout for Fleet Dispatch operations.`, ...state.news] };
+              }
               effectiveUpfrontCost = fleetCosts[fleetType];
               let wageMult = 1.0;
               let strikeRisk = 0.05;
@@ -375,15 +308,104 @@ export const useGameStore = create<GameState>()(
                 lineageNews.push(`FLEET DISPATCH: ${fleetType} fleet successfully completed all routes.`);
               }
             } else if (activeTab === 3) {
-              if (state.pl.clout < 150) {
-                return { news: ["LACK OF CLOUT: Need 150 Clout for 3PL Automated Hub deployment.", ...state.news] };
+              const { cost: deliveryCost3, cloutReq: deliveryCloutReq3, auraReq: deliveryAuraReq3 } = HUSTLE_BALANCE.r_delivery.level3;
+              if (state.pl.clout < deliveryCloutReq3) {
+                return { news: [`LACK OF CLOUT: Need ${deliveryCloutReq3} Clout for 3PL Automated Hub deployment.`, ...state.news] };
               }
-              effectiveUpfrontCost = 2000000;
+              if (state.pl.aura < deliveryAuraReq3) {
+                return { news: [`LACK OF AURA: Need ${deliveryAuraReq3} Aura for 3PL Automated Hub deployment.`, ...state.news] };
+              }
+              effectiveUpfrontCost = deliveryCost3;
               lineageYieldCash = 3500000;
               lineageYieldClout = 250;
               lineageYieldAura = 150;
               lineageFatigue = 70;
               lineageNews.push(`3PL AUTOMATED HUB: Regional logistics dominance established. Automation maximizing margins.`);
+            }
+          }
+
+          // 0.2 Tech Flip Logic
+          if (hustleId === 'tech_flip') {
+            const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
+            const { lotCosts, toolCosts, baseChances } = HUSTLE_BALANCE.techFlip;
+            effectiveUpfrontCost = lotCosts[selectedLot] + toolCosts[toolQuality];
+            lineageSuccessChance = baseChances[selectedLot];
+            if (toolQuality === 'PRECISION') lineageSuccessChance += 0.15;
+
+            const maxPrice = lotCosts[selectedLot] * 2;
+            lineageYieldCash = Math.min(listingPrice, maxPrice);
+            lineageYieldClout = 5;
+            lineageYieldAura = 0;
+            lineageHitMental = 5;
+
+            // Overrides for failure case in deductCostAndRollOutcome are handled by the core roll
+          }
+
+          // 0.3 Podcast Logic
+          if (hustleId === 'pod') {
+            const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
+            const { guestCosts, baseCloutYields } = HUSTLE_BALANCE.pod;
+            effectiveUpfrontCost = guestCosts[selectedGuest];
+
+            const controversyChance = unhingedSlider * 0.20;
+            const isCrisis = Math.random() < controversyChance;
+
+            if (isCrisis) {
+              lineageSuccessChance = 0; // Force failure roll
+              lineageHitMental = -25;
+              // shadowban will be handled in failure block
+            } else {
+              lineageSuccessChance = 1.0;
+              lineageYieldClout = baseCloutYields[selectedGuest] * unhingedSlider;
+              lineageYieldCash = (guestCosts[selectedGuest] * 0.5) * unhingedSlider;
+              lineageHitMental = -5;
+            }
+          }
+
+          // 0.4 Streetwear Logic
+          if (hustleId === 'vintage') {
+            const { brandTier } = state.pl.streetwearPanel;
+            const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
+            effectiveUpfrontCost = tierData.cost;
+
+            if (state.pl.clout < tierData.clReq || state.pl.aura < tierData.auReq) {
+              return { news: [`LACK OF STATS: Need ${tierData.clReq} Clout and ${tierData.auReq} Aura for ${brandTier}.`, ...state.news] };
+            }
+
+            lineageSuccessChance = 1.0; // Deterministic for these tiers
+            if (brandTier === 'UNDERGROUND_IP') {
+              lineageYieldCash = 1800;
+              lineageYieldClout = 10;
+              lineageYieldAura = 5;
+            } else if (brandTier === 'SOHO_STORE') {
+              lineageYieldCash = 12000;
+              lineageYieldClout = 25;
+              lineageYieldAura = 30;
+            } else if (brandTier === 'PARIS_RUNWAY') {
+              lineageYieldCash = 0;
+              lineageYieldClout = 100;
+              lineageYieldAura = 150;
+            }
+          }
+
+          // 0.5 Franchise Logic
+          if (hustleId === 'global_franchise') {
+            const { sector, footprint, supplyChain } = state.pl.franchisePanel;
+            const { baseSetupCosts, baseCashYields, baseCloutYields } = HUSTLE_BALANCE.global_franchise;
+            effectiveUpfrontCost = baseSetupCosts[sector] * footprint;
+
+            lineageYieldCash = baseCashYields[sector] * footprint;
+            lineageYieldClout = baseCloutYields[sector] * footprint;
+            lineageYieldAura = 20 * footprint;
+            lineageHitMental = -20;
+
+            if (supplyChain === 'OUTSOURCED') {
+              lineageYieldCash *= 0.6;
+            }
+
+            if (state.pl.hypeIsActive && sector === 'WELLNESS') {
+              lineageYieldCash *= 2;
+              lineageYieldClout *= 2;
             }
           }
 
@@ -481,8 +503,12 @@ export const useGameStore = create<GameState>()(
           const nextCrises = { ...state.pl.crises };
 
           if (isSuccess) {
-            // Anti-Spam Filter
-            if (hustleId === state.pl.lastExecutedHustleId) {
+            // Anti-Spam Filter (Handle techFlip vs tech_flip alias)
+            const isSpam = (hustleId === state.pl.lastExecutedHustleId) ||
+                           (hustleId === 'tech_flip' && state.pl.lastExecutedHustleId === 'techFlip') ||
+                           (hustleId === 'techFlip' && state.pl.lastExecutedHustleId === 'tech_flip');
+
+            if (isSpam) {
               finalYieldCash *= 0.5;
               finalYieldClout *= 0.5;
               currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
@@ -517,7 +543,23 @@ export const useGameStore = create<GameState>()(
               finalYieldClout *= 0.5;
             }
 
-            currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
+            // Specific Success News
+            if (hustleId === 'tech_flip') {
+              currentNews.unshift(`SUCCESS: Refurbished hardware sold for $${finalYieldCash.toLocaleString()}.`);
+            } else if (hustleId === 'pod') {
+              currentNews.unshift(`VIRAL: The episode was a hit! (+${finalYieldClout} Clout)`);
+            } else if (hustleId === 'vintage') {
+              currentNews.unshift(`COLLECTION DROPPED: Market reception is positive. Brand equity increasing.`);
+            } else if (hustleId === 'global_franchise') {
+              const { sector, supplyChain } = state.pl.franchisePanel;
+              if (supplyChain === 'OUTSOURCED') {
+                currentNews.unshift(`EXPANSION SUCCESS: ${sector} network scaled via outsourced logistics. 40% tax applied.`);
+              } else {
+                currentNews.unshift(`EXPANSION SUCCESS: Vertically integrated ${sector} network is now operational.`);
+              }
+            } else {
+              currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
+            }
           } else {
             // FAILURE & AURA ARMOR MITIGATION
             if (state.pl.aura >= 100) {
@@ -530,6 +572,14 @@ export const useGameStore = create<GameState>()(
                 finalHitMental = -10; // Will be doubled to -20 below
                 finalHitHeat = 20;
                 currentNews.unshift(`STUNT BACKFIRED: The PR campaign was exposed as a fake! Your reputation is in tatters and the heat is on.`);
+              }
+
+              // Specific Failure logic
+              if (hustleId === 'tech_flip') {
+                finalYieldCash = 0;
+                finalYieldAura = -10;
+                finalHitMental = -10; // Becomes -20
+                currentNews.unshift(`FAILURE: The hardware fried. Lost the lot and took a hit to your reputation.`);
               }
               finalHitMental *= 2;
               if (config.tier === 'MUD' || config.tier === 'STREET') {
@@ -547,6 +597,16 @@ export const useGameStore = create<GameState>()(
                 currentNews.unshift(`CRITICAL FAILURE: Exiled from high-society network circles. You are BLACKLISTED from elite operations.`);
               } else {
                 currentNews.unshift(`CRITICAL FAILURE: ${config.name} collapsed spectacularly.`);
+              }
+
+              // Specific Crisis Triggers
+              if (hustleId === 'pod') {
+                nextCrises.shadowbanTurns = 3;
+                currentNews.unshift(`CONTROVERSY: The episode exploded... in the wrong way. You've been shadowbanned.`);
+              }
+              if (hustleId === 'global_franchise' && state.pl.franchisePanel.supplyChain === 'INTEGRATED') {
+                nextCrises.laborStrikeTurns = 3;
+                currentNews.unshift(`CRITICAL FAILURE: Supply chain collapse triggered a total Labor Strike.`);
               }
             }
           }
@@ -608,13 +668,9 @@ export const useGameStore = create<GameState>()(
           };
 
           const advancedState = applyAdvancement(clampStats(nextState), 1) as GameState;
-          finalCash = advancedState.pl.bag;
-          netPayout = finalCash - (state.pl.bag - effectiveUpfrontCost);
 
           return advancedState;
         });
-
-        return { finalCash, netPayout };
       },
 
       ...createMudSlice(set),
@@ -628,166 +684,12 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      executeStreetwearRun: () => set((state) => {
-        const { brandTier } = state.pl.streetwearPanel;
-        const currentNews = [...state.news];
-        let yieldCash = 0;
-        let yieldClout = 0;
-        let yieldAura = 0;
-        let cost = 0;
-
-        if (brandTier === 'UNDERGROUND_IP') {
-          cost = 500;
-          yieldCash = 1800;
-          yieldClout = 10;
-          yieldAura = 5;
-        } else if (brandTier === 'SOHO_STORE') {
-          cost = 8000;
-          if (state.pl.clout < 40 || state.pl.aura < 30) {
-            currentNews.unshift("LOCKED: Soho Flagship requires 40 Clout and 30 Aura.");
-            return { news: currentNews };
-          }
-          yieldCash = 12000;
-          yieldClout = 25;
-          yieldAura = 30;
-        } else if (brandTier === 'PARIS_RUNWAY') {
-          cost = 35000;
-          if (state.pl.clout < 80 || state.pl.aura < 60) {
-            currentNews.unshift("LOCKED: Paris Runway requires 80 Clout and 60 Aura.");
-            return { news: currentNews };
-          }
-          yieldCash = 0;
-          yieldClout = 100;
-          yieldAura = 150;
-        }
-
-        if (state.pl.bag < cost) {
-          currentNews.unshift(`INSUFFICIENT FUNDS: Need $${cost.toLocaleString()} for this operation.`);
-          return { news: currentNews };
-        }
-
-        // Anti-Spam Filter
-        if (state.pl.lastExecutedHustleId === 'vintage') {
-          yieldCash *= 0.5;
-          yieldClout *= 0.5;
-          currentNews.unshift("MARKET FATIGUE: Spamming the same operation has cut your yields by 50%.");
-        }
-
-        // Synergy Ingestion
-        if (state.pl.hypeIsActive) {
-          yieldCash *= 2;
-          yieldAura *= 2;
-          currentNews.unshift("SYNERGY COMBO: Content hype applied! Business payouts doubled.");
-        }
-
-        const nextBag = state.pl.bag - cost + yieldCash;
-        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, 'SURGE');
-
-        const nextPl = {
-          ...state.pl,
-          bag: nextBag,
-          clout: Math.min(state.pl.maxClout, state.pl.clout + yieldClout),
-          aura: Math.min(state.pl.maxAura, state.pl.aura + yieldAura),
-          hypeIsActive: false,
-          lastExecutedHustleId: 'vintage',
-          streak: state.pl.streak + 1, // Deterministic success for IP
-        };
-
-        const nextState = {
-          ...state,
-          pl: nextPl,
-          news: currentNews
-        };
-
-        return applyAdvancement(clampStats(nextState as GameState), 1);
-      }),
-
       setFranchiseInput: (field, value) => set((state) => ({
         pl: {
           ...state.pl,
           franchisePanel: { ...state.pl.franchisePanel, [field]: value }
         }
       })),
-
-      executeFranchiseTurn: () => set((state) => {
-        const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === 'global_franchise');
-        const { sector, footprint, supplyChain } = state.pl.franchisePanel;
-        const baseSetupCosts = { FAST_FOOD: 10000, WELLNESS: 25000, LOGISTICS: 65000 };
-        const totalSetupCost = baseSetupCosts[sector] * footprint;
-
-        if (state.pl.bag < totalSetupCost) {
-          return { news: [`INSUFFICIENT FUNDS: Need $${totalSetupCost.toLocaleString()} to deploy this expansion.`, ...state.news] };
-        }
-
-        const isSuccess = Math.random() < (config?.successChance || 0.85);
-        const currentNews = [...state.news];
-
-        let finalYieldCash = 0;
-        let finalYieldClout = 0;
-        let finalYieldAura = 0;
-        let hitMental = -20;
-        const nextCrises = { ...state.pl.crises };
-        let nextHypeIsActive = state.pl.hypeIsActive;
-
-        if (isSuccess) {
-          const baseCashYields = { FAST_FOOD: 12000, WELLNESS: 28000, LOGISTICS: 75000 };
-          const baseCloutYields = { FAST_FOOD: 40, WELLNESS: 150, LOGISTICS: 100 };
-
-          finalYieldCash = baseCashYields[sector] * footprint;
-
-          if (state.pl.crises.laborStrikeTurns > 0) {
-             finalYieldCash = 0;
-             currentNews.unshift(`STRIKE BLOCK: No cash generated from corporate franchise operations during the active labor strike.`);
-          }
-
-          finalYieldClout = baseCloutYields[sector] * footprint;
-          finalYieldAura = 20 * footprint;
-
-          if (supplyChain === 'OUTSOURCED') {
-            finalYieldCash *= 0.6; // 40% logistics tax
-            currentNews.unshift(`EXPANSION SUCCESS: ${sector} network scaled via outsourced logistics. 40% tax applied.`);
-          } else {
-            currentNews.unshift(`EXPANSION SUCCESS: Vertically integrated ${sector} network is now operational.`);
-          }
-
-          if (state.pl.hypeIsActive && sector === 'WELLNESS') {
-            finalYieldCash *= 2;
-            finalYieldClout *= 2;
-            nextHypeIsActive = false;
-            currentNews.unshift(`SYNERGY: Wellness hype cycle triggered! Franchise yields doubled.`);
-          }
-        } else {
-          finalYieldCash = 0;
-          hitMental = -40;
-          if (supplyChain === 'INTEGRATED') {
-            nextCrises.laborStrikeTurns = 3;
-            currentNews.unshift(`CRITICAL FAILURE: Supply chain collapse triggered a total Labor Strike.`);
-          } else {
-            currentNews.unshift(`FAILURE: The franchise failed to find local market fit. Total capital loss.`);
-          }
-        }
-
-        const nextBag = state.pl.bag - totalSetupCost + finalYieldCash;
-        useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
-
-        const nextState = {
-          ...state,
-          pl: {
-            ...state.pl,
-            bag: nextBag,
-            clout: Math.min(200, state.pl.clout + finalYieldClout),
-            aura: Math.min(200, state.pl.aura + finalYieldAura),
-            mentalHealth: Math.max(0, state.pl.mentalHealth + hitMental),
-            hypeIsActive: nextHypeIsActive,
-            lastExecutedHustleId: 'global_franchise',
-            streak: isSuccess ? state.pl.streak + 1 : 0,
-            crises: nextCrises
-          },
-          news: currentNews
-        };
-
-        return applyAdvancement(clampStats(nextState as GameState), 1);
-      }),
     }),
     {
       name: SAVE_KEY,
@@ -812,13 +714,14 @@ export const useGameStore = create<GameState>()(
         const { ph, ...rest } = state;
         return rest;
       },
-      merge: (persistedState: any, currentState: GameState) => {
-        const merged = { ...currentState, ...(persistedState as any) };
+      merge: (persistedState: unknown, currentState: GameState) => {
+        const persisted = persistedState as Partial<GameState> | undefined;
+        const merged = { ...currentState, ...persisted };
         // SECURE THE INITIAL STATE FALLBACK: Ensure name exists for legacy players
         if (merged.pl) {
           merged.pl = {
-            name: (persistedState as any)?.pl?.name || "",
             ...merged.pl,
+            name: persisted?.pl?.name || merged.pl.name || "",
           };
         }
         return merged;
