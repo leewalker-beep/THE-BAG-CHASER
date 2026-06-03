@@ -30,7 +30,7 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
 
     const vendingYield = (currentPl.assetsOwned?.vendingMachines || 0) * 250;
     const musicYield = (currentPl.assetsOwned?.masterTracks || 0) * 150;
-    const totalPassiveYield = vendingYield + musicYield + (currentPl.passiveLaborYield || 0);
+    const totalPassiveYield = vendingYield + musicYield;
 
     currentPl.bag += totalPassiveYield;
     currentPl.bag -= totalMonthlyRent;

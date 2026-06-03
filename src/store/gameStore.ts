@@ -77,20 +77,6 @@ export const useGameStore = create<GameState>()(
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
-      setLaborInput: (field, value) => set((state) => ({
-        pl: {
-          ...state.pl,
-          laborPanel: { ...state.pl.laborPanel, [field]: value }
-        }
-      })),
-
-      setDeliveryInput: (field, value) => set((state) => ({
-        pl: {
-          ...state.pl,
-          deliveryPanel: { ...state.pl.deliveryPanel, [field]: value }
-        }
-      })),
-
       setTechFlipInput: (field, value) => set((state) => ({
         pl: {
           ...state.pl,
@@ -296,106 +282,6 @@ export const useGameStore = create<GameState>()(
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
 
-          // 0. Lineage Cost/Yield Override
-          let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
-          let lineageYieldCash = config.yieldCash;
-          let lineageYieldClout = config.yieldClout;
-          let lineageYieldAura = config.yieldAura;
-          let lineageHitMental = config.hitMental;
-          let lineageFatigue = config.fatigueCost;
-          let lineageSuccessChance = config.successChance;
-          const lineageNews: string[] = [];
-          const nextPlOverrides: Partial<typeof state.pl> = {};
-
-          if (hustleId === 'r_labor') {
-            const { activeTab, weeks, propertyType, budget, action } = state.pl.laborPanel;
-            if (activeTab === 1) {
-              const mult = weeks / 4;
-              lineageYieldCash = config.yieldCash * mult;
-              lineageFatigue = config.fatigueCost * mult;
-              lineageHitMental = config.hitMental * mult;
-            } else if (activeTab === 2) {
-              const baseCosts = { STUDIO: 50000, DUPLEX: 75000, LOFT: 100000 };
-              const budgetMults = { ECONOMY: 1, PREMIUM: 1.2, LUXURY: 1.5 };
-              effectiveUpfrontCost = baseCosts[propertyType as keyof typeof baseCosts] * (budgetMults[budget as keyof typeof budgetMults] || 1);
-              if (state.pl.bag < effectiveUpfrontCost) {
-                return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} for Property Flip.`, ...state.news] };
-              }
-              lineageFatigue = 60;
-              if (action === 'FLIP') {
-                const margin = effectiveUpfrontCost * (0.1 + Math.random() * 0.4); // 10% to 50% profit
-                lineageYieldCash = effectiveUpfrontCost + margin;
-                lineageYieldClout = 20;
-                lineageNews.push(`PROPERTY FLIP: Successfully renovated and flipped the ${propertyType}. Profit: $${margin.toLocaleString()}.`);
-              } else {
-                lineageYieldCash = 0;
-                lineageYieldClout = 10;
-                nextPlOverrides.passiveLaborYield = (state.pl.passiveLaborYield || 0) + 2500;
-                lineageNews.push(`PROPERTY RENT: The ${propertyType} has been added to your rental portfolio. +$2,500/mo passive flow.`);
-              }
-            } else if (activeTab === 3) {
-              effectiveUpfrontCost = 1500000;
-              if (state.pl.bag < effectiveUpfrontCost) {
-                return { news: [`INSUFFICIENT FUNDS: Need $1.5M for Commercial Syndicate.`, ...state.news] };
-              }
-              lineageYieldCash = 2500000;
-              lineageYieldClout = 150;
-              lineageYieldAura = 100;
-              lineageFatigue = 80;
-              lineageNews.push(`COMMERCIAL SYNDICATE: Major development project completed. Huge market impact.`);
-            }
-          }
-
-          if (hustleId === 'r_delivery') {
-            const { activeTab, weeks, fleetType, wageLevel } = state.pl.deliveryPanel;
-            if (activeTab === 1) {
-              const mult = weeks / 4;
-              lineageYieldCash = config.yieldCash * mult;
-              lineageFatigue = config.fatigueCost * mult;
-              lineageHitMental = config.hitMental * mult;
-            } else if (activeTab === 2) {
-              if (state.pl.clout < 40) {
-                return { news: ["LACK OF CLOUT: Need 40 Clout for Fleet Dispatch operations.", ...state.news] };
-              }
-              const fleetCosts = { 'E-BIKE': 15000, SPRINTER: 40000, FREIGHT: 85000 };
-              const fleetYields = { 'E-BIKE': 6000, SPRINTER: 15000, FREIGHT: 35000 };
-              effectiveUpfrontCost = fleetCosts[fleetType as keyof typeof fleetCosts];
-              if (state.pl.bag < effectiveUpfrontCost) {
-                return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} for Fleet Dispatch.`, ...state.news] };
-              }
-              let wageMult = 1.0;
-              let strikeRisk = 0.05;
-              if (wageLevel === 'LOW') { wageMult = 1.5; strikeRisk = 0.4; }
-              if (wageLevel === 'PREMIUM') { wageMult = 0.8; strikeRisk = 0; }
-
-              lineageYieldCash = fleetYields[fleetType] * wageMult;
-              lineageFatigue = 40;
-              lineageSuccessChance = 1.0; // Guaranteed to run, but may strike
-
-              if (Math.random() < strikeRisk) {
-                lineageYieldCash = 0;
-                lineageHitMental = -30;
-                nextPlOverrides.crises = { ...state.pl.crises, laborStrikeTurns: 2 };
-                lineageNews.push(`DRIVER STRIKE: Low wages triggered a fleet-wide walkout. Operations halted.`);
-              } else {
-                lineageNews.push(`FLEET DISPATCH: ${fleetType} fleet successfully completed all routes.`);
-              }
-            } else if (activeTab === 3) {
-              if (state.pl.clout < 150) {
-                return { news: ["LACK OF CLOUT: Need 150 Clout for 3PL Automated Hub deployment.", ...state.news] };
-              }
-              effectiveUpfrontCost = 2000000;
-              if (state.pl.bag < effectiveUpfrontCost) {
-                return { news: [`INSUFFICIENT FUNDS: Need $2.0M for 3PL Automated Hub.`, ...state.news] };
-              }
-              lineageYieldCash = 3500000;
-              lineageYieldClout = 250;
-              lineageYieldAura = 150;
-              lineageFatigue = 70;
-              lineageNews.push(`3PL AUTOMATED HUB: Regional logistics dominance established. Automation maximizing margins.`);
-            }
-          }
-
           // 1. Passive Asset Handle (Instant Execution with Time Advancement)
           if (config.isPassive && hustleId === 'r_vending') {
             if (state.pl.bag < config.upfrontCost) {
@@ -438,6 +324,8 @@ export const useGameStore = create<GameState>()(
           }
 
           // 3. Validation Logic
+          const effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned) ? 500 : config.upfrontCost;
+
           if (state.pl.bag < effectiveUpfrontCost) {
             return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} to execute ${config.name}.`, ...state.news] };
           }
@@ -462,22 +350,22 @@ export const useGameStore = create<GameState>()(
           // 4. Execution & Mitigation Logic
           const isSuccess = forceSuccess !== undefined
             ? forceSuccess
-            : (config.id.startsWith('r_') && config.id !== 'r_vending' && hustleId !== 'r_labor' && hustleId !== 'r_delivery')
+            : config.id.startsWith('r_') && config.id !== 'r_vending'
               ? true
-              : Math.random() < lineageSuccessChance;
+              : Math.random() < config.successChance;
           const currentLvl = state.pl.hustleLevels[hustleId] || 1;
-          let finalYieldCash = isSuccess ? lineageYieldCash : 0;
+          let finalYieldCash = isSuccess ? config.yieldCash : 0;
 
           if (state.pl.crises.laborStrikeTurns > 0 && config.tier === 'CORPORATE') {
             finalYieldCash = 0;
           }
 
-          let finalYieldClout = isSuccess ? lineageYieldClout : 0;
-          let finalYieldAura = isSuccess ? lineageYieldAura : 0;
-          let finalHitMental = lineageHitMental;
+          let finalYieldClout = isSuccess ? config.yieldClout : 0;
+          let finalYieldAura = isSuccess ? config.yieldAura : 0;
+          let finalHitMental = config.hitMental;
           let finalHitHeat = config.hitHeat;
 
-          const currentNews = [...lineageNews, ...state.news];
+          const currentNews = [...state.news];
 
           const nextCrises = { ...state.pl.crises };
 
@@ -561,7 +449,7 @@ export const useGameStore = create<GameState>()(
             heat: Math.min(100, Math.max(0, state.pl.heat + finalHitHeat)),
             hustleFatigue: {
               ...state.pl.hustleFatigue,
-              [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? lineageFatigue : Math.floor(lineageFatigue * 0.5))
+              [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? config.fatigueCost : Math.floor(config.fatigueCost * 0.5))
             },
             hypeIsActive: (isSuccess && (hustleId === 'cc' || hustleId === 'pod'))
                           ? true
@@ -569,9 +457,8 @@ export const useGameStore = create<GameState>()(
                             ? false
                             : state.pl.hypeIsActive,
             lastExecutedHustleId: hustleId,
-            streak: isSuccess ? state.pl.streak + 1 : 0,
-            crises: nextCrises,
-            ...nextPlOverrides
+          streak: isSuccess ? state.pl.streak + 1 : 0,
+            crises: nextCrises
           };
 
           // 5. Increment specialized stats (Only on Success)
