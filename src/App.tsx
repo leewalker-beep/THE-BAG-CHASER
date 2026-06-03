@@ -96,12 +96,7 @@ function App() {
 
     // Phase 2: Splash Impact
     await new Promise(r => setTimeout(r, 150));
-    state.deductCostAndRollOutcome(id, forceSuccess);
-
-    // Capture state immediately after dispatch
-    const newState = useGameStore.getState();
-    const finalCash = newState.pl.bag;
-    const netPayout = finalCash - floorCash;
+    const { finalCash, netPayout } = state.deductCostAndRollOutcome(id, forceSuccess);
 
     if (netPayout > 0) {
       setCashSplash({ text: `+$${netPayout.toLocaleString()}`, isWin: true });

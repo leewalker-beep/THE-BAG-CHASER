@@ -155,7 +155,7 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   adv: (intervals?: number) => void;
-  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
+  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => { finalCash: number; netPayout: number };
   upgradeHustle: (hustleId: string) => void;
   unfreezeAccounts: () => void;
 

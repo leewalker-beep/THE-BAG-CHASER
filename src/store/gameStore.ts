@@ -291,7 +291,10 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
-      deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) =>
+      deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => {
+        let finalCash = useGameStore.getState().pl.bag;
+        let netPayout = 0;
+
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
           if (!config) return {};
@@ -401,7 +404,10 @@ export const useGameStore = create<GameState>()(
               },
               news: ["ASSET ACQUIRED: Added 1 Vending Machine to your portfolio.", ...state.news]
             };
-            return applyAdvancement(clampStats(nextState as GameState), 1);
+            const advancedState = applyAdvancement(clampStats(nextState as GameState), 1) as GameState;
+            finalCash = advancedState.pl.bag;
+            netPayout = finalCash - (state.pl.bag - config.upfrontCost);
+            return advancedState;
           }
 
           // 2. Special Logic: Audio Studio (Music Syndicate)
@@ -410,7 +416,8 @@ export const useGameStore = create<GameState>()(
               if (state.pl.bag < config.upfrontCost) {
                 return { news: [`INSUFFICIENT FUNDS: Need $${config.upfrontCost.toLocaleString()} to build out the Music Studio.`, ...state.news] };
               }
-              return {
+              const nextState = {
+                ...state,
                 pl: {
                   ...state.pl,
                   bag: state.pl.bag - config.upfrontCost,
@@ -418,11 +425,15 @@ export const useGameStore = create<GameState>()(
                 },
                 news: ["ASSET ACQUIRED: Music Studio is now operational. You can now produce Master Tracks.", ...state.news]
               };
+              finalCash = nextState.pl.bag;
+              netPayout = 0;
+              return nextState;
             }
             // If already owned, it costs $500 per track and advances time
             if (state.pl.bag < 500) {
               return { news: ["INSUFFICIENT FUNDS: Need $500 for studio time and production costs.", ...state.news] };
             }
+            effectiveUpfrontCost = 500;
           }
 
           // 3. Validation Logic
@@ -596,8 +607,15 @@ export const useGameStore = create<GameState>()(
             news: currentNews,
           };
 
-          return applyAdvancement(clampStats(nextState), 1);
-        }),
+          const advancedState = applyAdvancement(clampStats(nextState), 1) as GameState;
+          finalCash = advancedState.pl.bag;
+          netPayout = finalCash - (state.pl.bag - effectiveUpfrontCost);
+
+          return advancedState;
+        });
+
+        return { finalCash, netPayout };
+      },
 
       ...createMudSlice(set),
       ...createStreetSlice(set),
