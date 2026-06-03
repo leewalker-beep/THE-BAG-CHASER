@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { TIER_REQUIREMENTS } from '../../config/balanceConfig';
 
 export const createMudSlice = (_set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   sourceTechPallet: () => _set((state) => {
@@ -114,10 +115,7 @@ export const createMudSlice = (_set: (fn: (state: GameState) => Partial<GameStat
   }),
 
   escapeTheMud: () => _set((state) => {
-    const minBag = 5000;
-    const minClout = 20;
-    const minAura = 20;
-    const leaseDeposit = 3000;
+    const { cash: minBag, clout: minClout, aura: minAura, fee: leaseDeposit } = TIER_REQUIREMENTS.STREET;
 
     if (state.pl.bag < minBag || state.pl.clout < minClout || state.pl.aura < minAura) return {};
 
