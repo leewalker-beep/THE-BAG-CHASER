@@ -4,7 +4,7 @@ import { TIER_REQUIREMENTS } from '../../config/balanceConfig';
 export const createMudSlice = (_set: (fn: (state: GameState) => Partial<GameState>) => void) => ({
   sourceTechPallet: () => _set((state) => {
     let cost = 100;
-    if (state.marketType === 'RECESSION' || state.marketType === 'CRACKDOWN') {
+    if (state.currentMarket === 'RECESSION' || state.currentMarket === 'CRACKDOWN') {
       cost = cost * 1.2;
     }
     if (state.pl.bag < cost) return {};

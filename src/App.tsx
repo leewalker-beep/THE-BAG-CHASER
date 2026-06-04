@@ -9,6 +9,7 @@ import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
+import { ProgressionPanel } from './components/hustles/ProgressionPanel';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
 import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
 import { MARKET_CONFIGS } from './config/marketConfig';
@@ -41,65 +42,6 @@ function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketT
     cost = HUSTLE_BALANCE.audio.studioOwnedProductionCost;
   }
 
-  if (id === 'r_labor') {
-    const { activeTab, propertyType, budget } = pl.laborPanel;
-    if (activeTab === 2) {
-      cloutReq = HUSTLE_BALANCE.r_labor.level2.cloutReq;
-      const { baseCosts, budgetMults } = HUSTLE_BALANCE.r_labor.level2;
-      cost = baseCosts[propertyType] * budgetMults[budget];
-    } else if (activeTab === 3) {
-      cloutReq = HUSTLE_BALANCE.r_labor.level3.cloutReq;
-      auraReq = HUSTLE_BALANCE.r_labor.level3.auraReq;
-      cost = HUSTLE_BALANCE.r_labor.level3.cost;
-    }
-  }
-
-  if (id === 'r_delivery') {
-    const { activeTab, fleetType } = pl.deliveryPanel;
-    if (activeTab === 2) {
-      cloutReq = HUSTLE_BALANCE.r_delivery.level2.cloutReq;
-      cost = HUSTLE_BALANCE.r_delivery.level2.fleetCosts[fleetType];
-    } else if (activeTab === 3) {
-      cloutReq = HUSTLE_BALANCE.r_delivery.level3.cloutReq;
-      auraReq = HUSTLE_BALANCE.r_delivery.level3.auraReq;
-      cost = HUSTLE_BALANCE.r_delivery.level3.cost;
-    }
-  }
-
-  if (id === 'vintage') {
-    const { brandTier } = pl.streetwearPanel;
-    const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
-    cost = tierData.cost;
-    cloutReq = tierData.clReq;
-    auraReq = tierData.auReq;
-  }
-
-  if (id === 'saas_mvp') {
-    const { infra } = pl.saasPanel;
-    cost = HUSTLE_BALANCE.saas_mvp.infraCosts[infra];
-  }
-
-  if (id === 'festival') {
-    const { venue, insured } = pl.festivalPanel;
-    cost = HUSTLE_BALANCE.festival.venueCosts[venue] + (insured ? HUSTLE_BALANCE.festival.insuranceFee : 0);
-  }
-
-  if (id === 'ecom_brand') {
-    const { runSize, adSpend } = pl.ecomBrandPanel;
-    cost = (HUSTLE_BALANCE.ecom_brand.runSizeCosts[runSize] || HUSTLE_BALANCE.ecom_brand.DEFAULT_RUN_SIZE_COST) + adSpend;
-  }
-
-  if (id === 'agency_scale') {
-    const { client, staff } = pl.agencyPanel;
-    const { clientYields, freelancerCostMult } = HUSTLE_BALANCE.agency_scale;
-    cost = staff === 'FREELANCERS' ? clientYields[client] * freelancerCostMult : 0;
-  }
-
-  if (id === 'global_franchise') {
-    const { sector, footprint } = pl.franchisePanel;
-    cost = HUSTLE_BALANCE.global_franchise.baseSetupCosts[sector] * footprint;
-  }
-
   const tree = HUSTLE_PROGRESSIONS[id];
   if (tree) {
     const currentNodeId = pl.hustleNodeIds[id] || 'l1';
@@ -107,6 +49,65 @@ function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketT
     if (node) {
       cost = 0; // Per-execution cost for tree hustles is handled by upgrades
       cloutReq = 0; // We assume the requirements for the current node were met during upgrade
+    }
+  } else {
+    if (id === 'r_labor') {
+      const { activeTab, propertyType, budget } = pl.laborPanel;
+      if (activeTab === 2) {
+        cloutReq = HUSTLE_BALANCE.r_labor.level2.cloutReq;
+        const { baseCosts, budgetMults } = HUSTLE_BALANCE.r_labor.level2;
+        cost = baseCosts[propertyType] * budgetMults[budget];
+      } else if (activeTab === 3) {
+        cloutReq = HUSTLE_BALANCE.r_labor.level3.cloutReq;
+        auraReq = HUSTLE_BALANCE.r_labor.level3.auraReq;
+        cost = HUSTLE_BALANCE.r_labor.level3.cost;
+      }
+    }
+
+    if (id === 'r_delivery') {
+      const { activeTab, fleetType } = pl.deliveryPanel;
+      if (activeTab === 2) {
+        cloutReq = HUSTLE_BALANCE.r_delivery.level2.cloutReq;
+        cost = HUSTLE_BALANCE.r_delivery.level2.fleetCosts[fleetType];
+      } else if (activeTab === 3) {
+        cloutReq = HUSTLE_BALANCE.r_delivery.level3.cloutReq;
+        auraReq = HUSTLE_BALANCE.r_delivery.level3.auraReq;
+        cost = HUSTLE_BALANCE.r_delivery.level3.cost;
+      }
+    }
+
+    if (id === 'vintage') {
+      const { brandTier } = pl.streetwearPanel;
+      const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
+      cost = tierData.cost;
+      cloutReq = tierData.clReq;
+      auraReq = tierData.auReq;
+    }
+
+    if (id === 'saas_mvp') {
+      const { infra } = pl.saasPanel;
+      cost = HUSTLE_BALANCE.saas_mvp.infraCosts[infra];
+    }
+
+    if (id === 'festival') {
+      const { venue, insured } = pl.festivalPanel;
+      cost = HUSTLE_BALANCE.festival.venueCosts[venue] + (insured ? HUSTLE_BALANCE.festival.insuranceFee : 0);
+    }
+
+    if (id === 'ecom_brand') {
+      const { runSize, adSpend } = pl.ecomBrandPanel;
+      cost = (HUSTLE_BALANCE.ecom_brand.runSizeCosts[runSize] || HUSTLE_BALANCE.ecom_brand.DEFAULT_RUN_SIZE_COST) + adSpend;
+    }
+
+    if (id === 'agency_scale') {
+      const { client, staff } = pl.agencyPanel;
+      const { clientYields, freelancerCostMult } = HUSTLE_BALANCE.agency_scale;
+      cost = staff === 'FREELANCERS' ? clientYields[client] * freelancerCostMult : 0;
+    }
+
+    if (id === 'global_franchise') {
+      const { sector, footprint } = pl.franchisePanel;
+      cost = HUSTLE_BALANCE.global_franchise.baseSetupCosts[sector] * footprint;
     }
   }
 
@@ -150,7 +151,8 @@ function App() {
       setEcomBrandInput: s.setEcomBrandInput,
       setAgencyInput: s.setAgencyInput,
       upgradeHustleNode: s.upgradeHustleNode,
-    }))
+      purchaseHustleUpgrade: s.purchaseHustleUpgrade,
+    }) as GameState)
   );
 
   const {
@@ -770,6 +772,9 @@ function HustleCard({ title, onClick, disabled, icon, className }: HustleCardPro
 }
 
 function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string, onBack: () => void, state: GameState, onExecute: (id: string, forceSuccess?: boolean) => Promise<void> }) {
+  if (hustleId in HUSTLE_PROGRESSIONS) {
+    return <ProgressionPanel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} />;
+  }
   const Panel = PANEL_REGISTRY[hustleId] || DefaultPanel;
   return <Panel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} />;
 }
