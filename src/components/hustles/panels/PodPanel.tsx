@@ -2,24 +2,14 @@ import type { PanelProps } from './types';
 
 import { HUSTLE_BALANCE } from '../../../config/balanceConfig';
 
-export function PodPanel({ onBack, state, onExecute }: PanelProps) {
+export function PodPanel({ onBack, state, onExecute, isEmbedded }: PanelProps) {
   const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
   const { guestCosts } = HUSTLE_BALANCE.pod;
   const canAfford = state.pl.bag >= guestCosts[selectedGuest];
   const riskPercent = unhingedSlider * 20;
 
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          Back to Dashboard
-        </button>
-        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-          STUDIO MODE
-        </div>
-      </div>
-
+  const content = (
+    <>
       <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-blue-400">PODCAST SYNDICATE</h2>
 
       <div className="space-y-4">
@@ -82,6 +72,23 @@ export function PodPanel({ onBack, state, onExecute }: PanelProps) {
           ? `SHADOWBANNED: ${state.pl.crises.shadowbanTurns} MO REMAINING`
           : canAfford ? "RECORD & SYNDICATE EPISODE" : "INSUFFICIENT FUNDS"}
       </button>
+    </>
+  );
+
+  if (isEmbedded) return content;
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+          Back to Dashboard
+        </button>
+        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          STUDIO MODE
+        </div>
+      </div>
+      {content}
     </div>
   );
 }

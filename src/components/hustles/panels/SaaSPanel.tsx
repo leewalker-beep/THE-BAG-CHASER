@@ -1,6 +1,6 @@
 import type { PanelProps } from './types';
 
-export function SaaSPanel({ onBack, state, onExecute }: PanelProps) {
+export function SaaSPanel({ onBack, state, onExecute, isEmbedded }: PanelProps) {
   const { infra, focus, subscriptionPrice } = state.pl.saasPanel;
   const infraCosts = { AWS: 500, DEVOPS: 2000, ENTERPRISE: 6000 };
   const canAfford = state.pl.bag >= infraCosts[infra];
@@ -10,18 +10,8 @@ export function SaaSPanel({ onBack, state, onExecute }: PanelProps) {
     else if (infra === 'DEVOPS') outageRisk = 20;
   }
 
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          Back to Dashboard
-        </button>
-        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-          ENGINEERING BAY
-        </div>
-      </div>
-
+  const content = (
+    <>
       <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-emerald-400">SAAS MVP DASHBOARD</h2>
 
       <div className="space-y-4">
@@ -84,6 +74,23 @@ export function SaaSPanel({ onBack, state, onExecute }: PanelProps) {
       >
         {canAfford ? "DEPLOY & SCALE PLATFORM" : "INSUFFICIENT FUNDS"}
       </button>
+    </>
+  );
+
+  if (isEmbedded) return content;
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+          Back to Dashboard
+        </button>
+        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          ENGINEERING BAY
+        </div>
+      </div>
+      {content}
     </div>
   );
 }

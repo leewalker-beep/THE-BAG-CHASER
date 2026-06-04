@@ -2,7 +2,7 @@ import type { PanelProps } from './types';
 
 import { HUSTLE_BALANCE } from '../../../config/balanceConfig';
 
-export function StreetwearPanel({ onBack, state, onExecute }: PanelProps) {
+export function StreetwearPanel({ onBack, state, onExecute, isEmbedded }: PanelProps) {
   const { brandTier } = state.pl.streetwearPanel;
   const labels: Record<string, string> = {
     'UNDERGROUND_IP': 'Underground IP Collection',
@@ -14,18 +14,8 @@ export function StreetwearPanel({ onBack, state, onExecute }: PanelProps) {
   const canAfford = state.pl.bag >= currentTier.cost;
   const meetsReqs = state.pl.clout >= currentTier.clReq && state.pl.aura >= currentTier.auReq;
 
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-          Back to Dashboard
-        </button>
-        <div className="text-[10px] font-mono text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20 uppercase">
-          DESIGN ATELIER
-        </div>
-      </div>
-
+  const content = (
+    <>
       <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-purple-400">STREETWEAR DRIP LAB</h2>
 
       <div className="space-y-4">
@@ -73,6 +63,23 @@ export function StreetwearPanel({ onBack, state, onExecute }: PanelProps) {
           ? `COOLDOWN: ${state.pl.swCooldownTurns} MO`
           : meetsReqs ? (canAfford ? "EXECUTE DESIGN RUN" : "INSUFFICIENT FUNDS") : "REQUIREMENTS NOT MET"}
       </button>
+    </>
+  );
+
+  if (isEmbedded) return content;
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+          Back to Dashboard
+        </button>
+        <div className="text-[10px] font-mono text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20 uppercase">
+          DESIGN ATELIER
+        </div>
+      </div>
+      {content}
     </div>
   );
 }
