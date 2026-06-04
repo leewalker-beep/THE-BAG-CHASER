@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import type { PanelProps } from './panels/types';
 import { HUSTLE_PROGRESSIONS } from '../../config/hustleProgression';
+import { HUSTLE_TONES } from '../../config/hustleTone';
 
 export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedded }: PanelProps & { hustleId: string, isEmbedded?: boolean }) {
   const tree = HUSTLE_PROGRESSIONS[hustleId];
   if (!tree) return null;
+
+  const tone = HUSTLE_TONES[hustleId];
 
   const currentNodeId = state.pl.hustleNodeIds[hustleId] || 'l1';
   const currentNode = tree[currentNodeId];
@@ -22,9 +25,12 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
   const canAfford = canAffordCash && canAffordClout && canAffordAura;
 
   const content = (
-    <>
+    <div className={tone?.font || ''}>
       <div className="space-y-4">
-        <div className={`p-4 border rounded-xl transition-all ${isPreview ? 'bg-indigo-950/30 border-indigo-500/50' : 'bg-slate-950/50 border-slate-800'}`}>
+        <div
+          className={`p-4 border rounded-xl transition-all ${isPreview ? 'bg-indigo-950/30 border-indigo-500/50' : 'bg-slate-950/50'}`}
+          style={{ borderColor: isPreview ? undefined : tone?.colors.secondary }}
+        >
           <div className="flex justify-between items-start">
             <h3 className="text-sm font-black text-white uppercase tracking-widest">
               {activeNode.name}
@@ -94,7 +100,14 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
                   <button
                     key={nodeId}
                     onClick={() => setPreviewNodeId(nodeId)}
-                    className="p-4 rounded-xl text-left transition-all border bg-slate-800 border-slate-700 hover:border-indigo-500/50 flex justify-between items-center group"
+                    className="p-4 rounded-xl text-left transition-all border bg-slate-800 flex justify-between items-center group"
+                    style={{ borderColor: tone?.colors.secondary }}
+                    onMouseEnter={(e) => {
+                      if (tone) e.currentTarget.style.borderColor = tone.colors.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (tone) e.currentTarget.style.borderColor = tone.colors.secondary;
+                    }}
                   >
                     <div>
                       <div className="text-[11px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white">{node.name}</div>
@@ -112,12 +125,13 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
       {!isPreview && !isEmbedded && (
         <button
           onClick={() => onExecute(hustleId)}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] mt-4"
+          className="w-full py-4 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] mt-4"
+          style={{ backgroundColor: tone?.colors.primary }}
         >
           EXECUTE {currentNode.name.toUpperCase()}
         </button>
       )}
-    </>
+    </div>
   );
 
   if (isEmbedded) {
