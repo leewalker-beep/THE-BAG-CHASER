@@ -15,7 +15,7 @@ import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COS
 import { MARKET_CONFIGS } from './config/marketConfig';
 
 import { PROGRESSION_TIERS, type MarketType } from './store/types';
-const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'FLEX1', 'ELITE'];
+const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'FLEX1', 'MOGUL', 'PRESIDENT', 'OPEN'];
 
 function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketType = 'NORMAL'): { can: boolean; reason?: string; cost: number } {
   if (!pl) return { can: false, reason: "INITIALIZING", cost: 0 };
@@ -47,8 +47,8 @@ function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketT
     const currentNodeId = pl.hustleNodeIds[id] || 'l1';
     const node = tree[currentNodeId];
     if (node) {
-      cost = 0; // Per-execution cost for tree hustles is handled by upgrades
-      cloutReq = 0; // We assume the requirements for the current node were met during upgrade
+      cost = node.cost;
+      cloutReq = 0; // Requirements are checked during upgrade, not execution
     }
   } else {
     if (id === 'r_labor') {
@@ -151,6 +151,7 @@ function App() {
       setEcomBrandInput: s.setEcomBrandInput,
       setAgencyInput: s.setAgencyInput,
       upgradeHustleNode: s.upgradeHustleNode,
+      upgradeHustleLevel: s.upgradeHustleLevel,
       purchaseHustleUpgrade: s.purchaseHustleUpgrade,
     }) as GameState)
   );

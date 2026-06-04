@@ -135,7 +135,7 @@ export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   EXP: 8,
 };
 
-export const PROGRESSION_TIERS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL'];
+export const PROGRESSION_TIERS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'MOGUL', 'PRESIDENT', 'OPEN'];
 
 export interface GameState {
   ph: 'PROLOGUE' | 'PROLOGUE_INTRO' | 'PLAYING' | 'POST_MORTEM' | 'LEADERBOARD';
