@@ -8,6 +8,7 @@ import { getInitialGameState } from './store/initialState';
 import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
+import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { ProgressionPanel } from './components/hustles/ProgressionPanel';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
@@ -596,6 +597,7 @@ function App() {
                     key={hustle.id}
                     title={hustle.name}
                     icon={hustle.icon}
+                    tone={HUSTLE_TONES[hustle.id]}
                     disabled={hustle.id === 'r_plasma' && plasmaUsedThisMonth}
                     onClick={() => {
                       if (!PANEL_REGISTRY) {
@@ -751,22 +753,45 @@ interface HustleCardProps {
   disabled?: boolean;
   icon: string;
   className?: string;
+  tone?: HustleTone;
 }
 
-function HustleCard({ title, onClick, disabled, icon, className }: HustleCardProps) {
+function HustleCard({ title, onClick, disabled, icon, className, tone }: HustleCardProps) {
   const baseClass = "relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-6 text-center transition-all active:scale-[0.95] group";
-  const colorClass = "hover:border-emerald-500/50";
   const disabledClass = disabled ? 'cursor-not-allowed' : 'cursor-pointer';
+
+  const style = tone ? {
+    borderColor: tone.colors.secondary,
+    '--hover-border': tone.colors.primary,
+  } as React.CSSProperties : {};
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseClass} ${colorClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${className || ''}`}
+      className={`${baseClass} ${disabledClass} ${disabled ? 'opacity-40 grayscale' : ''} ${tone?.font || ''} ${className || ''}`}
+      style={style}
+      onMouseEnter={(e) => {
+        if (!disabled && tone) {
+          e.currentTarget.style.borderColor = tone.colors.primary;
+          e.currentTarget.style.boxShadow = `0 0 15px ${tone.colors.primary}40`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled && tone) {
+          e.currentTarget.style.borderColor = tone.colors.secondary;
+          e.currentTarget.style.boxShadow = 'none';
+        }
+      }}
     >
       <div className={`relative z-10 flex flex-col items-center justify-center gap-3`}>
         <div className="text-4xl mb-1">{icon}</div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors leading-tight">{title}</div>
+        <div
+          className={`text-[10px] font-black uppercase tracking-widest transition-colors leading-tight`}
+          style={{ color: tone ? tone.colors.accent : undefined }}
+        >
+          {title}
+        </div>
       </div>
     </button>
   );
