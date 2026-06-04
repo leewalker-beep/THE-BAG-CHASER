@@ -259,24 +259,35 @@ export const useGameStore = create<GameState>()(
       }),
 
       upgradeHustleLevel: (hustleId, branchPath) => set((state) => {
+        console.log('gameStore: upgradeHustleLevel called for', hustleId, branchPath);
         if (state.pl.crises.accountsFrozen) {
+          console.warn('upgradeHustleLevel: accountsFrozen');
           return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
         }
         const tree = HUSTLE_PROGRESSIONS[hustleId];
-        if (!tree) return {};
+        if (!tree) {
+          console.error('upgradeHustleLevel: Tree not found for', hustleId);
+          return {};
+        }
         const node = tree[branchPath];
-        if (!node) return {};
+        if (!node) {
+          console.error('upgradeHustleLevel: Node not found for', branchPath);
+          return {};
+        }
 
         const cloutReq = node.cloutReq || 0;
         const auraReq = node.auraReq || 0;
 
         if (state.pl.bag < node.cost) {
+          console.warn('upgradeHustleLevel: Insufficient funds');
           return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} for ${node.name}.`, ...state.news] };
         }
         if (state.pl.clout < cloutReq) {
+          console.warn('upgradeHustleLevel: Lack of clout');
           return { news: [`LACK OF CLOUT: Need ${cloutReq} Clout for ${node.name}.`, ...state.news] };
         }
         if (state.pl.aura < auraReq) {
+          console.warn('upgradeHustleLevel: Lack of aura');
           return { news: [`LACK OF AURA: Need ${auraReq} Aura for ${node.name}.`, ...state.news] };
         }
 
@@ -284,7 +295,10 @@ export const useGameStore = create<GameState>()(
 
         useJuiceStore.getState().triggerSurge();
 
+        console.log('upgradeHustleLevel: Success, updating state for', hustleId, node.name);
+
         return {
+          ...state,
           pl: {
             ...state.pl,
             bag: state.pl.bag - node.cost,
