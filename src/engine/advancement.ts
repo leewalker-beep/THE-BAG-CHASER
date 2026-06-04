@@ -1,6 +1,5 @@
 import type { GameState, HustleID, MarketType } from '../store/types';
 import { MARKET_CONFIGS } from '../config/marketConfig';
-import { HUSTLE_PROGRESSIONS } from '../config/hustleProgression';
 import { useJuiceStore } from '../store/juiceStore';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {

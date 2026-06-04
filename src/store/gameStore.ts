@@ -258,6 +258,36 @@ export const useGameStore = create<GameState>()(
         };
       }),
 
+      purchaseHustleUpgrade: (hustleId, nodeId) => set((state) => {
+        if (state.pl.crises.accountsFrozen) {
+          return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
+        }
+        const tree = HUSTLE_PROGRESSIONS[hustleId];
+        if (!tree) return {};
+        const node = tree[nodeId];
+        if (!node) return {};
+
+        if (state.pl.bag < node.cost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} to unlock ${node.name}.`, ...state.news] };
+        }
+
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - node.cost,
+            hustleNodeIds: {
+              ...state.pl.hustleNodeIds,
+              [hustleId]: nodeId
+            },
+            treePassiveYields: {
+              ...state.pl.treePassiveYields,
+              [hustleId]: node.passiveMonthlyYield
+            }
+          },
+          news: [`SYSTEM: ${hustleId.toUpperCase()} upgraded to ${node.name}.`, ...state.news]
+        };
+      }),
+
       deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => {
         set((state) => {
           const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
@@ -299,7 +329,9 @@ export const useGameStore = create<GameState>()(
           const lineageNews: string[] = [];
           const nextPlOverrides: Partial<typeof state.pl> = {};
 
-          if (hustleId === 'r_labor') {
+          if (tree) {
+            // Progression tree stats already assigned above, skip legacy overrides
+          } else if (hustleId === 'r_labor') {
             const { activeTab, weeks, propertyType, budget, action } = state.pl.laborPanel;
             if (activeTab === 1) {
               const mult = weeks / 4;

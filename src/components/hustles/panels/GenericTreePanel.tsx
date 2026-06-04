@@ -1,4 +1,3 @@
-import React from 'react';
 import type { PanelProps } from './types';
 import { HUSTLE_PROGRESSIONS } from '../../../config/hustleProgression';
 
