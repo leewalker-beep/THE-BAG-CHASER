@@ -4,15 +4,22 @@ import { LaborPanel } from './panels/LaborPanel';
 import { DeliveryPanel } from './panels/DeliveryPanel';
 import { GenericTreePanel } from './panels/GenericTreePanel';
 import { MemeCoinMatchPanel } from './panels/MemeCoinMatchPanel';
+import { RealEstateMatchPanel } from './panels/RealEstateMatchPanel';
+import { SneakerDropMatchPanel } from './panels/SneakerDropMatchPanel';
+import { TechFlipMatchPanel } from './panels/TechFlipMatchPanel';
+import { ViralStreamMatchPanel } from './panels/ViralStreamMatchPanel';
+import { AgencyPanel } from './panels/AgencyPanel';
+import { PodPanel } from './panels/PodPanel';
+import { StreetwearPanel } from './panels/StreetwearPanel';
 
 export const PANEL_REGISTRY: Record<string, React.ComponentType<PanelProps>> = {
   // Interactive Match Layers (higher priority in original if/else)
-  'drop': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'drop' }),
-  'techFlip': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'techFlip' }),
-  'tech_flip': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'tech_flip' }),
-  'meme': MemeCoinMatchPanel,
-  'cc': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'cc' }),
-  'real_estate_empire': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'real_estate_empire' }),
+  'drop': SneakerDropMatchPanel,
+  'techFlip': (props) => React.createElement(TechFlipMatchPanel, { ...props, hustleId: 'techFlip' }),
+  'tech_flip': (props) => React.createElement(TechFlipMatchPanel, { ...props, hustleId: 'tech_flip' }),
+  'meme': (props) => React.createElement(MemeCoinMatchPanel, { ...props, hustleId: 'meme' }),
+  'cc': ViralStreamMatchPanel,
+  'real_estate_empire': RealEstateMatchPanel,
   'venture_capital': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'venture_capital' }),
   'audio': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'audio' }),
   'policy_flip': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'policy_flip' }),
@@ -25,8 +32,7 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType<PanelProps>> = {
   'saas_mvp': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'saas_mvp' }),
   'festival': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'festival' }),
   'ecom_brand': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'ecom_brand' }),
-  'agency_scale': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'agency_scale' }),
-  'pod': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'pod' }),
-  'vintage': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'vintage' }),
-
+  'agency_scale': AgencyPanel,
+  'pod': PodPanel,
+  'vintage': StreetwearPanel,
 };

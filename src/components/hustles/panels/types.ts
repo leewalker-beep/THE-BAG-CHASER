@@ -5,4 +5,5 @@ export interface PanelProps {
   onBack: () => void;
   state: GameState;
   onExecute: (id: string, forceSuccess?: boolean) => Promise<void>;
+  isEmbedded?: boolean;
 }

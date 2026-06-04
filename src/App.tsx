@@ -777,11 +777,16 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
   const Panel = PANEL_REGISTRY[hustleId] || DefaultPanel;
 
   if (!hasProgression) {
-    return <Panel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} />;
+    return <Panel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} isEmbedded={false} />;
   }
+
+  // Determine custom back label if possible
+  const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
+  const backLabel = config?.tier === 'STARTUP' ? 'Back to Startup Operations' : 'Back to Operations Panel';
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Tab Navigation */}
       <div className="flex gap-2">
         <button
           onClick={() => setSubTab('OPS')}
@@ -797,24 +802,25 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
         </button>
       </div>
 
-      {subTab === 'OPS' ? (
-        <Panel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} />
-      ) : (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-          <div className="flex items-center justify-between">
-            <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Dashboard
-            </button>
-            <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">
-              Lineage Upgrade Tree
-            </div>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+            </svg>
+            {backLabel}
+          </button>
+          <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">
+            {subTab === 'OPS' ? 'Operational Mode' : 'Lineage Upgrade Tree'}
           </div>
-          <ProgressionPanel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} isEmbedded />
         </div>
-      )}
+
+        {subTab === 'OPS' ? (
+          <Panel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} isEmbedded={true} />
+        ) : (
+          <ProgressionPanel hustleId={hustleId} onBack={onBack} state={state} onExecute={onExecute} isEmbedded={true} />
+        )}
+      </div>
     </div>
   );
 }
