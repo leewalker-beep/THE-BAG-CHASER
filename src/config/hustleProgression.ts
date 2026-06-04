@@ -9,12 +9,14 @@ export interface HustleNode {
   hitMental: number;
   passiveMonthlyYield: number;
   nextNodes: string[];
+  cloutReq?: number;
+  auraReq?: number;
 }
 
 export const HUSTLE_PROGRESSIONS: Record<string, Record<string, HustleNode>> = {
   r_labor: {
     l1: { id: 'l1', name: 'Manual Labor Grind', cost: 0, yieldCash: 2400, yieldClout: 0, yieldAura: 0, successChance: 1.0, hitMental: -8, passiveMonthlyYield: 0, nextNodes: ['l2a', 'l2b'] },
-    l2a: { id: 'l2a', name: 'House Renovation', cost: 15000, yieldCash: 25000, yieldClout: 0, yieldAura: 0, successChance: 0.8, hitMental: -15, passiveMonthlyYield: 0, nextNodes: ['l3a', 'l3b'] },
+    l2a: { id: 'l2a', name: 'House Renovation', cost: 15000, yieldCash: 25000, yieldClout: 0, yieldAura: 0, successChance: 0.8, hitMental: -15, passiveMonthlyYield: 0, nextNodes: ['l3a', 'l3b'], cloutReq: 40 },
     l2b: { id: 'l2b', name: 'Skilled Trade', cost: 5000, yieldCash: 8000, yieldClout: 0, yieldAura: 0, successChance: 0.9, hitMental: -10, passiveMonthlyYield: 0, nextNodes: ['l3c'] },
     l3a: { id: 'l3a', name: 'House Flip', cost: 75000, yieldCash: 200000, yieldClout: 0, yieldAura: 0, successChance: 0.7, hitMental: -25, passiveMonthlyYield: 0, nextNodes: ['l4a'] },
     l3b: { id: 'l3b', name: 'Rent Portfolio', cost: 50000, yieldCash: 0, yieldClout: 0, yieldAura: 0, successChance: 0.9, hitMental: -10, passiveMonthlyYield: 5000, nextNodes: ['l4a'] },

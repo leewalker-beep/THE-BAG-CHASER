@@ -12,7 +12,14 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
 
   const activeNode = previewNodeId ? tree[previewNodeId] : currentNode;
   const isPreview = previewNodeId !== null && previewNodeId !== currentNodeId;
-  const canAfford = state.pl.bag >= activeNode.cost;
+
+  const cloutReq = activeNode.cloutReq || 0;
+  const auraReq = activeNode.auraReq || 0;
+
+  const canAffordCash = state.pl.bag >= activeNode.cost;
+  const canAffordClout = state.pl.clout >= cloutReq;
+  const canAffordAura = state.pl.aura >= auraReq;
+  const canAfford = canAffordCash && canAffordClout && canAffordAura;
 
   const content = (
     <>
@@ -45,19 +52,32 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
           </div>
 
           {isPreview && (
-            <div className="mt-4 pt-4 border-t border-indigo-500/20 flex justify-between items-center">
-              <div className="text-[10px] font-bold text-slate-400">
-                Upgrade Cost: <span className={canAfford ? 'text-white' : 'text-red-500'}>${activeNode.cost.toLocaleString()}</span>
+            <div className="mt-4 pt-4 border-t border-indigo-500/20 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="text-[10px] font-bold text-slate-400">
+                  Cash: <span className={canAffordCash ? 'text-white' : 'text-red-500'}>${activeNode.cost.toLocaleString()}</span>
+                </div>
+                {cloutReq > 0 && (
+                  <div className="text-[10px] font-bold text-slate-400">
+                    Clout: <span className={canAffordClout ? 'text-white' : 'text-red-500'}>{cloutReq}</span>
+                  </div>
+                )}
+                {auraReq > 0 && (
+                  <div className="text-[10px] font-bold text-slate-400">
+                    Aura: <span className={canAffordAura ? 'text-white' : 'text-red-500'}>{auraReq}</span>
+                  </div>
+                )}
               </div>
+
               <button
                 disabled={!canAfford}
                 onClick={() => {
-                  state.purchaseHustleUpgrade(hustleId, activeNode.id);
+                  state.upgradeHustleLevel(hustleId, activeNode.id);
                   setPreviewNodeId(null);
                 }}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[10px] font-black rounded uppercase tracking-widest transition-all"
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[10px] font-black rounded uppercase tracking-widest transition-all"
               >
-                UPGRADE ⚡
+                CONFIRM UPGRADE ⚡
               </button>
             </div>
           )}

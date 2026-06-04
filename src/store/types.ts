@@ -164,6 +164,7 @@ export interface GameState {
   deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
   upgradeHustle: (hustleId: string) => void;
   upgradeHustleNode: (hustleId: string, nodeId: string) => void;
+  upgradeHustleLevel: (hustleId: string, branchPath: string) => void;
   purchaseHustleUpgrade: (hustleId: string, nodeId: string) => void;
   unfreezeAccounts: () => void;
   resolveBlacklist: () => void;
