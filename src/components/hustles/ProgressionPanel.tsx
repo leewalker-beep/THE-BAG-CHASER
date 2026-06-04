@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { PanelProps } from './panels/types';
 import { HUSTLE_PROGRESSIONS } from '../../config/hustleProgression';
 
-export function ProgressionPanel({ hustleId, onBack, state, onExecute }: PanelProps & { hustleId: string }) {
+export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedded }: PanelProps & { hustleId: string, isEmbedded?: boolean }) {
   const tree = HUSTLE_PROGRESSIONS[hustleId];
   if (!tree) return null;
 
@@ -14,20 +14,8 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute }: PanelPr
   const isPreview = previewNodeId !== null && previewNodeId !== currentNodeId;
   const canAfford = state.pl.bag >= activeNode.cost;
 
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Dashboard
-        </button>
-        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-          {currentNode.name.toUpperCase()}
-        </div>
-      </div>
-
+  const content = (
+    <>
       <div className="space-y-4">
         <div className={`p-4 border rounded-xl transition-all ${isPreview ? 'bg-indigo-950/30 border-indigo-500/50' : 'bg-slate-950/50 border-slate-800'}`}>
           <div className="flex justify-between items-start">
@@ -100,14 +88,35 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute }: PanelPr
         )}
       </div>
 
-      {!isPreview && (
+      {!isPreview && !isEmbedded && (
         <button
           onClick={() => onExecute(hustleId)}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] mt-4"
         >
           EXECUTE {currentNode.name.toUpperCase()}
         </button>
       )}
+    </>
+  );
+
+  if (isEmbedded) {
+    return content;
+  }
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in zoom-in duration-200">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[10px] font-black uppercase text-slate-500 hover:text-white flex items-center gap-1 transition-colors">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Dashboard
+        </button>
+        <div className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          {currentNode.name.toUpperCase()}
+        </div>
+      </div>
+      {content}
     </div>
   );
 }
