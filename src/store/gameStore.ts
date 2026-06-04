@@ -258,6 +258,53 @@ export const useGameStore = create<GameState>()(
         };
       }),
 
+      upgradeHustleLevel: (hustleId, branchPath) => set((state) => {
+        if (state.pl.crises.accountsFrozen) {
+          return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
+        }
+        const tree = HUSTLE_PROGRESSIONS[hustleId];
+        if (!tree) return {};
+        const node = tree[branchPath];
+        if (!node) return {};
+
+        const cloutReq = node.cloutReq || 0;
+        const auraReq = node.auraReq || 0;
+
+        if (state.pl.bag < node.cost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} for ${node.name}.`, ...state.news] };
+        }
+        if (state.pl.clout < cloutReq) {
+          return { news: [`LACK OF CLOUT: Need ${cloutReq} Clout for ${node.name}.`, ...state.news] };
+        }
+        if (state.pl.aura < auraReq) {
+          return { news: [`LACK OF AURA: Need ${auraReq} Aura for ${node.name}.`, ...state.news] };
+        }
+
+        const nextLevel = parseInt(branchPath.charAt(1)) || (state.pl.hustleLevels[hustleId] + 1);
+
+        useJuiceStore.getState().triggerSurge();
+
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - node.cost,
+            hustleLevels: {
+              ...state.pl.hustleLevels,
+              [hustleId]: nextLevel
+            },
+            hustleNodeIds: {
+              ...state.pl.hustleNodeIds,
+              [hustleId]: branchPath
+            },
+            treePassiveYields: {
+              ...state.pl.treePassiveYields,
+              [hustleId]: node.passiveMonthlyYield
+            }
+          },
+          news: [`UPGRADE SUCCESS: ${hustleId.toUpperCase()} is now Level ${nextLevel} (${node.name})`, ...state.news]
+        };
+      }),
+
       purchaseHustleUpgrade: (hustleId, nodeId) => set((state) => {
         if (state.pl.crises.accountsFrozen) {
           return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
