@@ -72,6 +72,7 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
               <button
                 disabled={!canAfford}
                 onClick={() => {
+                  console.log('ProgressionPanel: Clicked upgrade for', hustleId, activeNode.id);
                   state.upgradeHustleLevel(hustleId, activeNode.id);
                   setPreviewNodeId(null);
                 }}
