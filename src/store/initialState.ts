@@ -182,5 +182,6 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     unlockedHustles: initialUnlocked,
     currentMarket: 'NORMAL',
     fatalCause: null,
+    promotionNotified: {},
   };
 };
