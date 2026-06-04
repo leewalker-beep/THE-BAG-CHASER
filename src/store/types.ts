@@ -151,6 +151,7 @@ export interface GameState {
   unlockedHustles: Record<string, boolean>;
   currentMarket: MarketType;
   fatalCause: string | null;
+  promotionNotified: Record<string, boolean>;
 
   // Base Actions
   setPh: (ph: GameState['ph']) => void;

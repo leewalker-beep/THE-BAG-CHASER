@@ -295,31 +295,20 @@ export const useGameStore = create<GameState>()(
 
           const market = MARKET_CONFIGS[state.currentMarket];
 
+          const tree = HUSTLE_PROGRESSIONS[hustleId];
+          const currentNode = tree ? tree[state.pl.hustleNodeIds[hustleId] || 'l1'] : null;
+
           // 0. Lineage Cost/Yield Override
           let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned)
             ? HUSTLE_BALANCE.audio.studioOwnedProductionCost
-            : config.upfrontCost;
+            : (currentNode ? currentNode.cost : config.upfrontCost);
 
-          let lineageYieldCash = config.yieldCash;
-          let lineageYieldClout = config.yieldClout;
-          let lineageYieldAura = config.yieldAura;
-          let lineageHitMental = config.hitMental;
+          let lineageYieldCash = currentNode ? currentNode.yieldCash : config.yieldCash;
+          let lineageYieldClout = currentNode ? currentNode.yieldClout : config.yieldClout;
+          let lineageYieldAura = currentNode ? currentNode.yieldAura : config.yieldAura;
+          let lineageHitMental = currentNode ? currentNode.hitMental : config.hitMental;
           let lineageFatigue = config.fatigueCost;
-          let lineageSuccessChance = config.successChance;
-
-          const tree = HUSTLE_PROGRESSIONS[hustleId];
-          if (tree) {
-            const currentNodeId = state.pl.hustleNodeIds[hustleId] || 'l1';
-            const node = tree[currentNodeId];
-            if (node) {
-              effectiveUpfrontCost = 0; // The per-execution cost for tree-based hustles is typically 0 unless otherwise stated, cost is in the upgrade.
-              lineageYieldCash = node.yieldCash;
-              lineageYieldClout = node.yieldClout;
-              lineageYieldAura = node.yieldAura;
-              lineageHitMental = node.hitMental;
-              lineageSuccessChance = node.successChance;
-            }
-          }
+          let lineageSuccessChance = currentNode ? currentNode.successChance : config.successChance;
 
           effectiveUpfrontCost *= market.expenseMultiplier;
 
@@ -373,7 +362,7 @@ export const useGameStore = create<GameState>()(
             }
           }
 
-          if (hustleId === 'r_delivery') {
+          if (!tree && hustleId === 'r_delivery') {
             const { activeTab, weeks, fleetType, wageLevel } = state.pl.deliveryPanel;
             if (activeTab === 1) {
               const mult = weeks / 4;
@@ -421,7 +410,7 @@ export const useGameStore = create<GameState>()(
           }
 
           // 0.2 Tech Flip Logic
-          if (hustleId === 'tech_flip') {
+          if (!tree && hustleId === 'tech_flip') {
             const { selectedLot, toolQuality, listingPrice } = state.pl.techFlipPanel;
             const { lotCosts, toolCosts, baseChances } = HUSTLE_BALANCE.techFlip;
             effectiveUpfrontCost = lotCosts[selectedLot] + toolCosts[toolQuality];
@@ -438,7 +427,7 @@ export const useGameStore = create<GameState>()(
           }
 
           // 0.3 Podcast Logic
-          if (hustleId === 'pod') {
+          if (!tree && hustleId === 'pod') {
             const { selectedGuest, unhingedSlider } = state.pl.podcastPanel;
             const { guestCosts, baseCloutYields } = HUSTLE_BALANCE.pod;
             effectiveUpfrontCost = guestCosts[selectedGuest];
@@ -459,7 +448,7 @@ export const useGameStore = create<GameState>()(
           }
 
           // 0.4 Streetwear Logic
-          if (hustleId === 'vintage') {
+          if (!tree && hustleId === 'vintage') {
             const { brandTier } = state.pl.streetwearPanel;
             const tierData = HUSTLE_BALANCE.vintage.tiers[brandTier];
             if (!tierData) return {};
@@ -486,7 +475,7 @@ export const useGameStore = create<GameState>()(
           }
 
           // 0.5 Franchise Logic
-          if (hustleId === 'global_franchise') {
+          if (!tree && hustleId === 'global_franchise') {
             const { sector, footprint, supplyChain } = state.pl.franchisePanel;
             const { baseSetupCosts, baseCashYields, baseCloutYields } = HUSTLE_BALANCE.global_franchise;
             effectiveUpfrontCost = (baseSetupCosts[sector] || 0) * footprint;
@@ -654,6 +643,23 @@ export const useGameStore = create<GameState>()(
             } else {
               currentNews.unshift(`EXECUTED: ${config.name}. ${config.description}`);
             }
+
+            if (tree && currentNode && currentNode.nextNodes) {
+              const projectedCash = state.pl.bag - effectiveUpfrontCost + finalYieldCash;
+              const affordableNodes = currentNode.nextNodes
+                .map(id => tree[id])
+                .filter(node =>
+                  node &&
+                  projectedCash >= node.cost &&
+                  state.pl.clout >= ((node as any).cloutReq || 0) &&
+                  state.pl.aura >= ((node as any).auraReq || 0)
+                );
+
+              if (affordableNodes.length > 0 && !state.promotionNotified?.[hustleId]) {
+                currentNews.unshift(`⭐ PROMOTION AVAILABLE: Upgrade ${config.name} to ${affordableNodes[0].name} for $${affordableNodes[0].cost.toLocaleString()}`);
+                (nextPlOverrides as any).promotionNotified = { ...(state.promotionNotified || {}), [hustleId]: true };
+              }
+            }
           } else {
             // FAILURE & AURA ARMOR MITIGATION
             if (state.pl.aura >= 100) {
@@ -727,6 +733,9 @@ export const useGameStore = create<GameState>()(
             ...nextPlOverrides
           };
 
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { promotionNotified: nextPromo } = (nextPlOverrides as any);
+
           // 5. Increment specialized stats (Only on Success)
           if (isSuccess) {
             const nextStreet = { ...nextPl.streetStats };
@@ -759,6 +768,7 @@ export const useGameStore = create<GameState>()(
             ...state,
             pl: nextPl,
             news: currentNews,
+            promotionNotified: (nextPromo as Record<string, boolean>) || state.promotionNotified
           };
 
           const advancedState = applyAdvancement(clampStats(nextState), 1) as GameState;
