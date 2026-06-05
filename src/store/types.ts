@@ -10,6 +10,32 @@ export interface CrisisState {
   laborStrikeTurns: number;     // If > 0, completely halts cash generation from all Corporate level operations
 }
 
+export interface TierHistoryEntry {
+  reachedAtMonth: number;
+  cashEarned: number;
+  cloutDelta: number;
+  auraDelta: number;
+  hustlesExecuted: Record<string, number>;
+  crises: string[];
+  flexAssets: string[];
+  milestone: string;
+}
+
+export interface GameStats {
+  lifetimeEarnings: number;
+  totalHustles: number;
+  successfulHustles: number;
+  highestStreak: number;
+  tierHistory: Record<string, TierHistoryEntry>;
+  unlockedAchievements: string[];
+  crisisCounts: {
+    shadowbans: number;
+    blacklists: number;
+    strikes: number;
+    frozen: number;
+  };
+}
+
 export interface PlayerStats {
   name: string;
   bag: number;
@@ -62,6 +88,13 @@ export interface PlayerStats {
   assetsOwned: {
     vendingMachines: number;
     masterTracks: number;
+    watches: number;
+    cars: number;
+    yachts: number;
+    penthouses: number;
+    jets: number;
+    resorts: number;
+    franchises: number;
   };
   startupStats: {
     saasUsers: number;
@@ -111,6 +144,7 @@ export interface PlayerStats {
   lastExecutedHustleId: string | null;
   streak: number;
   crises: CrisisState;
+  stats: GameStats;
 }
 
 export interface GlobalModifiers {
@@ -198,4 +232,5 @@ export interface GameState {
   setLaborInput: (field: keyof PlayerStats['laborPanel'], value: any) => void;
   setDeliveryInput: (field: keyof PlayerStats['deliveryPanel'], value: any) => void;
   setCurrentTier: (tierName: GameTab, fee?: number) => void;
+  purchaseFlexAsset: (assetType: keyof PlayerStats['assetsOwned'], cost: number, name: string) => void;
 }

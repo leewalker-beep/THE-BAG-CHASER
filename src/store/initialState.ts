@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setPlayerName' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'setMarket' | 'adv' | 'deductCostAndRollOutcome' | 'upgradeHustle' | 'upgradeHustleNode' | 'upgradeHustleLevel' | 'purchaseHustleUpgrade' | 'unfreezeAccounts' | 'resolveBlacklist' | 'resolveShadowban' | 'resolveLaborStrike' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'setPodcastInput' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'setStreetwearInput' | 'setLaborInput' | 'setDeliveryInput' | 'setCurrentTier'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setPlayerName' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'setMarket' | 'adv' | 'deductCostAndRollOutcome' | 'upgradeHustle' | 'upgradeHustleNode' | 'upgradeHustleLevel' | 'purchaseHustleUpgrade' | 'unfreezeAccounts' | 'resolveBlacklist' | 'resolveShadowban' | 'resolveLaborStrike' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'setPodcastInput' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'setStreetwearInput' | 'setLaborInput' | 'setDeliveryInput' | 'setCurrentTier' | 'purchaseFlexAsset'> => {
   const allHustles: string[] = [
     'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap', 'r_vending',
     'r_flyers', 'r_pr_campaign', 'r_ghost_mode',
@@ -116,6 +116,13 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
       assetsOwned: {
         vendingMachines: 0,
         masterTracks: 0,
+        watches: 0,
+        cars: 0,
+        yachts: 0,
+        penthouses: 0,
+        jets: 0,
+        resorts: 0,
+        franchises: 0,
       },
       startupStats: {
         saasUsers: 0,
@@ -170,6 +177,31 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         accountsFrozen: false,
         blacklistTurns: 0,
         laborStrikeTurns: 0,
+      },
+      stats: {
+        lifetimeEarnings: 0,
+        totalHustles: 0,
+        successfulHustles: 0,
+        highestStreak: 0,
+        tierHistory: {
+          [startingTier === 1 ? 'STREET' : 'MUD']: {
+            reachedAtMonth: 0,
+            cashEarned: 0,
+            cloutDelta: 0,
+            auraDelta: 0,
+            hustlesExecuted: {},
+            crises: [],
+            flexAssets: [],
+            milestone: startingTier === 1 ? 'Started with Trust Fund' : 'Started from the Mud',
+          }
+        },
+        unlockedAchievements: [],
+        crisisCounts: {
+          shadowbans: 0,
+          blacklists: 0,
+          strikes: 0,
+          frozen: 0,
+        },
       },
     },
     modifiers: {
