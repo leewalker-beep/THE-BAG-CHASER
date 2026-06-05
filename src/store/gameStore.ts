@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { TAB_TIER_MAPPING, type GameState } from './types';
+import { TAB_TIER_MAPPING, type GameState, type PlayerStats } from './types';
 import { getInitialGameState } from './initialState';
 import { createMudSlice } from './slices/mudSlice';
 import { createStreetSlice } from './slices/streetSlice';
@@ -8,14 +8,38 @@ import { createStartupSlice } from './slices/startupSlice';
 import { applyAdvancement } from '../engine/advancement';
 import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from '../config/hustleProgression';
+import { FLEX_ASSETS } from '../config/flexAssets';
 import { MARKET_CONFIGS } from '../config/marketConfig';
 import { useJuiceStore } from './juiceStore';
 import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, UPGRADE_COSTS } from '../config/balanceConfig';
 
 const SAVE_KEY = 'bag-chaser-state';
 
+export const calculateMaxStats = (pl: PlayerStats) => {
+  const baseMaxClout = 100;
+  const baseMaxAura = 100;
+  const baseMaxMental = 100;
+
+  let maxClout = baseMaxClout;
+  let maxAura = baseMaxAura;
+  let maxMentalHealth = baseMaxMental;
+
+  FLEX_ASSETS.forEach(asset => {
+    const count = pl.flexAssets[asset.id] || 0;
+    if (count > 0) {
+      maxClout += (asset.maxCloutBoost || 0) * count;
+      maxAura += (asset.maxAuraBoost || 0) * count;
+      maxMentalHealth += (asset.maxMentalHealthBoost || 0) * count;
+    }
+  });
+
+  return { maxClout, maxAura, maxMentalHealth };
+};
+
 const clampStats = (state: GameState): GameState => {
   const { tier } = state.pl;
+  const { maxClout, maxAura, maxMentalHealth } = calculateMaxStats(state.pl);
+
   let ceiling = Infinity;
 
   if (tier === 0) ceiling = 30; // MUD
@@ -54,7 +78,10 @@ const clampStats = (state: GameState): GameState => {
     pl: {
       ...state.pl,
       clout: nextClout,
-      aura: nextAura
+      aura: nextAura,
+      maxClout,
+      maxAura,
+      maxMentalHealth
     },
     news
   };
@@ -954,35 +981,42 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      purchaseFlexAsset: (assetType, cost, name) => set((state) => {
-        if (state.pl.bag < cost) {
-          return { news: [`INSUFFICIENT FUNDS: Need $${cost.toLocaleString()} for ${name}.`, ...state.news] };
+      purchaseFlexAsset: (assetId) => set((state) => {
+        const asset = FLEX_ASSETS.find(a => a.id === assetId);
+        if (!asset) return {};
+
+        if (state.pl.bag < asset.cost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${asset.cost.toLocaleString()} for ${asset.name}.`, ...state.news] };
         }
+
+        const nextFlexAssets = {
+          ...state.pl.flexAssets,
+          [assetId]: (state.pl.flexAssets[assetId] || 0) + 1
+        };
+
         const nextStats = { ...state.pl.stats };
         const currentTierStats = nextStats.tierHistory[state.pl.currentTier];
         if (currentTierStats) {
-          currentTierStats.flexAssets.push(name);
+          currentTierStats.flexAssets.push(asset.name);
         }
 
-        const nextAssets = {
-          ...state.pl.assetsOwned,
-          [assetType]: state.pl.assetsOwned[assetType] + 1
-        };
-
-        const totalFlex = nextAssets.watches + nextAssets.cars + nextAssets.yachts + nextAssets.penthouses + nextAssets.jets + nextAssets.resorts + nextAssets.franchises;
+        const totalFlex = Object.values(nextFlexAssets).reduce((a, b) => a + b, 0);
         if (totalFlex >= 5 && !nextStats.unlockedAchievements.includes('Flex Collector')) {
           nextStats.unlockedAchievements.push('Flex Collector');
         }
 
-        return {
+        const nextState = {
+          ...state,
           pl: {
             ...state.pl,
-            bag: state.pl.bag - cost,
-            assetsOwned: nextAssets,
+            bag: state.pl.bag - asset.cost,
+            flexAssets: nextFlexAssets,
             stats: nextStats
           },
-          news: [`ASSET ACQUIRED: ${name} added to your collection.`, ...state.news]
+          news: [`ASSET ACQUIRED: ${asset.name} added to your collection.`, ...state.news]
         };
+
+        return clampStats(nextState);
       }),
     }),
     {

@@ -11,6 +11,7 @@ import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { StatsDashboard } from './components/StatsDashboard';
+import { FlexMarket } from './components/FlexMarket';
 import { MiniGameEngine } from './components/minigames/MiniGameEngine';
 import { ProgressionPanel } from './components/hustles/ProgressionPanel';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
@@ -18,7 +19,7 @@ import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COS
 import { MARKET_CONFIGS } from './config/marketConfig';
 
 import { PROGRESSION_TIERS, type MarketType } from './store/types';
-const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'FLEX1', 'MOGUL', 'PRESIDENT', 'OPEN'];
+const NAV_TABS: GameTab[] = ['MUD', 'STREET', 'STARTUP', 'CORPORATE', 'ELITE', 'FLEX', 'MOGUL', 'PRESIDENT', 'OPEN'];
 
 function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketType = 'NORMAL'): { can: boolean; reason?: string; cost: number } {
   if (!pl) return { can: false, reason: "INITIALIZING", cost: 0 };
@@ -464,9 +465,9 @@ function App() {
             const currentRankIdx = PROGRESSION_TIERS.indexOf(pl.currentTier);
             const tabRankIdx = PROGRESSION_TIERS.indexOf(tier as GameTab);
 
-            // FLEX1 is a non-blocking sandbox, unlocked if CORPORATE (index 3) is reached
-            const isFlex1 = tier === 'FLEX1';
-            const isLocked = isFlex1
+            // FLEX is a non-blocking sandbox, unlocked if CORPORATE (index 3) is reached
+            const isFlex = tier === 'FLEX';
+            const isLocked = isFlex
               ? currentRankIdx < 3
               : tabRankIdx > currentRankIdx + 1;
 
@@ -569,7 +570,7 @@ function App() {
         {showStats && (
           <StatsDashboard
             stats={pl.stats}
-            assets={pl.assetsOwned}
+            flexAssets={pl.flexAssets}
             onClose={() => setShowStats(false)}
             monthsPlayed={pl.mo}
           />
@@ -593,12 +594,9 @@ function App() {
 
         {activeHustleView === null ? (
           (() => {
-            if (activeTab === 'FLEX1') {
+            if (activeTab === 'FLEX' as any || activeTab === 'FLEX1' as any) {
               return (
-                <FlexAcquisitionPanel
-                  assets={pl.assetsOwned}
-                  onPurchase={state.purchaseFlexAsset}
-                />
+                <FlexMarket />
               );
             }
 
@@ -901,48 +899,5 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
 }
 
 
-function FlexAcquisitionPanel({ assets, onPurchase }: { assets: PlayerStats['assetsOwned'], onPurchase: GameState['purchaseFlexAsset'] }) {
-  const FLEX_ITEMS: { id: keyof PlayerStats['assetsOwned'], name: string, cost: number, icon: string }[] = [
-    { id: 'watches', name: 'Luxury Timepiece', cost: 15000, icon: '⌚' },
-    { id: 'cars', name: 'Supercar', cost: 250000, icon: '🏎️' },
-    { id: 'yachts', name: 'Personal Yacht', cost: 2500000, icon: '🛥️' },
-    { id: 'penthouses', name: 'Sky-High Penthouse', cost: 10000000, icon: '🏙️' },
-    { id: 'jets', name: 'Private Jet', cost: 35000000, icon: '🛩️' },
-    { id: 'resorts', name: 'Private Island Resort', cost: 150000000, icon: '🏝️' },
-    { id: 'franchises', name: 'Global Sports Franchise', cost: 2500000000, icon: '🏟️' },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2 mb-8">
-        <h2 className="text-2xl font-black uppercase tracking-tighter text-white italic">FLEX ACQUISITIONS MARKET</h2>
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Convert liquid capital into permanent social status.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {FLEX_ITEMS.map(item => (
-          <div key={item.id} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-center justify-between group hover:border-emerald-500/50 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="text-4xl">{item.icon}</div>
-              <div className="flex flex-col">
-                <span className="text-xs font-black text-white uppercase tracking-widest">{item.name}</span>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">${item.cost.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="text-[10px] font-black text-slate-500 uppercase">OWNED: {assets[item.id] || 0}</div>
-              <button
-                onClick={() => onPurchase(item.id, item.cost, item.name)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-[10px] font-black uppercase rounded transition-all active:scale-95"
-              >
-                Buy
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default App;
