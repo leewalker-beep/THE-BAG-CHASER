@@ -62,8 +62,8 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
   return {
     ph: 'PLAYING',
     deathBadge: null,
-    tab: startingTier === 1 ? 'STREET' : 'MUD',
-    activeTab: startingTier === 1 ? 'STREET' : 'MUD',
+    tab: 'MUD',
+    activeTab: 'MUD',
     activeHustleView: null,
     alias: '',
     diff,
@@ -189,7 +189,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         successfulHustles: 0,
         highestStreak: 0,
         tierHistory: {
-          [startingTier === 1 ? 'STREET' : 'MUD']: {
+          ['MUD']: {
             reachedAtMonth: 0,
             cashEarned: 0,
             cloutDelta: 0,
