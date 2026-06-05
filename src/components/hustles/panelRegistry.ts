@@ -6,6 +6,7 @@ import { RealEstateMatchPanel } from './panels/RealEstateMatchPanel';
 import { SneakerDropMatchPanel } from './panels/SneakerDropMatchPanel';
 import { TechFlipMatchPanel } from './panels/TechFlipMatchPanel';
 import { ViralStreamMatchPanel } from './panels/ViralStreamMatchPanel';
+import { DefaultPanel } from './panels/DefaultPanel';
 
 import { LaborPanel } from './panels/LaborPanel';
 import { DeliveryPanel } from './panels/DeliveryPanel';
@@ -56,4 +57,10 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType<PanelProps>> = {
   'data_monopoly': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'data_monopoly' }),
   'central_bank_play': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'central_bank_play' }),
   'legacy_fund': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'legacy_fund' }),
+
+  // PRESIDENT Content
+  'the_campaign': (props) => React.createElement(DefaultPanel, { ...props, hustleId: 'the_campaign' }),
+  'the_coup': (props) => React.createElement(DefaultPanel, { ...props, hustleId: 'the_coup' }),
+  'the_legacy': (props) => React.createElement(DefaultPanel, { ...props, hustleId: 'the_legacy' }),
+  'the_icon': (props) => React.createElement(DefaultPanel, { ...props, hustleId: 'the_icon' }),
 };

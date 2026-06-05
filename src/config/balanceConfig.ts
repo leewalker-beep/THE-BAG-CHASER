@@ -3,6 +3,8 @@ export const TIER_REQUIREMENTS: Record<string, { cash: number, clout: number, au
   STARTUP: { cash: 15000, clout: 50, aura: 50, fee: 5000, description: "Startup Incorporation" },
   CORPORATE: { cash: 100000, clout: 100, aura: 100, fee: 25000, description: "Institutional Compliance" },
   ELITE: { cash: 5000000, clout: 200, aura: 200, fee: 1000000, description: "Sovereign Elite Syndicate" },
+  MOGUL: { cash: 25000000, clout: 5000, aura: 2500, fee: 5000000, description: "Global Industrial Mogul" },
+  PRESIDENT: { cash: 100000000, clout: 25000, aura: 15000, fee: 25000000, description: "The Ultimate Seat of Power" },
 };
 
 export const UNFREEZE_COST = 5000;
