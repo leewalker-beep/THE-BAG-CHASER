@@ -25,4 +25,7 @@ export const HUSTLE_TONES: Record<string, HustleTone> = {
   policy_flip: { font: 'font-serif', colors: { primary: '#dc2626', secondary: '#991b1b', accent: '#fef08a' }, animation: 'official', interaction: 'click-heavy', icon: '⚖️', theme: 'official' },
   global_index: { font: 'font-mono', colors: { primary: '#22d3ee', secondary: '#0891b2', accent: '#ffffff' }, animation: 'futuristic', interaction: 'click-soft', icon: '🌍', theme: 'futuristic' },
   r_plasma: { font: 'font-sans', colors: { primary: '#ef4444', secondary: '#dc2626', accent: '#fef08a' }, animation: 'clinical', interaction: 'click-heavy', icon: '🩸', theme: 'clinical' },
+  data_analytics: { font: 'font-mono', colors: { primary: '#3b82f6', secondary: '#1d4ed8', accent: '#60a5fa' }, animation: 'data', interaction: 'click-soft', icon: '📊', theme: 'data' },
+  crypto_mining: { font: 'font-mono', colors: { primary: '#f59e0b', secondary: '#b45309', accent: '#fbbf24' }, animation: 'mining', interaction: 'click-heavy', icon: '⛏️', theme: 'mining' },
+  virtual_assistant_agency: { font: 'font-sans', colors: { primary: '#10b981', secondary: '#047857', accent: '#34d399' }, animation: 'service', interaction: 'click-soft', icon: '👩‍💼', theme: 'service' },
 };

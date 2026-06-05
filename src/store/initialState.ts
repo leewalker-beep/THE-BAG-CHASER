@@ -6,7 +6,8 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
     'r_flyers', 'r_pr_campaign', 'r_ghost_mode',
     'cc', 'pod', 'audio', 'drop', 'vintage', 'promo',
     'techFlip', 'smm', 'gig', 'sw', 'drip', 'meme',
-    'saas_mvp', 'agency_scale', 'ecom_brand', 'festival', 'global_franchise'
+    'saas_mvp', 'agency_scale', 'data_analytics', 'crypto_mining', 'virtual_assistant_agency',
+    'ecom_brand', 'festival', 'global_franchise'
   ];
 
   const initialFatigue = allHustles.reduce((acc, hustle) => {

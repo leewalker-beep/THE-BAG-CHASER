@@ -15,6 +15,7 @@ export interface HustleConfig {
   successChance: number;
   icon: string;
   passiveYieldModifier?: string; // For special conditional handling like REIT or Audio track passive checks
+  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe';
 }
 
 export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
@@ -44,6 +45,9 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
   { id: 'meme', tier: 'STARTUP', name: 'Meme Dev', description: 'Deploying and marketing speculative crypto assets.', upfrontCost: 2000, cloutReq: 50, yieldCash: 6000, yieldClout: 20, yieldAura: -20, hitMental: -20, hitHeat: 40, fatigueCost: 10, isPassive: false, successChance: 0.85, icon: '🐸' },
   { id: 'saas_mvp', tier: 'STARTUP', name: 'SaaS MVP', description: 'Build and scale a software-as-a-service platform.', upfrontCost: 5000, cloutReq: 100, yieldCash: 0, yieldClout: 2500, yieldAura: 10, hitMental: -15, hitHeat: 0, fatigueCost: 20, isPassive: false, successChance: 0.85, icon: '💻' },
   { id: 'agency_scale', tier: 'STARTUP', name: 'Agency Scale', description: 'Expanding a service business with full-time staff.', upfrontCost: 0, cloutReq: 150, yieldCash: 6500, yieldClout: 50, yieldAura: 20, hitMental: -20, hitHeat: 5, fatigueCost: 25, isPassive: false, successChance: 0.85, icon: '🏢' },
+  { id: 'data_analytics', tier: 'STARTUP', name: 'Data Analytics Firm', description: 'Extracting actionable insights from corporate datasets.', upfrontCost: 5000, cloutReq: 40, yieldCash: 12000, yieldClout: 20, yieldAura: 10, hitMental: -15, hitHeat: 0, fatigueCost: 20, isPassive: false, successChance: 0.85, icon: '📊', miniGame: 'chart_match' },
+  { id: 'crypto_mining', tier: 'STARTUP', name: 'Crypto Mining Rig', description: 'Optimizing hash rates for maximum digital yield.', upfrontCost: 8000, cloutReq: 30, yieldCash: 5000, yieldClout: 5, yieldAura: -10, hitMental: -5, hitHeat: 15, fatigueCost: 10, isPassive: false, successChance: 0.8, icon: '⛏️', miniGame: 'tap_mine' },
+  { id: 'virtual_assistant_agency', tier: 'STARTUP', name: 'VA Agency', description: 'Outsourcing administrative tasks at scale.', upfrontCost: 3000, cloutReq: 50, yieldCash: 8000, yieldClout: 30, yieldAura: 20, hitMental: -12, hitHeat: 2, fatigueCost: 15, isPassive: false, successChance: 0.9, icon: '👩‍💼', miniGame: 'tic_tac_toe' },
   { id: 'ecom_brand', tier: 'CORPORATE', name: 'DTC Brand Conglomerate', description: 'Full-scale direct-to-consumer product empire.', upfrontCost: 110000, cloutReq: 110, yieldCash: 9000, yieldClout: 30, yieldAura: 15, hitMental: -10, hitHeat: 2, fatigueCost: 15, isPassive: false, successChance: 0.85, icon: '🏢' },
   { id: 'festival', tier: 'CORPORATE', name: 'Global Festival Circuit', description: 'Organize and promote a multi-day live music event.', upfrontCost: 85000, cloutReq: 100, yieldCash: 0, yieldClout: 500, yieldAura: 150, hitMental: -35, hitHeat: 10, fatigueCost: 50, isPassive: false, successChance: 0.75, icon: '🎪' },
 
