@@ -35,4 +35,5 @@ export const HUSTLE_TONES: Record<string, HustleTone> = {
   data_monopoly: { font: 'font-mono', colors: { primary: '#6366f1', secondary: '#4338ca', accent: '#e0e7ff' }, animation: 'panopticon', interaction: 'click-heavy', icon: '👁️', theme: 'panopticon' },
   central_bank_play: { font: 'font-serif', colors: { primary: '#b45309', secondary: '#78350f', accent: '#fef3c7' }, animation: 'monetary', interaction: 'click-heavy', icon: '🏦', theme: 'monetary' },
   legacy_fund: { font: 'font-serif', colors: { primary: '#ca8a04', secondary: '#854d0e', accent: '#fef9c3' }, animation: 'timeless', interaction: 'click-soft', icon: '🏺', theme: 'timeless' },
+  the_campaign: { font: 'font-serif', colors: { primary: '#dc2626', secondary: '#1e40af', accent: '#ffffff' }, animation: 'official', interaction: 'click-heavy', icon: '🗳️', theme: 'political' },
 };

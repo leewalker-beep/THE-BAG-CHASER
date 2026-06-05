@@ -141,6 +141,20 @@ export interface PlayerStats {
     fleetType: 'E-BIKE' | 'SPRINTER' | 'FREIGHT';
     wageLevel: 'LOW' | 'BALANCED' | 'PREMIUM';
   };
+  campaignState: {
+    phase: 'PARTY' | 'MATE' | 'TRAIL' | 'OCTOBER' | 'ELECTION' | 'RESULT';
+    party: 'LIBERTY' | 'UNITY' | 'PROGRESS' | null;
+    runningMate: string | null;
+    fundraising: number;
+    polling: number;
+    momentum: number;
+    turnout: number;
+    round: number;
+    usedPACs: string[];
+    stateModifiers: Record<string, number>;
+    endorsements: string[];
+    primarySupport: number;
+  };
   hypeIsActive: boolean;
   lastExecutedHustleId: string | null;
   streak: number;
@@ -236,6 +250,7 @@ export interface GameState {
   setStreetwearInput: (field: string, value: any) => void;
   setLaborInput: (field: keyof PlayerStats['laborPanel'], value: any) => void;
   setDeliveryInput: (field: keyof PlayerStats['deliveryPanel'], value: any) => void;
+  setCampaignState: (updates: Partial<PlayerStats['campaignState']>) => void;
   setCurrentTier: (tierName: GameTab, fee?: number) => void;
   purchaseFlexAsset: (assetId: string) => void;
 }

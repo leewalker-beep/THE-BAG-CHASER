@@ -75,5 +75,21 @@ export const DEATH_MESSAGES: Record<string, DeathMessage> = {
   DEFAULT: {
     message: "You lived fast and died young. The world will remember... maybe.",
     badge: "GHOST IN THE MACHINE"
+  },
+  the_campaign_funds: {
+    message: "You couldn't buy enough votes. The money ran out before your principles did.",
+    badge: "BANKRUPT CANDIDATE"
+  },
+  the_campaign_polling: {
+    message: "The people spoke. They said your name, then they laughed.",
+    badge: "POLLING COLLAPSE"
+  },
+  the_campaign_momentum: {
+    message: "One scandal too many. Your campaign is now a punchline.",
+    badge: "MOMENTUM CRASH"
+  },
+  the_campaign_primary: {
+    message: "Your party abandoned you. You're now a cautionary tale on cable news.",
+    badge: "PRIMARY REJECT"
   }
 };
