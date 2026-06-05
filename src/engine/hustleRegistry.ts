@@ -15,7 +15,7 @@ export interface HustleConfig {
   successChance: number;
   icon: string;
   passiveYieldModifier?: string; // For special conditional handling like REIT or Audio track passive checks
-  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch';
+  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail';
 }
 
 export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
@@ -70,6 +70,7 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
   { id: 'legacy_fund', tier: 'MOGUL', name: 'Legacy Fund', description: 'Securing generational wealth and influence.', upfrontCost: 10000000, cloutReq: 8000, yieldCash: 5000000, yieldClout: 4000, yieldAura: 2000, hitMental: -30, hitHeat: 10, fatigueCost: 30, isPassive: false, successChance: 0.70, icon: '🏺', miniGame: 'heirloom_catch' },
 
   // --- TIER 8: PRESIDENT ---
+  { id: 'the_campaign', tier: 'PRESIDENT', name: 'The Campaign', description: 'Run for the highest office in the land. Dark money, state-by-state strategy, and national destiny.', upfrontCost: 10000000, cloutReq: 50000, yieldCash: 10000000000, yieldClout: 10000000, yieldAura: 5000000, hitMental: -80, hitHeat: 20, fatigueCost: 100, isPassive: false, successChance: 0.4, icon: '🗳️', miniGame: 'campaign_trail' },
   { id: 'policy_flip', tier: 'PRESIDENT', name: 'Policy Influence', description: 'Shaping national legislation for profit.', upfrontCost: 5000000, cloutReq: 20000, yieldCash: 2000000, yieldClout: 5000, yieldAura: 1000, hitMental: -50, hitHeat: 50, fatigueCost: 60, isPassive: false, successChance: 0.7, icon: '⚖️' },
 
   // --- TIER 9: OPEN ---

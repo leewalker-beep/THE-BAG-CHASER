@@ -9,9 +9,10 @@ import { GrantSort } from './GrantSort';
 import { PatternMatch } from './PatternMatch';
 import { RateBalance } from './RateBalance';
 import { HeirloomCatch } from './HeirloomCatch';
+import { CampaignTrail } from './CampaignTrail';
 
 interface MiniGameEngineProps {
-  type: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch';
+  type: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail';
   onResult: (multiplier: number) => void;
 }
 
@@ -35,6 +36,7 @@ export function MiniGameEngine({ type, onResult }: MiniGameEngineProps) {
         {type === 'pattern_match' && <PatternMatch onComplete={onResult} />}
         {type === 'rate_balance' && <RateBalance onComplete={onResult} />}
         {type === 'heirloom_catch' && <HeirloomCatch onComplete={onResult} />}
+        {type === 'campaign_trail' && <CampaignTrail onComplete={onResult} />}
 
         <div className="p-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
       </motion.div>

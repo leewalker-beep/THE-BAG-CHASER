@@ -1,6 +1,6 @@
 import type { GameState, HustleID } from './types';
 
-export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setPlayerName' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'setMarket' | 'dismissNarrative' | 'adv' | 'deductCostAndRollOutcome' | 'upgradeHustle' | 'upgradeHustleNode' | 'upgradeHustleLevel' | 'purchaseHustleUpgrade' | 'unfreezeAccounts' | 'resolveBlacklist' | 'resolveShadowban' | 'resolveLaborStrike' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'setPodcastInput' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'setStreetwearInput' | 'setLaborInput' | 'setDeliveryInput' | 'setCurrentTier' | 'purchaseFlexAsset'> => {
+export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh' | 'setPlayerName' | 'setTab' | 'setActiveTab' | 'setActiveHustleView' | 'setMarket' | 'dismissNarrative' | 'adv' | 'deductCostAndRollOutcome' | 'upgradeHustle' | 'upgradeHustleNode' | 'upgradeHustleLevel' | 'purchaseHustleUpgrade' | 'unfreezeAccounts' | 'resolveBlacklist' | 'resolveShadowban' | 'resolveLaborStrike' | 'sourceTechPallet' | 'repairTech' | 'sellTech' | 'buyVintageStock' | 'recruitRunner' | 'payRunnerBonus' | 'signSmmClient' | 'resolveClientCrisis' | 'escapeTheMud' | 'setSwInput' | 'executeStreetwearDrop' | 'setTechFlipInput' | 'setPodcastInput' | 'setSaaSInput' | 'executeSaaSProject' | 'setFestivalInput' | 'executeConcertFestival' | 'setEcomBrandInput' | 'executeEcomBrand' | 'setAgencyInput' | 'executeAgencyRetainer' | 'setFranchiseInput' | 'setStreetwearInput' | 'setLaborInput' | 'setDeliveryInput' | 'setCampaignState' | 'setCurrentTier' | 'purchaseFlexAsset'> => {
   const allHustles: string[] = [
     'r_labor', 'r_delivery', 'r_survey', 'r_plasma', 'r_scrap', 'r_vending',
     'r_flyers', 'r_pr_campaign', 'r_ghost_mode',
@@ -172,6 +172,20 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         weeks: 1,
         fleetType: 'E-BIKE',
         wageLevel: 'BALANCED',
+      },
+      campaignState: {
+        phase: 'PARTY',
+        party: null,
+        runningMate: null,
+        fundraising: 50000000,
+        polling: 40,
+        momentum: 0,
+        turnout: 50,
+        round: 1,
+        usedPACs: [],
+        stateModifiers: {},
+        endorsements: [],
+        primarySupport: 100,
       },
       hypeIsActive: false,
       lastExecutedHustleId: null,
