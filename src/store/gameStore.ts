@@ -10,6 +10,7 @@ import { MASTER_HUSTLE_REGISTRY } from '../engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from '../config/hustleProgression';
 import { FLEX_ASSETS } from '../config/flexAssets';
 import { MARKET_CONFIGS } from '../config/marketConfig';
+import { NARRATIVE_BEATS } from '../config/narrativeConfig';
 import { useJuiceStore } from './juiceStore';
 import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, UPGRADE_COSTS } from '../config/balanceConfig';
 
@@ -106,6 +107,11 @@ export const useGameStore = create<GameState>()(
       setActiveHustleView: (activeHustleView) => set({ activeHustleView }),
 
       setMarket: (currentMarket) => set({ currentMarket }),
+
+      dismissNarrative: () => set((state) => ({
+        activeNarrative: null,
+        lastNarrativeTriggered: state.activeNarrative || state.lastNarrativeTriggered
+      })),
 
       adv: (intervals = 1) => set((state) => applyAdvancement(state, intervals)),
 
@@ -234,6 +240,8 @@ export const useGameStore = create<GameState>()(
           nextStats.unlockedAchievements.push(`${tierName} Unlocked`);
         }
 
+        const shouldTriggerNarrative = NARRATIVE_BEATS[tierName] && state.lastNarrativeTriggered !== tierName;
+
         const nextState = {
           ...state,
           pl: {
@@ -243,7 +251,8 @@ export const useGameStore = create<GameState>()(
             currentTier: tierName,
             stats: nextStats
           },
-          news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news]
+          news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news],
+          activeNarrative: shouldTriggerNarrative ? tierName : state.activeNarrative
         };
         return clampStats(nextState);
       }),

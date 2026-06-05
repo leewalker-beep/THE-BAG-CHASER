@@ -187,6 +187,8 @@ export interface GameState {
   currentMarket: MarketType;
   fatalCause: string | null;
   promotionNotified: Record<string, boolean>;
+  activeNarrative: GameTab | null;
+  lastNarrativeTriggered: GameTab | null;
 
   // Base Actions
   setPh: (ph: GameState['ph']) => void;
@@ -195,6 +197,7 @@ export interface GameState {
   setActiveTab: (tab: GameTab) => void;
   setActiveHustleView: (hustleId: string | null) => void;
   setMarket: (market: MarketType) => void;
+  dismissNarrative: () => void;
   adv: (intervals?: number) => void;
   deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean, yieldMultiplier?: number) => void;
   upgradeHustle: (hustleId: string) => void;
