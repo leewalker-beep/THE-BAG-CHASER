@@ -91,5 +91,17 @@ export const DEATH_MESSAGES: Record<string, DeathMessage> = {
   the_campaign_primary: {
     message: "Your party abandoned you. You're now a cautionary tale on cable news.",
     badge: "PRIMARY REJECT"
+  },
+  the_coup: {
+    message: "Your plot was discovered. You're in a federal prison now.",
+    badge: "TRAITOR"
+  },
+  the_legacy: {
+    message: "You tried to shape the world from the shadows. The world didn't notice.",
+    badge: "FOOTNOTE"
+  },
+  the_icon: {
+    message: "You chased fame until you became a punchline. The internet has moved on.",
+    badge: "PUNCHLINE"
   }
 };

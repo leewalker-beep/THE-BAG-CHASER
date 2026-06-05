@@ -36,4 +36,7 @@ export const HUSTLE_TONES: Record<string, HustleTone> = {
   central_bank_play: { font: 'font-serif', colors: { primary: '#b45309', secondary: '#78350f', accent: '#fef3c7' }, animation: 'monetary', interaction: 'click-heavy', icon: '🏦', theme: 'monetary' },
   legacy_fund: { font: 'font-serif', colors: { primary: '#ca8a04', secondary: '#854d0e', accent: '#fef9c3' }, animation: 'timeless', interaction: 'click-soft', icon: '🏺', theme: 'timeless' },
   the_campaign: { font: 'font-serif', colors: { primary: '#dc2626', secondary: '#1e40af', accent: '#ffffff' }, animation: 'official', interaction: 'click-heavy', icon: '🗳️', theme: 'political' },
+  the_coup: { font: 'font-mono', colors: { primary: '#450a0a', secondary: '#1e1b4b', accent: '#f87171' }, animation: 'tactical', interaction: 'click-heavy', icon: '🕵️', theme: 'dark-ops' },
+  the_legacy: { font: 'font-serif', colors: { primary: '#92400e', secondary: '#451a03', accent: '#fde68a' }, animation: 'elegant', interaction: 'click-soft', icon: '🏺', theme: 'prestige' },
+  the_icon: { font: 'font-sans', colors: { primary: '#db2777', secondary: '#4338ca', accent: '#f472b6' }, animation: 'viral', interaction: 'click-soft', icon: '✨', theme: 'glossy' },
 };
