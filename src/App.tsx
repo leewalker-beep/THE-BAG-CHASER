@@ -10,6 +10,7 @@ import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
+import { StatsDashboard } from './components/StatsDashboard';
 import { ProgressionPanel } from './components/hustles/ProgressionPanel';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
 import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
@@ -154,6 +155,7 @@ function App() {
       upgradeHustleNode: s.upgradeHustleNode,
       upgradeHustleLevel: s.upgradeHustleLevel,
       purchaseHustleUpgrade: s.purchaseHustleUpgrade,
+      purchaseFlexAsset: s.purchaseFlexAsset,
     }) as GameState)
   );
 
@@ -165,6 +167,7 @@ function App() {
 
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
   const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
+  const [showStats, setShowStats] = useState(false);
   const isAnimating = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -377,7 +380,15 @@ function App() {
 
           {/* RIGHT COLUMN: THE WEALTH TERMINAL */}
           <div className="flex flex-col text-right font-mono select-none">
-            <span className="text-[9px] tracking-widest text-slate-500 uppercase font-bold scale-90 origin-right">LIQUID CAPITAL</span>
+            <div className="flex items-center justify-end">
+               <button
+                onClick={() => setShowStats(true)}
+                className="text-lg hover:scale-110 transition-transform active:scale-95 px-2"
+                title="View Stats Dashboard"
+               >
+                 📊
+               </button>
+            </div>
             <span className="text-2xl font-black text-emerald-400 tracking-tight font-mono -mt-0.5">
               ${displayedCash.toLocaleString()}
             </span>
@@ -524,6 +535,17 @@ function App() {
         </AnimatePresence>
       </div>
 
+      <AnimatePresence>
+        {showStats && (
+          <StatsDashboard
+            stats={pl.stats}
+            assets={pl.assetsOwned}
+            onClose={() => setShowStats(false)}
+            monthsPlayed={pl.mo}
+          />
+        )}
+      </AnimatePresence>
+
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto p-4 pb-28 space-y-4 touch-pan-y max-w-4xl mx-auto w-full">
         {pl.crises.accountsFrozen && (
@@ -543,13 +565,10 @@ function App() {
           (() => {
             if (activeTab === 'FLEX1') {
               return (
-                <div className="mb-8 p-12 bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center text-center gap-6 opacity-60">
-                  <div className="text-4xl opacity-40">⚙️</div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-black uppercase tracking-[0.3em] text-slate-500">FLEX ACQUISITIONS MARKET</h3>
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest max-w-xs">DECK UNDER CONSTRUCTION (YACHTS / REAL ESTATE / LIQUIDITY TRADING)</p>
-                  </div>
-                </div>
+                <FlexAcquisitionPanel
+                  assets={pl.assetsOwned}
+                  onPurchase={state.purchaseFlexAsset}
+                />
               );
             }
 
@@ -851,5 +870,49 @@ function SubGamePanel({ hustleId, onBack, state, onExecute }: { hustleId: string
   );
 }
 
+
+function FlexAcquisitionPanel({ assets, onPurchase }: { assets: PlayerStats['assetsOwned'], onPurchase: GameState['purchaseFlexAsset'] }) {
+  const FLEX_ITEMS: { id: keyof PlayerStats['assetsOwned'], name: string, cost: number, icon: string }[] = [
+    { id: 'watches', name: 'Luxury Timepiece', cost: 15000, icon: '⌚' },
+    { id: 'cars', name: 'Supercar', cost: 250000, icon: '🏎️' },
+    { id: 'yachts', name: 'Personal Yacht', cost: 2500000, icon: '🛥️' },
+    { id: 'penthouses', name: 'Sky-High Penthouse', cost: 10000000, icon: '🏙️' },
+    { id: 'jets', name: 'Private Jet', cost: 35000000, icon: '🛩️' },
+    { id: 'resorts', name: 'Private Island Resort', cost: 150000000, icon: '🏝️' },
+    { id: 'franchises', name: 'Global Sports Franchise', cost: 2500000000, icon: '🏟️' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2 mb-8">
+        <h2 className="text-2xl font-black uppercase tracking-tighter text-white italic">FLEX ACQUISITIONS MARKET</h2>
+        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Convert liquid capital into permanent social status.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {FLEX_ITEMS.map(item => (
+          <div key={item.id} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-center justify-between group hover:border-emerald-500/50 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">{item.icon}</div>
+              <div className="flex flex-col">
+                <span className="text-xs font-black text-white uppercase tracking-widest">{item.name}</span>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold">${item.cost.toLocaleString()}</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-[10px] font-black text-slate-500 uppercase">OWNED: {assets[item.id] || 0}</div>
+              <button
+                onClick={() => onPurchase(item.id, item.cost, item.name)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-[10px] font-black uppercase rounded transition-all active:scale-95"
+              >
+                Buy
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default App;

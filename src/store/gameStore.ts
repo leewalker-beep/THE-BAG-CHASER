@@ -114,11 +114,14 @@ export const useGameStore = create<GameState>()(
         if (state.pl.bag < UNFREEZE_COST) {
           return { news: [`INSUFFICIENT FUNDS: Need $${UNFREEZE_COST.toLocaleString()} to retain legal counsel and unfreeze accounts.`, ...state.news] };
         }
+        const nextStats = { ...state.pl.stats };
+        nextStats.crisisCounts.frozen += 1;
         return {
           pl: {
             ...state.pl,
             bag: state.pl.bag - UNFREEZE_COST,
-            crises: { ...state.pl.crises, accountsFrozen: false }
+            crises: { ...state.pl.crises, accountsFrozen: false },
+            stats: nextStats
           },
           news: ["SYSTEM: Legal retainer paid. Corporate accounts have been UNFROZEN.", ...state.news]
         };
@@ -142,11 +145,16 @@ export const useGameStore = create<GameState>()(
         if (state.pl.bag < RESOLVE_SHADOWBAN_COST) {
           return { news: [`INSUFFICIENT FUNDS: Need $${RESOLVE_SHADOWBAN_COST.toLocaleString()} for a managed PR scrub to lift the shadowban.`, ...state.news] };
         }
+        const nextStats = { ...state.pl.stats };
+        if (!nextStats.unlockedAchievements.includes('Shadowban Survivor')) {
+          nextStats.unlockedAchievements.push('Shadowban Survivor');
+        }
         return {
           pl: {
             ...state.pl,
             bag: state.pl.bag - RESOLVE_SHADOWBAN_COST,
-            crises: { ...state.pl.crises, shadowbanTurns: 0 }
+            crises: { ...state.pl.crises, shadowbanTurns: 0 },
+            stats: nextStats
           },
           news: ["SYSTEM: Digital footprint scrubbed. The SHADOWBAN has been lifted.", ...state.news]
         };
@@ -175,13 +183,38 @@ export const useGameStore = create<GameState>()(
         }
 
         const newTier = TAB_TIER_MAPPING[tierName];
+        const nextStats = { ...state.pl.stats };
+
+        // Finalize old tier record
+        if (nextStats.tierHistory[state.pl.currentTier]) {
+          // No explicit time-to-reach field in TierHistoryEntry interface?
+          // Re-checking types.ts: reachedAtMonth is there.
+        }
+
+        // Initialize new tier record
+        nextStats.tierHistory[tierName] = {
+          reachedAtMonth: state.pl.mo,
+          cashEarned: 0,
+          cloutDelta: 0,
+          auraDelta: 0,
+          hustlesExecuted: {},
+          crises: [],
+          flexAssets: [],
+          milestone: `Reached ${tierName}`
+        };
+
+        if (!nextStats.unlockedAchievements.includes(`${tierName} Unlocked`)) {
+          nextStats.unlockedAchievements.push(`${tierName} Unlocked`);
+        }
+
         const nextState = {
           ...state,
           pl: {
             ...state.pl,
             bag: state.pl.bag - fee,
             tier: newTier,
-            currentTier: tierName
+            currentTier: tierName,
+            stats: nextStats
           },
           news: [`SYSTEM: Tier upgraded to ${tierName}. Filing fees of $${fee.toLocaleString()} deducted.`, ...state.news]
         };
@@ -772,6 +805,70 @@ export const useGameStore = create<GameState>()(
             }
           }
 
+          const nextStats = { ...state.pl.stats };
+          const currentTierStats = nextStats.tierHistory[state.pl.currentTier] || {
+            reachedAtMonth: state.pl.mo,
+            cashEarned: 0,
+            cloutDelta: 0,
+            auraDelta: 0,
+            hustlesExecuted: {},
+            crises: [],
+            flexAssets: [],
+            milestone: ''
+          };
+
+          nextStats.totalHustles += 1;
+          if (isSuccess) nextStats.successfulHustles += 1;
+          nextStats.lifetimeEarnings += finalYieldCash;
+
+          currentTierStats.cashEarned += finalYieldCash;
+          currentTierStats.cloutDelta += finalYieldClout;
+          currentTierStats.auraDelta += finalYieldAura;
+          currentTierStats.hustlesExecuted[hustleId] = (currentTierStats.hustlesExecuted[hustleId] || 0) + 1;
+
+          if (isSuccess) {
+            const nextStreak = state.pl.streak + 1;
+            if (nextStreak > nextStats.highestStreak) {
+              nextStats.highestStreak = nextStreak;
+            }
+          }
+
+          // Achievement checks
+          if (nextStats.lifetimeEarnings >= 1000000 && !nextStats.unlockedAchievements.includes('First Million')) {
+            nextStats.unlockedAchievements.push('First Million');
+            currentNews.unshift("🏆 ACHIEVEMENT UNLOCKED: First Million ($1,000,000 earned)");
+          }
+          if (nextStats.highestStreak >= 10 && !nextStats.unlockedAchievements.includes('10x Streak')) {
+            nextStats.unlockedAchievements.push('10x Streak');
+            currentNews.unshift("🏆 ACHIEVEMENT UNLOCKED: 10x Streak");
+          }
+          if (nextStats.totalHustles >= 100 && !nextStats.unlockedAchievements.includes('100 Hustles Executed')) {
+            nextStats.unlockedAchievements.push('100 Hustles Executed');
+            currentNews.unshift("🏆 ACHIEVEMENT UNLOCKED: 100 Hustles Executed");
+          }
+
+          // Crisis Logging
+          if (!isSuccess && !forceSuccess) {
+             if (nextCrises.shadowbanTurns > state.pl.crises.shadowbanTurns) {
+               nextStats.crisisCounts.shadowbans += 1;
+               currentTierStats.crises.push('Shadowban');
+             }
+             if (nextCrises.blacklistTurns > state.pl.crises.blacklistTurns) {
+               nextStats.crisisCounts.blacklists += 1;
+               currentTierStats.crises.push('Blacklist');
+             }
+             if (nextCrises.laborStrikeTurns > state.pl.crises.laborStrikeTurns) {
+               nextStats.crisisCounts.strikes += 1;
+               currentTierStats.crises.push('Labor Strike');
+             }
+             if (nextCrises.accountsFrozen && !state.pl.crises.accountsFrozen) {
+               nextStats.crisisCounts.frozen += 1;
+               currentTierStats.crises.push('Frozen Accounts');
+             }
+          }
+
+          nextStats.tierHistory[state.pl.currentTier] = currentTierStats;
+
           const nextPl = {
             ...state.pl,
             bag: state.pl.bag - effectiveUpfrontCost + finalYieldCash,
@@ -791,6 +888,7 @@ export const useGameStore = create<GameState>()(
             lastExecutedHustleId: hustleId,
             streak: isSuccess ? state.pl.streak + 1 : 0,
             crises: nextCrises,
+            stats: nextStats,
             ...nextPlOverrides
           };
 
@@ -855,6 +953,37 @@ export const useGameStore = create<GameState>()(
           franchisePanel: { ...state.pl.franchisePanel, [field]: value }
         }
       })),
+
+      purchaseFlexAsset: (assetType, cost, name) => set((state) => {
+        if (state.pl.bag < cost) {
+          return { news: [`INSUFFICIENT FUNDS: Need $${cost.toLocaleString()} for ${name}.`, ...state.news] };
+        }
+        const nextStats = { ...state.pl.stats };
+        const currentTierStats = nextStats.tierHistory[state.pl.currentTier];
+        if (currentTierStats) {
+          currentTierStats.flexAssets.push(name);
+        }
+
+        const nextAssets = {
+          ...state.pl.assetsOwned,
+          [assetType]: state.pl.assetsOwned[assetType] + 1
+        };
+
+        const totalFlex = nextAssets.watches + nextAssets.cars + nextAssets.yachts + nextAssets.penthouses + nextAssets.jets + nextAssets.resorts + nextAssets.franchises;
+        if (totalFlex >= 5 && !nextStats.unlockedAchievements.includes('Flex Collector')) {
+          nextStats.unlockedAchievements.push('Flex Collector');
+        }
+
+        return {
+          pl: {
+            ...state.pl,
+            bag: state.pl.bag - cost,
+            assetsOwned: nextAssets,
+            stats: nextStats
+          },
+          news: [`ASSET ACQUIRED: ${name} added to your collection.`, ...state.news]
+        };
+      }),
     }),
     {
       name: SAVE_KEY,

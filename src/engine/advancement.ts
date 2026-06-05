@@ -88,6 +88,11 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     // Crisis Turn Counters
     if (currentPl.crises.shadowbanTurns > 0) {
       currentPl.crises.shadowbanTurns -= 1;
+      if (currentPl.crises.shadowbanTurns === 0) {
+        if (!currentPl.stats.unlockedAchievements.includes('Shadowban Survivor')) {
+          currentPl.stats.unlockedAchievements.push('Shadowban Survivor');
+        }
+      }
     }
     if (currentPl.crises.blacklistTurns > 0) {
       currentPl.crises.blacklistTurns -= 1;
