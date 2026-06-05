@@ -48,10 +48,8 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
 
           <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
             <div className="text-emerald-400 font-bold">Yield: ${activeNode.yieldCash.toLocaleString()}</div>
-            <div className="text-blue-400 font-bold">Mental: {activeNode.hitMental}</div>
             <div className="text-indigo-400 font-bold">Clout: +{activeNode.yieldClout}</div>
             <div className="text-purple-400 font-bold">Aura: +{activeNode.yieldAura}</div>
-            <div className="text-orange-400 font-bold">Success: {Math.round(activeNode.successChance * 100)}%</div>
             {activeNode.passiveMonthlyYield > 0 && (
               <div className="text-amber-400 font-bold">Passive: ${activeNode.passiveMonthlyYield.toLocaleString()}/mo</div>
             )}
