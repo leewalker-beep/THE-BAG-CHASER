@@ -8,9 +8,10 @@ interface StatsDashboardProps {
   flexAssets: PlayerStats['flexAssets'];
   onClose: () => void;
   monthsPlayed: number;
+  deathBadge?: string | null;
 }
 
-export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, flexAssets, onClose, monthsPlayed }) => {
+export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, flexAssets, onClose, monthsPlayed, deathBadge }) => {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   const successRate = stats.totalHustles > 0
@@ -40,6 +41,20 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, flexAsset
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-8 scrollbar-none">
+          {/* Death Badge (if applicable) */}
+          {deathBadge && (
+            <section className="animate-in fade-in slide-in-from-top-4 duration-700">
+              <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-4">POST-MORTEM STATUS</h3>
+              <div className="bg-red-950/20 border-2 border-red-900/40 p-6 rounded-2xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9px] text-red-400 font-bold uppercase tracking-widest mb-1">Final Reputation</div>
+                  <div className="text-3xl font-black text-white italic tracking-tighter uppercase">💀 {deathBadge}</div>
+                </div>
+                <div className="text-4xl grayscale opacity-50">⚰️</div>
+              </div>
+            </section>
+          )}
+
           {/* Career Overview */}
           <section>
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">CAREER OVERVIEW</h3>

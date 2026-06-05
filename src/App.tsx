@@ -9,6 +9,7 @@ import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
+import { DEATH_MESSAGES } from './config/deathMessages';
 import { NARRATIVE_BEATS } from './config/narrativeConfig';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { StatsDashboard } from './components/StatsDashboard';
@@ -134,6 +135,7 @@ function App() {
       pl: s.pl,
       ph: s.ph,
       fatalCause: s.fatalCause,
+      deathBadge: s.deathBadge,
       news: s.news,
       activeTab: s.activeTab,
       setActiveTab: s.setActiveTab,
@@ -168,7 +170,7 @@ function App() {
   );
 
   const {
-    pl, ph, fatalCause, news,
+    pl, ph, fatalCause, deathBadge, news,
     activeTab, setActiveTab, activeHustleView, setActiveHustleView,
     currentMarket
   } = state;
@@ -349,14 +351,75 @@ function App() {
   }
 
   if (ph === 'POST_MORTEM') {
+    const lastHustleId = pl.lastExecutedHustleId || 'DEFAULT';
+    const deathInfo = DEATH_MESSAGES[lastHustleId] || DEATH_MESSAGES['DEFAULT'];
+
     return (
-      <div className="min-h-screen bg-black text-red-500 flex flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-6xl font-black mb-4">GAME OVER</h1>
-        <p className="text-2xl mb-8 font-mono">{fatalCause}</p>
-        <div className="space-y-4">
-           <button onClick={() => state.setPh('PROLOGUE_INTRO')} className="block w-64 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded">BACK TO START</button>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-[20000] bg-black flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
+      >
+        <div className="max-w-2xl w-full space-y-8 py-12">
+          <motion.h1
+            initial={{ scale: 0.8, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            className="text-7xl md:text-9xl font-black text-red-600 tracking-tighter italic mb-4"
+          >
+            GAME OVER
+          </motion.h1>
+
+          <div className="space-y-2">
+            <p className="text-red-500 font-mono text-lg uppercase tracking-widest">{fatalCause}</p>
+            <div className="h-px w-24 bg-red-900 mx-auto my-4" />
+            <p className="text-slate-400 font-mono italic text-sm md:text-base leading-relaxed px-4">
+              "{deathInfo.message}"
+            </p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-slate-900/50 border-2 border-red-900/30 p-8 rounded-3xl inline-block"
+          >
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-3">Earned Death Badge</div>
+            <div className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase italic drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+              💀 {deathBadge || deathInfo.badge}
+            </div>
+          </motion.div>
+
+          <div className="flex flex-col md:flex-row gap-4 justify-center pt-8">
+            <button
+              onClick={() => {
+                useGameStore.setState({ deathBadge: null });
+                state.setPh('PROLOGUE_INTRO');
+              }}
+              className="px-12 py-5 bg-red-600 hover:bg-red-500 text-black font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-red-900/20"
+            >
+              RUN IT BACK
+            </button>
+            <button
+              onClick={() => setShowStats(true)}
+              className="px-12 py-5 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest transition-all active:scale-95 border border-slate-700"
+            >
+              VIEW AUTOPSY
+            </button>
+          </div>
         </div>
-      </div>
+
+        <AnimatePresence>
+          {showStats && (
+            <StatsDashboard
+              stats={pl.stats}
+              flexAssets={pl.flexAssets}
+              onClose={() => setShowStats(false)}
+              monthsPlayed={pl.mo}
+              deathBadge={deathBadge || deathInfo.badge}
+            />
+          )}
+        </AnimatePresence>
+      </motion.div>
     );
   }
 
@@ -646,6 +709,7 @@ function App() {
             flexAssets={pl.flexAssets}
             onClose={() => setShowStats(false)}
             monthsPlayed={pl.mo}
+          deathBadge={deathBadge}
           />
         )}
       </AnimatePresence>
