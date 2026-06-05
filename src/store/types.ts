@@ -195,7 +195,7 @@ export interface GameState {
   setActiveHustleView: (hustleId: string | null) => void;
   setMarket: (market: MarketType) => void;
   adv: (intervals?: number) => void;
-  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean) => void;
+  deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean, yieldMultiplier?: number) => void;
   upgradeHustle: (hustleId: string) => void;
   upgradeHustleNode: (hustleId: string, nodeId: string) => void;
   upgradeHustleLevel: (hustleId: string, branchPath: string) => void;

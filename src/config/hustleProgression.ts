@@ -163,4 +163,28 @@ export const HUSTLE_PROGRESSIONS: Record<string, Record<string, HustleNode>> = {
     l3b: { id: 'l3b', name: 'Market Maker', cost: 300000000, yieldCash: 0, yieldClout: 75000, yieldAura: 30000, successChance: 0.9, hitMental: -15, passiveMonthlyYield: 150000000, nextNodes: ['l4a'] },
     l4a: { id: 'l4a', name: 'Hegemony', cost: 1000000000, yieldCash: 750000000, yieldClout: 500000, yieldAura: 250000, successChance: 0.8, hitMental: -25, passiveMonthlyYield: 0, nextNodes: [] },
   },
+  data_analytics: {
+    l1: { id: 'l1', name: 'Freelance Analyst', cost: 5000, yieldCash: 12000, yieldClout: 20, yieldAura: 10, successChance: 0.85, hitMental: -15, passiveMonthlyYield: 0, nextNodes: ['l2a', 'l2b'] },
+    l2a: { id: 'l2a', name: 'Boutique Analytics', cost: 25000, yieldCash: 60000, yieldClout: 100, yieldAura: 50, successChance: 0.8, hitMental: -25, passiveMonthlyYield: 0, nextNodes: ['l3a', 'l3b'], cloutReq: 60 },
+    l2b: { id: 'l2b', name: 'Data Pipeline Service', cost: 15000, yieldCash: 0, yieldClout: 50, yieldAura: 30, successChance: 0.85, hitMental: -15, passiveMonthlyYield: 10000, nextNodes: ['l3a'] },
+    l3a: { id: 'l3a', name: 'Enterprise Intelligence', cost: 100000, yieldCash: 250000, yieldClout: 500, yieldAura: 200, successChance: 0.75, hitMental: -35, passiveMonthlyYield: 0, nextNodes: ['l4a'] },
+    l3b: { id: 'l3b', name: 'Insight Dashboard SaaS', cost: 50000, yieldCash: 0, yieldClout: 200, yieldAura: 100, successChance: 0.8, hitMental: -20, passiveMonthlyYield: 40000, nextNodes: ['l4a'] },
+    l4a: { id: 'l4a', name: 'Global Oracle', cost: 1000000, yieldCash: 2000000, yieldClout: 5000, yieldAura: 1000, successChance: 0.7, hitMental: -50, passiveMonthlyYield: 0, nextNodes: [] },
+  },
+  crypto_mining: {
+    l1: { id: 'l1', name: 'Single GPU Rig', cost: 8000, yieldCash: 5000, yieldClout: 5, yieldAura: -10, successChance: 0.8, hitMental: -5, passiveMonthlyYield: 0, nextNodes: ['l2a', 'l2b'] },
+    l2a: { id: 'l2a', name: 'ASIC Farm', cost: 40000, yieldCash: 35000, yieldClout: 20, yieldAura: -20, successChance: 0.75, hitMental: -15, passiveMonthlyYield: 0, nextNodes: ['l3a', 'l3b'] },
+    l2b: { id: 'l2b', name: 'Mining Pool Host', cost: 20000, yieldCash: 0, yieldClout: 50, yieldAura: 0, successChance: 0.85, hitMental: -10, passiveMonthlyYield: 15000, nextNodes: ['l3a'] },
+    l3a: { id: 'l3a', name: 'Industrial Mining Center', cost: 200000, yieldCash: 180000, yieldClout: 100, yieldAura: -50, successChance: 0.7, hitMental: -30, passiveMonthlyYield: 0, nextNodes: ['l4a'] },
+    l3b: { id: 'l3b', name: 'Cloud Mining Platform', cost: 100000, yieldCash: 0, yieldClout: 300, yieldAura: -20, successChance: 0.8, hitMental: -20, passiveMonthlyYield: 80000, nextNodes: ['l4a'] },
+    l4a: { id: 'l4a', name: 'Hashrate Hegemony', cost: 2500000, yieldCash: 2500000, yieldClout: 1000, yieldAura: -200, successChance: 0.65, hitMental: -50, passiveMonthlyYield: 0, nextNodes: [] },
+  },
+  virtual_assistant_agency: {
+    l1: { id: 'l1', name: 'Solo VA Shop', cost: 3000, yieldCash: 8000, yieldClout: 30, yieldAura: 20, successChance: 0.9, hitMental: -12, passiveMonthlyYield: 0, nextNodes: ['l2a', 'l2b'] },
+    l2a: { id: 'l2a', name: 'VA Boutique', cost: 15000, yieldCash: 40000, yieldClout: 100, yieldAura: 50, successChance: 0.85, hitMental: -20, passiveMonthlyYield: 0, nextNodes: ['l3a', 'l3b'] },
+    l2b: { id: 'l2b', name: 'Training Academy', cost: 10000, yieldCash: 0, yieldClout: 150, yieldAura: 80, successChance: 0.85, hitMental: -15, passiveMonthlyYield: 10000, nextNodes: ['l3a'] },
+    l3a: { id: 'l3a', name: 'Global BPO Firm', cost: 75000, yieldCash: 200000, yieldClout: 400, yieldAura: 150, successChance: 0.8, hitMental: -30, passiveMonthlyYield: 0, nextNodes: ['l4a'] },
+    l3b: { id: 'l3b', name: 'AI-Automated VA', cost: 50000, yieldCash: 0, yieldClout: 250, yieldAura: 100, successChance: 0.8, hitMental: -20, passiveMonthlyYield: 50000, nextNodes: ['l4a'] },
+    l4a: { id: 'l4a', name: 'Labor Arbitrage Empire', cost: 1000000, yieldCash: 3000000, yieldClout: 1500, yieldAura: 500, successChance: 0.75, hitMental: -40, passiveMonthlyYield: 0, nextNodes: [] },
+  },
 };

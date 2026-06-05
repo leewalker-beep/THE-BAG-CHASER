@@ -42,4 +42,9 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType<PanelProps>> = {
   'audio': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'audio' }),
   'policy_flip': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'policy_flip' }),
   'global_index': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'global_index' }),
+
+  // Step 3 STARTUP Content
+  'data_analytics': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'data_analytics' }),
+  'crypto_mining': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'crypto_mining' }),
+  'virtual_assistant_agency': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'virtual_assistant_agency' }),
 };

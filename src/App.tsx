@@ -11,6 +11,7 @@ import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { StatsDashboard } from './components/StatsDashboard';
+import { MiniGameEngine } from './components/minigames/MiniGameEngine';
 import { ProgressionPanel } from './components/hustles/ProgressionPanel';
 import { DefaultPanel } from './components/hustles/panels/DefaultPanel';
 import { TIER_REQUIREMENTS, UNFREEZE_COST, HUSTLE_BALANCE, RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST } from './config/balanceConfig';
@@ -123,6 +124,9 @@ function canAffordHustle(id: string, pl: PlayerStats | null, marketType: MarketT
 }
 
 function App() {
+  useEffect(() => {
+    (window as any).useGameStore = useGameStore;
+  }, []);
   const state = useGameStore(
     useShallow((s: GameState) => ({
       pl: s.pl,
@@ -168,6 +172,7 @@ function App() {
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
   const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
   const [showStats, setShowStats] = useState(false);
+  const [activeMiniGame, setActiveMiniGame] = useState<{ type: 'chart_match' | 'tap_mine' | 'tic_tac_toe', hustleId: string } | null>(null);
   const isAnimating = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -184,8 +189,16 @@ function App() {
     }
   }, [pl?.bag]);
 
-  const executeHustle = async (id: string, forceSuccess?: boolean) => {
+  const executeHustle = async (id: string, forceSuccess?: boolean, yieldMultiplier?: number) => {
     if (!pl) return;
+
+    const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === id);
+
+    // Mini-Game Interception
+    if (config?.miniGame && yieldMultiplier === undefined) {
+      setActiveMiniGame({ type: config.miniGame, hustleId: id });
+      return;
+    }
 
     // Cooldown Guards
     if ((id === 'drop' || id === 'vintage' || id === 'sw') && pl?.swCooldownTurns > 0) {
@@ -221,7 +234,7 @@ function App() {
 
     // Phase 2: Splash Impact
     await new Promise(r => setTimeout(r, 150));
-    state.deductCostAndRollOutcome(id, forceSuccess);
+    state.deductCostAndRollOutcome(id, forceSuccess, yieldMultiplier);
     const bagAfter = useGameStore.getState().pl.bag;
     const netPayout = bagAfter - floorCash;
 
@@ -481,6 +494,23 @@ function App() {
       </div>
 
       <HeatDrizzle heat={heat} />
+
+      {/* MINI-GAME OVERLAY */}
+      <AnimatePresence>
+        {activeMiniGame && (
+          <MiniGameEngine
+            type={activeMiniGame.type}
+            onResult={(multiplier) => {
+              const id = activeMiniGame.hustleId;
+              setActiveMiniGame(null);
+              // Win (1.0) or Draw (0.75) results in forced success.
+              // Loss (0.5) lets the natural success chance decide, but yields half.
+              const forceSuccess = multiplier >= 0.75 ? true : undefined;
+              executeHustle(id, forceSuccess, multiplier);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* CENTER IMPACT SPLASH */}
       {cashSplash && (
