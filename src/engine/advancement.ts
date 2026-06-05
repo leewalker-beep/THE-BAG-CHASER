@@ -1,5 +1,6 @@
 import type { GameState, HustleID, MarketType } from '../store/types';
 import { MARKET_CONFIGS } from '../config/marketConfig';
+import { FLEX_ASSETS } from '../config/flexAssets';
 import { useJuiceStore } from '../store/juiceStore';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
@@ -31,12 +32,20 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     const vendingYield = (currentPl.assetsOwned?.vendingMachines || 0) * 250;
     const musicYield = (currentPl.assetsOwned?.masterTracks || 0) * 150;
 
+    let flexPassiveYield = 0;
+    FLEX_ASSETS.forEach(asset => {
+      const count = currentPl.flexAssets[asset.id] || 0;
+      if (count > 0 && asset.passiveMonthlyYield) {
+        flexPassiveYield += asset.passiveMonthlyYield * count;
+      }
+    });
+
     let treePassiveYield = 0;
     Object.values(currentPl.treePassiveYields).forEach(val => {
       treePassiveYield += val;
     });
 
-    const totalPassiveYield = vendingYield + musicYield + (currentPl.passiveLaborYield || 0) + treePassiveYield;
+    const totalPassiveYield = vendingYield + musicYield + (currentPl.passiveLaborYield || 0) + treePassiveYield + flexPassiveYield;
 
     currentPl.bag += totalPassiveYield;
     currentPl.bag -= totalMonthlyRent;

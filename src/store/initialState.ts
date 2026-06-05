@@ -114,6 +114,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
         studioOwned: false,
       },
       passiveLaborYield: 0,
+      flexAssets: {},
       assetsOwned: {
         vendingMachines: 0,
         masterTracks: 0,

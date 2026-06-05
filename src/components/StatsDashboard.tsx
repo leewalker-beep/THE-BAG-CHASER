@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { GameStats, TierHistoryEntry } from '../store/types';
+import type { GameStats, TierHistoryEntry, PlayerStats } from '../store/types';
+import { FLEX_ASSETS } from '../config/flexAssets';
 
 interface StatsDashboardProps {
   stats: GameStats;
-  assets: any;
+  flexAssets: PlayerStats['flexAssets'];
   onClose: () => void;
   monthsPlayed: number;
 }
 
-export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, assets, onClose, monthsPlayed }) => {
+export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, flexAssets, onClose, monthsPlayed }) => {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   const successRate = stats.totalHustles > 0
@@ -71,13 +72,17 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({ stats, assets, o
           <section>
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">FLEX ASSETS OWNED</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatCard label="Watches" value={assets.watches.toString()} color={assets.watches > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Cars" value={assets.cars.toString()} color={assets.cars > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Yachts" value={assets.yachts.toString()} color={assets.yachts > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Penthouses" value={assets.penthouses.toString()} color={assets.penthouses > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Jets" value={assets.jets.toString()} color={assets.jets > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Resorts" value={assets.resorts.toString()} color={assets.resorts > 0 ? "text-orange-400" : "text-slate-500"} />
-              <StatCard label="Franchises" value={assets.franchises.toString()} color={assets.franchises > 0 ? "text-orange-400" : "text-slate-500"} />
+              {FLEX_ASSETS.map(asset => {
+                const count = flexAssets[asset.id] || 0;
+                return (
+                  <StatCard
+                    key={asset.id}
+                    label={asset.name}
+                    value={count.toString()}
+                    color={count > 0 ? "text-orange-400" : "text-slate-500"}
+                  />
+                );
+              })}
             </div>
           </section>
 

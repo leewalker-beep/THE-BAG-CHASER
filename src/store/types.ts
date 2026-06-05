@@ -85,6 +85,7 @@ export interface PlayerStats {
     studioOwned: boolean;
   };
   passiveLaborYield: number;
+  flexAssets: Record<string, number>;
   assetsOwned: {
     vendingMachines: number;
     masterTracks: number;
@@ -153,7 +154,7 @@ export interface GlobalModifiers {
   stressRiskModifier: number;
 }
 
-export type GameTab = 'MUD' | 'STREET' | 'STARTUP' | 'CORPORATE' | 'FLEX1' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
+export type GameTab = 'MUD' | 'STREET' | 'STARTUP' | 'CORPORATE' | 'FLEX' | 'ELITE' | 'MOGUL' | 'FLEX2' | 'PRESIDENT' | 'OPEN' | 'EXP';
 
 export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   MUD: 0,
@@ -162,7 +163,7 @@ export const TAB_TIER_MAPPING: Record<GameTab, number> = {
   CORPORATE: 3,
   ELITE: 4,
   MOGUL: 5,
-  FLEX1: 99, // Non-blocking sandbox
+  FLEX: 99, // Non-blocking sandbox
   FLEX2: 100,
   PRESIDENT: 6,
   OPEN: 7,
@@ -232,5 +233,5 @@ export interface GameState {
   setLaborInput: (field: keyof PlayerStats['laborPanel'], value: any) => void;
   setDeliveryInput: (field: keyof PlayerStats['deliveryPanel'], value: any) => void;
   setCurrentTier: (tierName: GameTab, fee?: number) => void;
-  purchaseFlexAsset: (assetType: keyof PlayerStats['assetsOwned'], cost: number, name: string) => void;
+  purchaseFlexAsset: (assetId: string) => void;
 }
