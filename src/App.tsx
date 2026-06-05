@@ -9,6 +9,7 @@ import type { GameState, GameTab, PlayerStats } from './store/types';
 import { MASTER_HUSTLE_REGISTRY } from './engine/hustleRegistry';
 import { HUSTLE_PROGRESSIONS } from './config/hustleProgression';
 import { HUSTLE_TONES, type HustleTone } from './config/hustleTone';
+import { NARRATIVE_BEATS } from './config/narrativeConfig';
 import { PANEL_REGISTRY } from './components/hustles/panelRegistry';
 import { StatsDashboard } from './components/StatsDashboard';
 import { FlexMarket } from './components/FlexMarket';
@@ -147,6 +148,8 @@ function App() {
       resolveShadowban: s.resolveShadowban,
       resolveLaborStrike: s.resolveLaborStrike,
       setCurrentTier: s.setCurrentTier,
+      activeNarrative: s.activeNarrative,
+      dismissNarrative: s.dismissNarrative,
       setLaborInput: s.setLaborInput,
       setDeliveryInput: s.setDeliveryInput,
       setPodcastInput: s.setPodcastInput,
@@ -317,6 +320,8 @@ function App() {
     bag, aura, clout, mentalHealth, heat, mo, plasmaUsedThisMonth
   } = pl;
 
+  const { activeNarrative, dismissNarrative } = state;
+
   const ageYears = 18 + Math.floor(mo / 12);
   const ageMonths = mo % 12;
 
@@ -358,6 +363,74 @@ function App() {
   return (
     <div className="h-screen w-full flex flex-col bg-[#020817] text-white font-mono overflow-hidden select-none selection:bg-emerald-500">
       <VFXManager />
+
+      <AnimatePresence>
+        {mentalHealth <= 10 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[11000] bg-red-950/90 flex flex-col items-center justify-center p-6 text-center"
+          >
+            <div className="text-red-500 text-8xl font-black mb-4 animate-pulse">CRITICAL</div>
+            <div className="text-white text-xl font-mono uppercase tracking-[0.3em] mb-8">SYSTEM COLLAPSE IMMINENT</div>
+            <p className="text-red-200 max-w-md font-bold uppercase text-sm leading-relaxed">
+              Your mental health has reached terminal levels. The pressure is crushing your reality. Find a way to recover or face total psychological blackout.
+            </p>
+          </motion.div>
+        )}
+        {heat >= 100 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[11000] bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center"
+          >
+             <div className="relative w-32 h-32 mb-8">
+               <div className="absolute inset-0 bg-red-600 rounded-full animate-ping opacity-25"></div>
+               <div className="absolute inset-4 bg-red-600 rounded-full flex items-center justify-center text-5xl">🚨</div>
+             </div>
+            <div className="text-red-600 text-5xl font-black mb-4 tracking-tighter uppercase">FEDS ARE WATCHING</div>
+            <div className="text-white text-lg font-mono uppercase tracking-widest mb-8">MAXIMUM HEAT DETECTED</div>
+            <p className="text-slate-400 max-w-md font-bold uppercase text-xs leading-relaxed">
+              You are currently under full surveillance. Every move is logged. Every dollar is traced. The next slip-up is your last.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activeNarrative && NARRATIVE_BEATS[activeNarrative] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="max-w-md w-full bg-slate-900 border-2 border-emerald-500/30 p-8 rounded-3xl shadow-2xl shadow-emerald-500/20 text-center space-y-6"
+            >
+              <div className="text-emerald-400 font-mono text-[10px] tracking-[0.3em] uppercase">Narrative Synchronization...</div>
+              <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-tight">
+                {NARRATIVE_BEATS[activeNarrative]!.title}
+              </h2>
+              <div className="h-px w-12 bg-emerald-500/50 mx-auto" />
+              <p className="text-slate-300 font-mono text-sm leading-relaxed">
+                {NARRATIVE_BEATS[activeNarrative]!.message}
+              </p>
+              <button
+                onClick={() => dismissNarrative()}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-900/40"
+              >
+                CONTINUE HUSTLE
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes molten-glow {
@@ -413,7 +486,7 @@ function App() {
         <div className="w-full px-4 pb-2">
           <div className="grid grid-cols-4 gap-1.5 bg-[#020817]/80 p-2 rounded-lg border border-slate-900 text-center">
             {/* CLOUT */}
-            <div className="flex flex-col items-center justify-center">
+            <div className={`flex flex-col items-center justify-center rounded border transition-all ${clout <= 10 ? 'animate-pulse border-blue-500 bg-blue-500/10' : 'border-transparent'}`}>
               <div className="text-[9px] text-slate-500 font-bold">CLT</div>
               <div className="flex items-center">
                 <span className="text-sm font-black text-blue-400">{clout}</span>
@@ -424,21 +497,21 @@ function App() {
             </div>
 
             {/* MENTAL HEALTH */}
-            <div className={`flex flex-col items-center justify-center transition-all ${mentalHealth <= 20 ? 'animate-heartbeat text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : ''}`}>
+            <div className={`flex flex-col items-center justify-center rounded border transition-all ${mentalHealth <= 25 ? 'animate-pulse border-red-500 bg-red-500/10' : 'border-transparent'} ${mentalHealth <= 20 ? 'animate-heartbeat' : ''}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">MNT</div>
               <div className="flex items-center">
-                <span className={`${mentalHealth <= 20 ? 'text-base font-black tracking-tight text-rose-500 scale-105 animate-pulse' : 'text-sm font-black text-emerald-400'}`}>{mentalHealth}%</span>
+                <span className={`${mentalHealth <= 25 ? 'text-base font-black tracking-tight text-rose-500 scale-105' : 'text-sm font-black text-emerald-400'}`}>{mentalHealth}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
-                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth={mentalHealth <= 20 ? "2.5" : "1.5"} />
+                  <path d="M0,5 L4,5 L6,2 L8,8 L10,5 L24,5" fill="none" stroke="currentColor" strokeWidth={mentalHealth <= 25 ? "2.5" : "1.5"} />
                 </svg>
               </div>
             </div>
 
             {/* AURA */}
-            <div className={`flex flex-col items-center justify-center transition-all ${aura <= 10 ? 'animate-heartbeat text-rose-500' : ''}`}>
+            <div className={`flex flex-col items-center justify-center rounded border transition-all ${aura <= 10 ? 'animate-pulse border-purple-500 bg-purple-500/10' : 'border-transparent'}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">AUR</div>
               <div className="flex items-center">
-                <span className={`${aura <= 10 ? 'text-base font-black tracking-tight text-rose-500 scale-105' : 'text-sm font-black text-purple-400'}`}>{aura}</span>
+                <span className={`${aura <= 10 ? 'text-base font-black tracking-tight text-purple-400 scale-105' : 'text-sm font-black text-purple-400'}`}>{aura}</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
                   <path d="M0,7 C4,7 6,3 12,5 S20,3 24,7" fill="none" stroke={aura <= 10 ? "currentColor" : "#a855f7"} strokeWidth="1.5" />
                 </svg>
@@ -446,10 +519,10 @@ function App() {
             </div>
 
             {/* HEAT */}
-            <div className={`flex flex-col items-center justify-center transition-all ${heat >= 80 ? 'animate-heartbeat text-red-500 font-bold' : ''}`}>
+            <div className={`flex flex-col items-center justify-center rounded border transition-all ${heat >= 80 ? 'animate-pulse border-orange-500 bg-orange-500/10' : 'border-transparent'}`}>
               <div className="text-[9px] text-slate-500 font-bold uppercase">HT</div>
               <div className="flex items-center">
-                <span className={`${heat >= 80 ? 'text-base font-black tracking-tight text-red-500 animate-pulse' : 'text-sm font-black text-orange-400'}`}>{heat}%</span>
+                <span className={`${heat >= 80 ? 'text-base font-black tracking-tight text-red-500' : 'text-sm font-black text-orange-400'}`}>{heat}%</span>
                 <svg className="w-6 h-3 ml-1" viewBox="0 0 24 10">
                   <path d="M0,9 L8,9 L8,6 L16,6 L16,3 L24,3" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
@@ -680,17 +753,27 @@ function App() {
       </main>
 
       {/* STEP 2: THE FIXED BOTTOM ZONE (CONSOLE REGISTRY) */}
-      <footer className="fixed bottom-0 left-0 right-0 h-12 bg-slate-950 border-t border-slate-800 p-2 overflow-hidden z-50 text-[11px] font-mono text-emerald-400">
-        <div className="max-w-2xl mx-auto h-full flex flex-col justify-center">
-          {news.slice(0, 2).map((msg: string, i: number) => (
-            <div key={i} className="flex gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
-              <span className="text-slate-700 shrink-0">[{i+1}]</span>
-              <span className={msg.startsWith('SYSTEM') ? 'text-blue-400 font-bold' : 'text-emerald-400'}>{msg}</span>
+      {(() => {
+        let tickerColor = 'text-emerald-400';
+        if (mentalHealth <= 25) tickerColor = 'text-red-500';
+        else if (heat >= 80) tickerColor = 'text-orange-500';
+        else if (aura <= 10) tickerColor = 'text-purple-500';
+        else if (clout <= 10) tickerColor = 'text-blue-500';
+
+        return (
+          <footer className={`fixed bottom-0 left-0 right-0 h-12 bg-slate-950 border-t border-slate-800 p-2 overflow-hidden z-50 text-[11px] font-mono ${tickerColor}`}>
+            <div className="max-w-2xl mx-auto h-full flex flex-col justify-center">
+              {news.slice(0, 2).map((msg: string, i: number) => (
+                <div key={i} className="flex gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <span className="text-slate-700 shrink-0">[{i+1}]</span>
+                  <span className={msg.startsWith('SYSTEM') ? 'text-blue-400 font-bold' : tickerColor}>{msg}</span>
+                </div>
+              ))}
+              {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
             </div>
-          ))}
-          {news.length === 0 && <div className="text-slate-800 italic">SYSTEM READY... STANDBY FOR INPUT...</div>}
-        </div>
-      </footer>
+          </footer>
+        );
+      })()}
 
     </div>
   );
