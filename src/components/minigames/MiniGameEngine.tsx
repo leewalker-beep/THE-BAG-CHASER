@@ -10,9 +10,12 @@ import { PatternMatch } from './PatternMatch';
 import { RateBalance } from './RateBalance';
 import { HeirloomCatch } from './HeirloomCatch';
 import { CampaignTrail } from './CampaignTrail';
+import { ShadowGame } from './ShadowGame';
+import { FoundationBuilder } from './FoundationBuilder';
+import { InfluenceEngine } from './InfluenceEngine';
 
 interface MiniGameEngineProps {
-  type: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail';
+  type: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail' | 'shadow_game' | 'foundation_builder' | 'influence_engine';
   onResult: (multiplier: number) => void;
 }
 
@@ -37,6 +40,9 @@ export function MiniGameEngine({ type, onResult }: MiniGameEngineProps) {
         {type === 'rate_balance' && <RateBalance onComplete={onResult} />}
         {type === 'heirloom_catch' && <HeirloomCatch onComplete={onResult} />}
         {type === 'campaign_trail' && <CampaignTrail onComplete={onResult} />}
+        {type === 'shadow_game' && <ShadowGame onComplete={onResult} />}
+        {type === 'foundation_builder' && <FoundationBuilder onComplete={onResult} />}
+        {type === 'influence_engine' && <InfluenceEngine onComplete={onResult} />}
 
         <div className="p-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
       </motion.div>

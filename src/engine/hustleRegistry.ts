@@ -15,7 +15,7 @@ export interface HustleConfig {
   successChance: number;
   icon: string;
   passiveYieldModifier?: string; // For special conditional handling like REIT or Audio track passive checks
-  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail';
+  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch' | 'campaign_trail' | 'shadow_game' | 'foundation_builder' | 'influence_engine';
 }
 
 export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
@@ -71,6 +71,9 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
 
   // --- TIER 8: PRESIDENT ---
   { id: 'the_campaign', tier: 'PRESIDENT', name: 'The Campaign', description: 'Run for the highest office in the land. Dark money, state-by-state strategy, and national destiny.', upfrontCost: 10000000, cloutReq: 50000, yieldCash: 10000000000, yieldClout: 10000000, yieldAura: 5000000, hitMental: -80, hitHeat: 20, fatigueCost: 100, isPassive: false, successChance: 0.4, icon: '🗳️', miniGame: 'campaign_trail' },
+  { id: 'the_coup', tier: 'PRESIDENT', name: 'The Coup', description: 'Seize control through the shadow government. Bribes, blackmail, and military loyalty.', upfrontCost: 25000000, cloutReq: 75000, yieldCash: 15000000000, yieldClout: 5000000, yieldAura: 10000000, hitMental: -90, hitHeat: 80, fatigueCost: 120, isPassive: false, successChance: 0.4, icon: '🕵️', miniGame: 'shadow_game' },
+  { id: 'the_legacy', tier: 'PRESIDENT', name: 'The Legacy', description: 'Shape the world through philanthropy, policy, and media control.', upfrontCost: 50000000, cloutReq: 100000, yieldCash: 5000000000, yieldClout: 20000000, yieldAura: 50000000, hitMental: -40, hitHeat: 5, fatigueCost: 50, isPassive: false, successChance: 0.4, icon: '🏺', miniGame: 'foundation_builder' },
+  { id: 'the_icon', tier: 'PRESIDENT', name: 'The Icon', description: 'Achieve cultural immortality through viral dominance.', upfrontCost: 20000000, cloutReq: 150000, yieldCash: 2000000000, yieldClout: 50000000, yieldAura: 100000000, hitMental: -60, hitHeat: 25, fatigueCost: 80, isPassive: false, successChance: 0.4, icon: '✨', miniGame: 'influence_engine' },
   { id: 'policy_flip', tier: 'PRESIDENT', name: 'Policy Influence', description: 'Shaping national legislation for profit.', upfrontCost: 5000000, cloutReq: 20000, yieldCash: 2000000, yieldClout: 5000, yieldAura: 1000, hitMental: -50, hitHeat: 50, fatigueCost: 60, isPassive: false, successChance: 0.7, icon: '⚖️' },
 
   // --- TIER 9: OPEN ---
