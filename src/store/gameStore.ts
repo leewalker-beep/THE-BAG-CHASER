@@ -456,7 +456,10 @@ export const useGameStore = create<GameState>()(
 
           const market = MARKET_CONFIGS[state.currentMarket];
           const tree = HUSTLE_PROGRESSIONS[hustleId];
-          const currentNode = tree ? tree[state.pl.hustleNodeIds[hustleId] || 'l1'] : null;
+          const savedNodeId = state.pl.hustleNodeIds[hustleId];
+          const currentNode = tree ? tree[savedNodeId || 'l1'] : null;
+
+          console.log(`[DEBUG] Hustle: ${hustleId} | SavedNodeID: ${savedNodeId} | NodeYield: ${currentNode?.yieldCash}`);
 
           // Calculate effective cost
           let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned)
@@ -531,20 +534,6 @@ export const useGameStore = create<GameState>()(
             finalYieldCash *= 2;
             finalYieldAura *= 2;
             currentNews.unshift("SYNERGY COMBO: Content hype applied! Payouts doubled.");
-          }
-
-          // Level multipliers
-          const currentLvl = state.pl.hustleLevels[hustleId] || 1;
-          if (currentLvl > 1) {
-            if (hustleId === 'drop') {
-              if (currentLvl === 2) finalYieldCash *= 1.8;
-              if (currentLvl === 3) finalYieldCash *= 3.5;
-            } else if (hustleId === 'techFlip' || hustleId === 'tech_flip') {
-              if (currentLvl === 2) finalYieldCash *= 2.0;
-              if (currentLvl === 3) finalYieldCash *= 4.0;
-            } else if (hustleId === 'vintage') {
-              if (currentLvl === 2) finalYieldCash *= 2.2;
-            }
           }
 
           // SINGLE cost deduction (critical fix)
