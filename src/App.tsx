@@ -178,7 +178,7 @@ function App() {
   const [displayedCash, setDisplayedCash] = useState(pl?.bag || 0);
   const [cashSplash, setCashSplash] = useState<{ text: string; isWin: boolean } | null>(null);
   const [showStats, setShowStats] = useState(false);
-  const [activeMiniGame, setActiveMiniGame] = useState<{ type: 'chart_match' | 'tap_mine' | 'tic_tac_toe', hustleId: string } | null>(null);
+  const [activeMiniGame, setActiveMiniGame] = useState<{ type: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch', hustleId: string } | null>(null);
   const isAnimating = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -28,4 +28,11 @@ export const HUSTLE_TONES: Record<string, HustleTone> = {
   data_analytics: { font: 'font-mono', colors: { primary: '#3b82f6', secondary: '#1d4ed8', accent: '#60a5fa' }, animation: 'data', interaction: 'click-soft', icon: '📊', theme: 'data' },
   crypto_mining: { font: 'font-mono', colors: { primary: '#f59e0b', secondary: '#b45309', accent: '#fbbf24' }, animation: 'mining', interaction: 'click-heavy', icon: '⛏️', theme: 'mining' },
   virtual_assistant_agency: { font: 'font-sans', colors: { primary: '#10b981', secondary: '#047857', accent: '#34d399' }, animation: 'service', interaction: 'click-soft', icon: '👩‍💼', theme: 'service' },
+  film_studio: { font: 'font-serif', colors: { primary: '#a855f7', secondary: '#7e22ce', accent: '#fef08a' }, animation: 'cinematic', interaction: 'click-heavy', icon: '🎬', theme: 'cinematic' },
+  fight_promoter: { font: 'font-black', colors: { primary: '#ef4444', secondary: '#b91c1c', accent: '#ffffff' }, animation: 'aggressive', interaction: 'click-heavy', icon: '🥊', theme: 'aggressive' },
+  space_investment: { font: 'font-mono', colors: { primary: '#22d3ee', secondary: '#0891b2', accent: '#e0f2fe' }, animation: 'orbit', interaction: 'click-soft', icon: '🚀', theme: 'orbit' },
+  philanthropy_empire: { font: 'font-serif', colors: { primary: '#fb7185', secondary: '#e11d48', accent: '#fff1f2' }, animation: 'graceful', interaction: 'click-soft', icon: '🤝', theme: 'graceful' },
+  data_monopoly: { font: 'font-mono', colors: { primary: '#6366f1', secondary: '#4338ca', accent: '#e0e7ff' }, animation: 'panopticon', interaction: 'click-heavy', icon: '👁️', theme: 'panopticon' },
+  central_bank_play: { font: 'font-serif', colors: { primary: '#b45309', secondary: '#78350f', accent: '#fef3c7' }, animation: 'monetary', interaction: 'click-heavy', icon: '🏦', theme: 'monetary' },
+  legacy_fund: { font: 'font-serif', colors: { primary: '#ca8a04', secondary: '#854d0e', accent: '#fef9c3' }, animation: 'timeless', interaction: 'click-soft', icon: '🏺', theme: 'timeless' },
 };

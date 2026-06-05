@@ -47,4 +47,13 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType<PanelProps>> = {
   'data_analytics': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'data_analytics' }),
   'crypto_mining': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'crypto_mining' }),
   'virtual_assistant_agency': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'virtual_assistant_agency' }),
+
+  // Step 6 ELITE/MOGUL Content
+  'film_studio': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'film_studio' }),
+  'fight_promoter': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'fight_promoter' }),
+  'space_investment': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'space_investment' }),
+  'philanthropy_empire': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'philanthropy_empire' }),
+  'data_monopoly': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'data_monopoly' }),
+  'central_bank_play': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'central_bank_play' }),
+  'legacy_fund': (props) => React.createElement(GenericTreePanel, { ...props, hustleId: 'legacy_fund' }),
 };

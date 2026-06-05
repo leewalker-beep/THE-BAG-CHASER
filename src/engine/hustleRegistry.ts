@@ -15,7 +15,7 @@ export interface HustleConfig {
   successChance: number;
   icon: string;
   passiveYieldModifier?: string; // For special conditional handling like REIT or Audio track passive checks
-  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe';
+  miniGame?: 'chart_match' | 'tap_mine' | 'tic_tac_toe' | 'scene_cut' | 'hype_meter' | 'rocket_launch' | 'grant_sort' | 'pattern_match' | 'rate_balance' | 'heirloom_catch';
 }
 
 export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
@@ -58,9 +58,16 @@ export const MASTER_HUSTLE_REGISTRY: HustleConfig[] = [
 
   // --- TIER 5: ELITE ---
   { id: 'venture_capital', tier: 'ELITE', name: 'Venture Capital', description: 'Funding the next generation of unicorns.', upfrontCost: 250000, cloutReq: 1000, yieldCash: 150000, yieldClout: 500, yieldAura: 200, hitMental: -20, hitHeat: 10, fatigueCost: 10, isPassive: true, successChance: 0.75, icon: '🦄' },
+  { id: 'film_studio', tier: 'ELITE', name: 'Film Studio', description: 'Producing high-impact cinematic experiences.', upfrontCost: 5000000, cloutReq: 2500, yieldCash: 2000000, yieldClout: 500, yieldAura: 300, hitMental: -40, hitHeat: 15, fatigueCost: 40, isPassive: false, successChance: 0.65, icon: '🎬', miniGame: 'scene_cut' },
+  { id: 'fight_promoter', tier: 'ELITE', name: 'Fight Promoter', description: 'Organizing and promoting high-stakes combat events.', upfrontCost: 1000000, cloutReq: 1500, yieldCash: 400000, yieldClout: 300, yieldAura: 200, hitMental: -30, hitHeat: 20, fatigueCost: 30, isPassive: false, successChance: 0.75, icon: '🥊', miniGame: 'hype_meter' },
+  { id: 'space_investment', tier: 'ELITE', name: 'Space Investment Fund', description: 'Backing the next frontier of human expansion.', upfrontCost: 3000000, cloutReq: 2000, yieldCash: 1200000, yieldClout: 800, yieldAura: 500, hitMental: -25, hitHeat: 5, fatigueCost: 20, isPassive: false, successChance: 0.70, icon: '🚀', miniGame: 'rocket_launch' },
+  { id: 'philanthropy_empire', tier: 'ELITE', name: 'Philanthropy Empire', description: 'Shaping the world through massive charitable initiatives.', upfrontCost: 2000000, cloutReq: 3000, yieldCash: 0, yieldClout: 1500, yieldAura: 2500, hitMental: -15, hitHeat: 0, fatigueCost: 15, isPassive: false, successChance: 0.80, icon: '🤝', miniGame: 'grant_sort' },
+  { id: 'data_monopoly', tier: 'ELITE', name: 'Data Monopoly', description: 'Controlling the flow of global information.', upfrontCost: 4000000, cloutReq: 4000, yieldCash: 3000000, yieldClout: 2000, yieldAura: 1000, hitMental: -35, hitHeat: 25, fatigueCost: 35, isPassive: false, successChance: 0.65, icon: '👁️', miniGame: 'pattern_match' },
 
   // --- TIER 6: MOGUL ---
   { id: 'real_estate_empire', tier: 'MOGUL', name: 'Real Estate Empire', description: 'Acquiring city blocks and commercial hubs.', upfrontCost: 1000000, cloutReq: 5000, yieldCash: 500000, yieldClout: 1000, yieldAura: 500, hitMental: -15, hitHeat: 20, fatigueCost: 5, isPassive: true, successChance: 0.75, icon: '🏙️' },
+  { id: 'central_bank_play', tier: 'MOGUL', name: 'Central Bank Play', description: 'Influencing global monetary policy for massive gains.', upfrontCost: 15000000, cloutReq: 10000, yieldCash: 10000000, yieldClout: 5000, yieldAura: 3000, hitMental: -50, hitHeat: 40, fatigueCost: 50, isPassive: false, successChance: 0.60, icon: '🏦', miniGame: 'rate_balance' },
+  { id: 'legacy_fund', tier: 'MOGUL', name: 'Legacy Fund', description: 'Securing generational wealth and influence.', upfrontCost: 10000000, cloutReq: 8000, yieldCash: 5000000, yieldClout: 4000, yieldAura: 2000, hitMental: -30, hitHeat: 10, fatigueCost: 30, isPassive: false, successChance: 0.70, icon: '🏺', miniGame: 'heirloom_catch' },
 
   // --- TIER 8: PRESIDENT ---
   { id: 'policy_flip', tier: 'PRESIDENT', name: 'Policy Influence', description: 'Shaping national legislation for profit.', upfrontCost: 5000000, cloutReq: 20000, yieldCash: 2000000, yieldClout: 5000, yieldAura: 1000, hitMental: -50, hitHeat: 50, fatigueCost: 60, isPassive: false, successChance: 0.7, icon: '⚖️' },
