@@ -189,6 +189,7 @@ export interface GameState {
   promotionNotified: Record<string, boolean>;
   activeNarrative: GameTab | null;
   lastNarrativeTriggered: GameTab | null;
+  deathBadge: string | null;
 
   // Base Actions
   setPh: (ph: GameState['ph']) => void;

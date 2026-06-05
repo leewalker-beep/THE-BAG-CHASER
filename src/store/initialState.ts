@@ -59,6 +59,7 @@ export const getInitialGameState = (diff: 1 | 2 | 3 = 3): Omit<GameState, 'setPh
 
   return {
     ph: 'PLAYING',
+    deathBadge: null,
     tab: startingTier === 1 ? 'STREET' : 'MUD',
     activeTab: startingTier === 1 ? 'STREET' : 'MUD',
     activeHustleView: null,

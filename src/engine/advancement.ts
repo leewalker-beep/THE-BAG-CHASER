@@ -2,6 +2,7 @@ import type { GameState, HustleID, MarketType } from '../store/types';
 import { MARKET_CONFIGS } from '../config/marketConfig';
 import { FLEX_ASSETS } from '../config/flexAssets';
 import { useJuiceStore } from '../store/juiceStore';
+import { DEATH_MESSAGES } from '../config/deathMessages';
 
 export const applyAdvancement = (state: GameState, intervals: number = 1): Partial<GameState> => {
   const currentPl = { ...state.pl };
@@ -133,16 +134,22 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     }
 
     // 4. The Sanity Check Interceptor
-    if (currentPl.bag < 0) {
+    if (currentPl.bag < 0 || currentPl.mentalHealth <= 0 || currentPl.aura <= 0 || currentPl.clout <= 0) {
       currentPh = 'POST_MORTEM';
-      currentFatalCause = 'INDICTMENT: Bankrupted and liquidated by the feds.';
-    } else if (currentPl.mentalHealth <= 0) {
-      currentPh = 'POST_MORTEM';
-      currentFatalCause = 'AUTOPSY: Total mental and physical collapse under the grind.';
-    } else if (currentPl.aura <= 0 || currentPl.clout <= 0) {
-      currentPh = 'POST_MORTEM';
-      currentFatalCause = 'CANCELLATION: Permanently erased from the cultural matrix.';
+      if (currentPl.bag < 0) {
+        currentFatalCause = 'INDICTMENT: Bankrupted and liquidated by the feds.';
+      } else if (currentPl.mentalHealth <= 0) {
+        currentFatalCause = 'AUTOPSY: Total mental and physical collapse under the grind.';
+      } else {
+        currentFatalCause = 'CANCELLATION: Permanently erased from the cultural matrix.';
+      }
     }
+  }
+
+  let finalDeathBadge = state.deathBadge;
+  if (currentPh === 'POST_MORTEM' && !finalDeathBadge) {
+    const lastHustleId = currentPl.lastExecutedHustleId || 'DEFAULT';
+    finalDeathBadge = DEATH_MESSAGES[lastHustleId]?.badge || DEATH_MESSAGES['DEFAULT'].badge;
   }
 
   useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, currentPl.bag);
@@ -153,6 +160,7 @@ export const applyAdvancement = (state: GameState, intervals: number = 1): Parti
     currentMarket: currentMarket,
     ph: currentPh,
     fatalCause: currentFatalCause,
+    deathBadge: finalDeathBadge,
     lastProcessedTimestamp: Date.now()
   };
 };
