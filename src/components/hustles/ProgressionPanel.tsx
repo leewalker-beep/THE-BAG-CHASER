@@ -77,7 +77,7 @@ export function ProgressionPanel({ hustleId, onBack, state, onExecute, isEmbedde
                 disabled={!canAfford}
                 onClick={() => {
                   console.log('ProgressionPanel: Clicked upgrade for', hustleId, activeNode.id);
-                  state.upgradeHustleLevel(hustleId, activeNode.id);
+                  state.purchaseHustleUpgrade(hustleId, activeNode.id);
                   setPreviewNodeId(null);
                 }}
                 className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[10px] font-black rounded uppercase tracking-widest transition-all"

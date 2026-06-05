@@ -389,22 +389,53 @@ export const useGameStore = create<GameState>()(
       }),
 
       purchaseHustleUpgrade: (hustleId, nodeId) => set((state) => {
+        console.log('gameStore: purchaseHustleUpgrade called for', hustleId, nodeId);
         if (state.pl.crises.accountsFrozen) {
+          console.warn('purchaseHustleUpgrade: accountsFrozen');
           return { news: ["ACCOUNTS FROZEN: You cannot perform upgrades until legal issues are resolved.", ...state.news] };
         }
         const tree = HUSTLE_PROGRESSIONS[hustleId];
-        if (!tree) return {};
+        if (!tree) {
+          console.error('purchaseHustleUpgrade: Tree not found for', hustleId);
+          return {};
+        }
         const node = tree[nodeId];
-        if (!node) return {};
-
-        if (state.pl.bag < node.cost) {
-          return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} to unlock ${node.name}.`, ...state.news] };
+        if (!node) {
+          console.error('purchaseHustleUpgrade: Node not found for', nodeId);
+          return {};
         }
 
+        const cloutReq = node.cloutReq || 0;
+        const auraReq = node.auraReq || 0;
+
+        if (state.pl.bag < node.cost) {
+          console.warn('purchaseHustleUpgrade: Insufficient funds');
+          return { news: [`INSUFFICIENT FUNDS: Need $${node.cost.toLocaleString()} to unlock ${node.name}.`, ...state.news] };
+        }
+        if (state.pl.clout < cloutReq) {
+          console.warn('purchaseHustleUpgrade: Lack of clout');
+          return { news: [`LACK OF CLOUT: Need ${cloutReq} Clout for ${node.name}.`, ...state.news] };
+        }
+        if (state.pl.aura < auraReq) {
+          console.warn('purchaseHustleUpgrade: Lack of aura');
+          return { news: [`LACK OF AURA: Need ${auraReq} Aura for ${node.name}.`, ...state.news] };
+        }
+
+        const nextLevel = parseInt(nodeId.charAt(1)) || (state.pl.hustleLevels[hustleId] + 1);
+
+        useJuiceStore.getState().triggerSurge();
+
+        console.log('purchaseHustleUpgrade: Success, updating state for', hustleId, node.name);
+
         return {
+          ...state,
           pl: {
             ...state.pl,
             bag: state.pl.bag - node.cost,
+            hustleLevels: {
+              ...state.pl.hustleLevels,
+              [hustleId]: nextLevel
+            },
             hustleNodeIds: {
               ...state.pl.hustleNodeIds,
               [hustleId]: nodeId
@@ -414,7 +445,7 @@ export const useGameStore = create<GameState>()(
               [hustleId]: node.passiveMonthlyYield
             }
           },
-          news: [`SYSTEM: ${hustleId.toUpperCase()} upgraded to ${node.name}.`, ...state.news]
+          news: [`UPGRADE SUCCESS: ${hustleId.toUpperCase()} is now Level ${nextLevel} (${node.name})`, ...state.news]
         };
       }),
 
