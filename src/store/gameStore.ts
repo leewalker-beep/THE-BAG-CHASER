@@ -471,34 +471,34 @@ export const useGameStore = create<GameState>()(
           const currentLevel = state.pl.hustleLevels[hustleId] || 1;
 
           // Calculate cost and yield from node ONLY
-          let cost = currentNode.cost;
-          let yieldCash = currentNode.yieldCash;
+          const result = {
+            cost: currentNode.cost * market.expenseMultiplier,
+            yieldCash: currentNode.yieldCash * market.yieldMultiplier * yieldMultiplierParam,
+            yieldClout: currentNode.yieldClout,
+            yieldAura: currentNode.yieldAura
+          };
 
-          // Apply market multipliers (ONCE)
-          cost *= market.expenseMultiplier;
-          yieldCash *= market.yieldMultiplier * yieldMultiplierParam;
-
-          // Validation
-          if (state.pl.bag < cost) {
-            return { news: [`Need $${cost} for ${config.name}`, ...state.news] };
+          if (state.pl.bag < result.cost) {
+            console.log(`❌ ${hustleId} insufficient funds: need $${result.cost} have $${state.pl.bag}`);
+            return { news: [`Need $${result.cost} for this hustle`, ...state.news] };
           }
 
           // Success roll
           const success = forceSuccess !== undefined ? forceSuccess : Math.random() < (currentNode.successChance || 0.8);
-          if (!success) yieldCash = Math.floor(yieldCash * 0.3);
+          if (!success) result.yieldCash = Math.floor(result.yieldCash * 0.3);
 
           // SINGLE math operation
-          const newBag = state.pl.bag - cost + yieldCash;
+          const newBag = state.pl.bag - result.cost + result.yieldCash;
 
           let newClout = state.pl.clout;
           let newAura = state.pl.aura;
 
           if (config.tier === 'STREET') {
-            newClout = Math.min(state.pl.maxClout, state.pl.clout + (currentNode.yieldClout || 0));
-            newAura = Math.min(state.pl.maxAura, state.pl.aura + (currentNode.yieldAura || 0));
+            newClout = Math.min(state.pl.maxClout, state.pl.clout + (result.yieldClout || 0));
+            newAura = Math.min(state.pl.maxAura, state.pl.aura + (result.yieldAura || 0));
           }
 
-          console.log(`📊 ${hustleId} Lv${currentLevel}: cost=$${cost} yield=$${yieldCash} net=$${newBag - state.pl.bag}`);
+          console.log(`📊 ${hustleId} Lv${currentLevel}: cost=$${result.cost} yield=$${result.yieldCash} net=$${newBag - state.pl.bag} clout=+${result.yieldClout || 0} aura=+${result.yieldAura || 0}`);
 
           const nextPl = {
             ...state.pl,
