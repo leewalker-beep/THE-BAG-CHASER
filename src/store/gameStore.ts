@@ -12,7 +12,7 @@ import { FLEX_ASSETS } from '../config/flexAssets';
 import { MARKET_CONFIGS } from '../config/marketConfig';
 import { NARRATIVE_BEATS } from '../config/narrativeConfig';
 import { useJuiceStore } from './juiceStore';
-import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, UPGRADE_COSTS, HUSTLE_BALANCE } from '../config/balanceConfig';
+import { RESOLVE_BLACKLIST_COST, RESOLVE_SHADOWBAN_COST, RESOLVE_STRIKE_COST, TIER_REQUIREMENTS, UNFREEZE_COST, UPGRADE_COSTS } from '../config/balanceConfig';
 
 const SAVE_KEY = 'bag-chaser-state';
 
@@ -449,189 +449,52 @@ export const useGameStore = create<GameState>()(
         };
       }),
 
-      deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean, yieldMultiplier: number = 1) => {
+      deductCostAndRollOutcome: (hustleId: string, forceSuccess?: boolean, yieldMultiplierParam: number = 1) => {
         set((state) => {
-          const config = MASTER_HUSTLE_REGISTRY.find((h) => h.id === hustleId);
+          const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
           if (!config) return {};
 
-          const market = MARKET_CONFIGS[state.currentMarket];
+          // LOCK: Only MUD tier hustles work
+          if (config.tier !== 'MUD') {
+            return { news: [`${config.tier} tier locked. Complete MUD tier first.`, ...state.news] };
+          }
+
           const tree = HUSTLE_PROGRESSIONS[hustleId];
-          const savedNodeId = state.pl.hustleNodeIds[hustleId];
-          const currentNode = tree ? tree[savedNodeId || 'l1'] : null;
+          const savedNodeId = state.pl.hustleNodeIds[hustleId] || 'l1';
+          const currentNode = tree ? tree[savedNodeId] : null;
 
-          console.log(`[DEBUG] Hustle: ${hustleId} | SavedNodeID: ${savedNodeId} | NodeYield: ${currentNode?.yieldCash}`);
+          if (!currentNode) {
+            return { news: [`No data for ${hustleId}`, ...state.news] };
+          }
 
-          // Calculate effective cost
-          let effectiveUpfrontCost = (hustleId === 'audio' && state.pl.streetStats.studioOwned)
-            ? HUSTLE_BALANCE.audio.studioOwnedProductionCost
-            : (currentNode ? currentNode.cost : config.upfrontCost);
+          const market = MARKET_CONFIGS[state.currentMarket];
+          const currentLevel = state.pl.hustleLevels[hustleId] || 1;
 
-          let lineageYieldCash = currentNode ? currentNode.yieldCash : config.yieldCash;
-          let lineageYieldClout = currentNode ? currentNode.yieldClout : config.yieldClout;
-          let lineageYieldAura = currentNode ? currentNode.yieldAura : config.yieldAura;
-          let lineageHitMental = currentNode ? currentNode.hitMental : config.hitMental;
-          let lineageFatigue = config.fatigueCost;
-          let lineageSuccessChance = currentNode ? currentNode.successChance : config.successChance;
+          // Calculate cost and yield from node ONLY
+          let cost = currentNode.cost;
+          let yieldCash = currentNode.yieldCash;
 
-          // Apply market multipliers
-          effectiveUpfrontCost *= market.expenseMultiplier;
-          lineageYieldCash *= market.yieldMultiplier;
-          lineageYieldClout *= market.yieldMultiplier;
-          lineageYieldAura *= market.yieldMultiplier;
-
-          // Apply minigame yield multiplier
-          lineageYieldCash *= yieldMultiplier;
-          lineageYieldClout *= yieldMultiplier;
-          lineageYieldAura *= yieldMultiplier;
+          // Apply market multipliers (ONCE)
+          cost *= market.expenseMultiplier;
+          yieldCash *= market.yieldMultiplier * yieldMultiplierParam;
 
           // Validation
-          if (state.pl.bag < effectiveUpfrontCost) {
-            return { news: [`INSUFFICIENT FUNDS: Need $${effectiveUpfrontCost.toLocaleString()} to execute ${config.name}.`, ...state.news] };
+          if (state.pl.bag < cost) {
+            return { news: [`Need $${cost} for ${config.name}`, ...state.news] };
           }
 
-          if (state.pl.clout < config.cloutReq) {
-            return { news: [`LACK OF CLOUT: Need ${config.cloutReq} Clout to pull off ${config.name}.`, ...state.news] };
-          }
+          // Success roll
+          const success = forceSuccess !== undefined ? forceSuccess : Math.random() < (currentNode.successChance || 0.8);
+          if (!success) yieldCash = Math.floor(yieldCash * 0.3);
 
-          if (state.pl.crises.blacklistTurns > 0 && (config.tier === 'ELITE' || config.tier === 'MOGUL' || config.tier === 'PRESIDENT')) {
-            return { news: [`BLACKLISTED: You are currently exiled from ${config.tier} circles.`, ...state.news] };
-          }
+          // SINGLE math operation
+          const newBag = state.pl.bag - cost + yieldCash;
 
-          // Special cooldowns
-          if (hustleId === 'r_plasma' && state.pl.plasmaUsedThisMonth) {
-            return { news: ["MEDICAL LIMIT: You can only sell plasma once per month.", ...state.news] };
-          }
-          if ((hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') && state.pl.swCooldownTurns > 0) {
-            return { news: ["COOLDOWN: Hype needs to rebuild before another drop.", ...state.news] };
-          }
+          console.log(`📊 ${hustleId} Lv${currentLevel}: cost=$${cost} yield=$${yieldCash} net=$${newBag - state.pl.bag}`);
 
-          // Execution
-          const isSuccess = forceSuccess !== undefined
-            ? forceSuccess
-            : (config.id.startsWith('r_') && config.id !== 'r_vending')
-              ? true
-              : Math.random() < lineageSuccessChance;
-
-          let finalYieldCash = isSuccess ? lineageYieldCash : 0;
-          let finalYieldClout = isSuccess ? lineageYieldClout : 0;
-          let finalYieldAura = isSuccess ? lineageYieldAura : 0;
-          let finalHitMental = lineageHitMental;
-          let finalHitHeat = config.hitHeat * market.heatMultiplier;
-
-          const currentNews = [...state.news];
-          const nextCrises = { ...state.pl.crises };
-
-          // Anti-spam
-          const isSpam = hustleId === state.pl.lastExecutedHustleId;
-          if (isSuccess && isSpam) {
-            finalYieldCash *= 0.5;
-            finalYieldClout *= 0.5;
-            currentNews.unshift("MARKET FATIGUE: Spamming this operation cut yields by 50%.");
-          }
-
-          // Synergy bonuses
-          if (state.pl.hypeIsActive && (hustleId === 'drop' || hustleId === 'vintage')) {
-            finalYieldCash *= 2;
-            finalYieldAura *= 2;
-            currentNews.unshift("SYNERGY COMBO: Content hype applied! Payouts doubled.");
-          }
-
-          // SINGLE cost deduction (critical fix)
-          const nextBag = state.pl.bag - effectiveUpfrontCost + finalYieldCash;
-
-          // Update stats
-          const nextStats = { ...state.pl.stats };
-          nextStats.totalHustles += 1;
-          if (isSuccess) nextStats.successfulHustles += 1;
-          nextStats.lifetimeEarnings += finalYieldCash;
-
-          // Achievement checks
-          if (nextStats.lifetimeEarnings >= 1000000 && !nextStats.unlockedAchievements.includes('First Million')) {
-            nextStats.unlockedAchievements.push('First Million');
-            currentNews.unshift("🏆 ACHIEVEMENT UNLOCKED: First Million ($1,000,000 earned)");
-          }
-
-          // Update tier history
-          const currentTierStats = nextStats.tierHistory[state.pl.currentTier] || {
-            reachedAtMonth: state.pl.mo,
-            cashEarned: 0,
-            cloutDelta: 0,
-            auraDelta: 0,
-            hustlesExecuted: {},
-            crises: [],
-            flexAssets: [],
-            milestone: ''
-          };
-          currentTierStats.cashEarned += finalYieldCash;
-          currentTierStats.cloutDelta += finalYieldClout;
-          currentTierStats.auraDelta += finalYieldAura;
-          currentTierStats.hustlesExecuted[hustleId] = (currentTierStats.hustlesExecuted[hustleId] || 0) + 1;
-          nextStats.tierHistory[state.pl.currentTier] = currentTierStats;
-
-          // Failure crises
-          if (!isSuccess && !forceSuccess) {
-            finalHitMental *= 2;
-            if (config.tier === 'MUD' || config.tier === 'STREET') {
-              nextCrises.shadowbanTurns = 3;
-              currentNews.unshift(`CRITICAL FAILURE: Shadowbanned for 3 months.`);
-            } else if (config.tier === 'STARTUP' || config.tier === 'CORPORATE') {
-              nextCrises.accountsFrozen = true;
-              currentNews.unshift(`CRITICAL FAILURE: Accounts frozen due to regulatory breach.`);
-            } else if (config.tier === 'ELITE' || config.tier === 'MOGUL' || config.tier === 'PRESIDENT') {
-              nextCrises.blacklistTurns = 4;
-              currentNews.unshift(`CRITICAL FAILURE: Blacklisted from elite circles for 4 months.`);
-            }
-          }
-
-          // Build next state
-          const nextPl = {
-            ...state.pl,
-            bag: nextBag,
-            clout: Math.min(state.pl.maxClout, Math.max(0, state.pl.clout + finalYieldClout)),
-            aura: Math.min(state.pl.maxAura, Math.max(0, state.pl.aura + finalYieldAura)),
-            mentalHealth: Math.min(state.pl.maxMentalHealth, Math.max(0, state.pl.mentalHealth + finalHitMental)),
-            heat: Math.min(100, Math.max(0, state.pl.heat + finalHitHeat)),
-            hustleFatigue: {
-              ...state.pl.hustleFatigue,
-              [hustleId]: (state.pl.hustleFatigue[hustleId] || 0) + (isSuccess ? lineageFatigue : Math.floor(lineageFatigue * 0.5))
-            },
-            hypeIsActive: (isSuccess && (hustleId === 'cc' || hustleId === 'pod')) ? true : false,
-            lastExecutedHustleId: hustleId,
-            streak: isSuccess ? state.pl.streak + 1 : 0,
-            crises: nextCrises,
-            stats: nextStats,
-          };
-
-          // Specialized stats on success
-          if (isSuccess) {
-            if (hustleId === 'cc') nextPl.streetStats.ccSubs += 1000;
-            if (hustleId === 'pod') nextPl.streetStats.podEpisodes += 1;
-            if (hustleId === 'audio') {
-              nextPl.streetStats.audioTracks += 1;
-              nextPl.assetsOwned.masterTracks += 1;
-            }
-            if (hustleId === 'drip') nextPl.streetStats.dripStock += 10;
-            if (hustleId === 'meme') nextPl.streetStats.activeMemeTokens += 1;
-            if (hustleId === 'saas_mvp') nextPl.startupStats.saasUsers += 500;
-            if (hustleId === 'agency_scale') nextPl.startupStats.agencyStaff += 1;
-            if (hustleId === 'ecom_brand') nextPl.startupStats.ecomOrders += 200;
-            if (hustleId === 'r_plasma') nextPl.plasmaUsedThisMonth = true;
-            if (hustleId === 'sw' || hustleId === 'drop' || hustleId === 'vintage') nextPl.swCooldownTurns = 3;
-            if (hustleId === 'r_vending') nextPl.assetsOwned.vendingMachines += 1;
-          }
-
-          // Trigger VFX
-          useJuiceStore.getState().checkAndTriggerVFX(state.pl.bag, nextBag, isSuccess ? 'SURGE' : 'CASCADE');
-
-          const nextState: GameState = {
-            ...state,
-            pl: nextPl,
-            news: currentNews,
-          };
-
-          // Advance time
-          const advancedState = applyAdvancement(clampStats(nextState), 1) as GameState;
-          return advancedState;
+          const nextPl = { ...state.pl, bag: newBag, lastExecutedHustleId: hustleId };
+          const nextState = { ...state, pl: nextPl };
+          return applyAdvancement(clampStats(nextState), 1);
         });
       },
 
