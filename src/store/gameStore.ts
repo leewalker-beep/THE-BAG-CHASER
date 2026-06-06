@@ -454,8 +454,8 @@ export const useGameStore = create<GameState>()(
           const config = MASTER_HUSTLE_REGISTRY.find(h => h.id === hustleId);
           if (!config) return {};
 
-          // LOCK: Only MUD tier hustles work
-          if (config.tier !== 'MUD') {
+          // LOCK: Only MUD and STREET tier hustles work
+          if (config.tier !== 'MUD' && config.tier !== 'STREET') {
             return { news: [`${config.tier} tier locked. Complete MUD tier first.`, ...state.news] };
           }
 
@@ -490,9 +490,23 @@ export const useGameStore = create<GameState>()(
           // SINGLE math operation
           const newBag = state.pl.bag - cost + yieldCash;
 
+          let newClout = state.pl.clout;
+          let newAura = state.pl.aura;
+
+          if (config.tier === 'STREET') {
+            newClout = Math.min(state.pl.maxClout, state.pl.clout + (currentNode.yieldClout || 0));
+            newAura = Math.min(state.pl.maxAura, state.pl.aura + (currentNode.yieldAura || 0));
+          }
+
           console.log(`📊 ${hustleId} Lv${currentLevel}: cost=$${cost} yield=$${yieldCash} net=$${newBag - state.pl.bag}`);
 
-          const nextPl = { ...state.pl, bag: newBag, lastExecutedHustleId: hustleId };
+          const nextPl = {
+            ...state.pl,
+            bag: newBag,
+            clout: newClout,
+            aura: newAura,
+            lastExecutedHustleId: hustleId
+          };
           const nextState = { ...state, pl: nextPl };
           return applyAdvancement(clampStats(nextState), 1);
         });
